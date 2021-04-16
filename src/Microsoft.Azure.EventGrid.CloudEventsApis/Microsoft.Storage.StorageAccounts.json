@@ -1,0 +1,64 @@
+﻿[
+    {
+      "properties": {
+        "displayName": "Blob Created",
+        "description": "Raised when a blob is created.",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.BlobCreated",
+      "name": "Microsoft.Storage.BlobCreated",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Blob Deleted",
+        "description": "Raised when a blob is deleted.",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.BlobDeleted",
+      "name": "Microsoft.Storage.BlobDeleted",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Directory Created",
+        "description": "Event published when a directory is created",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.DirectoryCreated",
+      "name": "Microsoft.Storage.DirectoryCreated",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Directory Deleted",
+        "description": "Event published when a directory is deleted",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.DirectoryDeleted",
+      "name": "Microsoft.Storage.DirectoryDeleted",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Blob Renamed",
+        "description": "Event published when a blob is renamed",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.BlobRenamed",
+      "name": "Microsoft.Storage.BlobRenamed",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Directory Renamed",
+        "description": "Event published when a directory is renamed",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.DirectoryRenamed",
+      "name": "Microsoft.Storage.DirectoryRenamed",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    }
+  ]

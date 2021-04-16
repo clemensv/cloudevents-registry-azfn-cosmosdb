@@ -1,0 +1,102 @@
+﻿[
+    {
+      "properties": {
+        "displayName": "SMS Received",
+        "description": "Event published when a SMS is received",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.SMSReceived",
+      "name": "Microsoft.Communication.SMSReceived",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "SMS Delivery Report Received",
+        "description": "Event published when a SMS Delivery report is received",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.SMSDeliveryReportReceived",
+      "name": "Microsoft.Communication.SMSDeliveryReportReceived",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chat Message Received",
+        "description": "Event published when a chat Message is received",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.ChatMessageReceived",
+      "name": "Microsoft.Communication.ChatMessageReceived",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chat Message Edited",
+        "description": "Event published when an chat message is edited",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.ChatMessageEdited",
+      "name": "Microsoft.Communication.ChatMessageEdited",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chat Message Deleted",
+        "description": "Event published when an chat message is deleted",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.ChatMessageDeleted",
+      "name": "Microsoft.Communication.ChatMessageDeleted",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chat Thread Created With User",
+        "description": "Event published when a new chat thread is created with a specific user in it",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.ChatThreadCreatedWithUser",
+      "name": "Microsoft.Communication.ChatThreadCreatedWithUser",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chat Thread With User Deleted",
+        "description": "Event published when a chat thread containing a specific user is deleted",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.ChatThreadWithUserDeleted",
+      "name": "Microsoft.Communication.ChatThreadWithUserDeleted",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chat Thread Properties Updated Per User",
+        "description": "Event published for each user in a chat thread when its properties are updated",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.ChatThreadPropertiesUpdatedPerUser",
+      "name": "Microsoft.Communication.ChatThreadPropertiesUpdatedPerUser",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chat Member Added To Thread With User",
+        "description": "Event published when a user is add to the chat thread containing event's subject user",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.ChatMemberAddedToThreadWithUser",
+      "name": "Microsoft.Communication.ChatMemberAddedToThreadWithUser",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chat Member Removed From Thread With User",
+        "description": "Event published when a user is removed from the chat thread containing event's subject user",
+        "schemaUrl": "tbd"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Communication.CommunicationServices/eventTypes/Microsoft.Communication.ChatMemberRemovedFromThreadWithUser",
+      "name": "Microsoft.Communication.ChatMemberRemovedFromThreadWithUser",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    }
+  ]

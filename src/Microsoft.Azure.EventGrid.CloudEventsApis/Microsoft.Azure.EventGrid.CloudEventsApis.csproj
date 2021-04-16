@@ -1,0 +1,76 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AzureFunctionsVersion>v3</AzureFunctionsVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Microsoft.AppConfiguration.ConfigurationStores.json" />
+    <None Remove="Microsoft.Cache.Redis.json" />
+    <None Remove="Microsoft.Communication.CommunicationServices.json" />
+    <None Remove="Microsoft.ContainerRegistry.Registries.json" />
+    <None Remove="microsoft.devices.iothubs.json" />
+    <None Remove="Microsoft.EventHub.Namespaces.json" />
+    <None Remove="Microsoft.KeyVault.vaults.json" />
+    <None Remove="Microsoft.MachineLearningServices.Workspaces.json" />
+    <None Remove="Microsoft.Maps.Accounts.json" />
+    <None Remove="Microsoft.Media.MediaServices.json" />
+    <None Remove="Microsoft.Resources.ResourceGroups.json" />
+    <None Remove="Microsoft.Resources.Subscriptions.json" />
+    <None Remove="Microsoft.ServiceBus.Namespaces.json" />
+    <None Remove="Microsoft.SignalRService.SignalR.json" />
+    <None Remove="Microsoft.Storage.StorageAccounts.json" />
+    <None Remove="Microsoft.Web.ServerFarms.json" />
+    <None Remove="Microsoft.Web.Sites.json" />
+    <None Remove="topicTypes.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="microsoft.resources.resourcegroups.json" />
+    <EmbeddedResource Include="microsoft.resources.subscriptions.json" />
+    <EmbeddedResource Include="microsoft.servicebus.namespaces.json" />
+    <EmbeddedResource Include="microsoft.signalrservice.signalr.json" />
+    <EmbeddedResource Include="microsoft.storage.storageaccounts.json" />
+    <EmbeddedResource Include="microsoft.communication.communicationservices.json" />
+    <EmbeddedResource Include="microsoft.containerregistry.registries.json" />
+    <EmbeddedResource Include="microsoft.devices.iothubs.json" />
+    <EmbeddedResource Include="microsoft.eventhub.namespaces.json" />
+    <EmbeddedResource Include="microsoft.keyvault.vaults.json" />
+    <EmbeddedResource Include="microsoft.machinelearningservices.workspaces.json" />
+    <EmbeddedResource Include="microsoft.maps.accounts.json" />
+    <EmbeddedResource Include="microsoft.media.mediaservices.json" />
+    <EmbeddedResource Include="microsoft.web.serverfarms.json" />
+    <EmbeddedResource Include="microsoft.web.sites.json" />
+    <EmbeddedResource Include="microsoft.cache.redis.json" />
+    <EmbeddedResource Include="microsoft.appconfiguration.configurationstores.json" />
+    <EmbeddedResource Include="topictypes.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.4.0-beta.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Azure.Management.EventGrid" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.11.1-preview" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.12" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
+    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.11" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="NSwag.MSBuild" Version="13.10.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="host.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="local.settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="generated\" />
+  </ItemGroup>
+    <Target Name="NSwag" AfterTargets="BeforeBuild">
+    <Exec Command="$(NSwagExe_Core31) run /variables:Configuration=$(Configuration),OutDir=$(OutDir)" />
+  </Target>
+</Project>

@@ -1,0 +1,13 @@
+﻿[
+    {
+      "properties": {
+        "displayName": "AppServicePlanUpdated",
+        "description": "Event published when a server farm is updated.",
+        "schemaUrl": "tbd",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.ServerFarms/eventTypes/Microsoft.Web.AppServicePlanUpdated",
+      "name": "Microsoft.Web.AppServicePlanUpdated",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    }
+  ]

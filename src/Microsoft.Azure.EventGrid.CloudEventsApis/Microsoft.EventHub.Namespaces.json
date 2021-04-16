@@ -1,0 +1,13 @@
+﻿[
+  {
+    "properties": {
+      "displayName": "Capture File Created",
+      "description": "Raised when a capture file is created.",
+      "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.EventHub/stable/2018-01-01/EventHub.json",
+      "isInDefaultSet": true
+    },
+    "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.EventHub.Namespaces/eventTypes/Microsoft.EventHub.CaptureFileCreated",
+    "name": "Microsoft.EventHub.CaptureFileCreated",
+    "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+  }
+]

@@ -1,0 +1,46 @@
+﻿[
+    {
+      "properties": {
+        "displayName": "Image Pushed",
+        "description": "Event published when an image is pushed",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ContainerRegistry/stable/2018-01-01/ContainerRegistry.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.ContainerRegistry.Registries/eventTypes/Microsoft.ContainerRegistry.ImagePushed",
+      "name": "Microsoft.ContainerRegistry.ImagePushed",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Image Deleted",
+        "description": "Event published when an image is deleted",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ContainerRegistry/stable/2018-01-01/ContainerRegistry.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.ContainerRegistry.Registries/eventTypes/Microsoft.ContainerRegistry.ImageDeleted",
+      "name": "Microsoft.ContainerRegistry.ImageDeleted",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chart Pushed",
+        "description": "Event published when an artifact is pushed",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ContainerRegistry/stable/2018-01-01/ContainerRegistry.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.ContainerRegistry.Registries/eventTypes/Microsoft.ContainerRegistry.ChartPushed",
+      "name": "Microsoft.ContainerRegistry.ChartPushed",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Chart Deleted",
+        "description": "Event published when an artifact is deleted",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ContainerRegistry/stable/2018-01-01/ContainerRegistry.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.ContainerRegistry.Registries/eventTypes/Microsoft.ContainerRegistry.ChartDeleted",
+      "name": "Microsoft.ContainerRegistry.ChartDeleted",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    }
+  ]

@@ -1,0 +1,56 @@
+﻿[
+    {
+      "properties": {
+        "displayName": "Device Created",
+        "description": "Device Created Event",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Devices/stable/2018-01-01/IotHub.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/microsoft.devices.iothubs/eventTypes/Microsoft.Devices.DeviceCreated",
+      "name": "Microsoft.Devices.DeviceCreated",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Device Deleted",
+        "description": "Device Deleted Event",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Devices/stable/2018-01-01/IotHub.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/microsoft.devices.iothubs/eventTypes/Microsoft.Devices.DeviceDeleted",
+      "name": "Microsoft.Devices.DeviceDeleted",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Device Connected",
+        "description": "Device Connected event",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Devices/stable/2018-01-01/IotHub.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/microsoft.devices.iothubs/eventTypes/Microsoft.Devices.DeviceConnected",
+      "name": "Microsoft.Devices.DeviceConnected",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Device Disconnected",
+        "description": "Device Disconnected event",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Devices/stable/2018-01-01/IotHub.json",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/microsoft.devices.iothubs/eventTypes/Microsoft.Devices.DeviceDisconnected",
+      "name": "Microsoft.Devices.DeviceDisconnected",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Device Telemetry",
+        "description": "Published when a telemetry message is sent to an IoT hub.",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Devices/stable/2018-01-01/IotHub.json"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/microsoft.devices.iothubs/eventTypes/Microsoft.Devices.DeviceTelemetry",
+      "name": "Microsoft.Devices.DeviceTelemetry",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    }
+  ]

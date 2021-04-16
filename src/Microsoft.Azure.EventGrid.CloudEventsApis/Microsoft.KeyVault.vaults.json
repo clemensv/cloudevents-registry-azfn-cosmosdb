@@ -1,0 +1,111 @@
+﻿[
+    {
+      "properties": {
+        "displayName": "Certificate New Version Created",
+        "description": "Raised when a certificate is enrolled or renewed in a Key Vault",
+        "schemaUrl": "TBD",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.CertificateNewVersionCreated",
+      "name": "Microsoft.KeyVault.CertificateNewVersionCreated",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Certificate Near Expiry",
+        "description": "Raised when a certificate is about to expire in a Key Vault",
+        "schemaUrl": "TBD",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.CertificateNearExpiry",
+      "name": "Microsoft.KeyVault.CertificateNearExpiry",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Certificate Expired",
+        "description": "Raised when a certificate is Expired in a Key Vault",
+        "schemaUrl": "TBD",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.CertificateExpired",
+      "name": "Microsoft.KeyVault.CertificateExpired",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Secret New Version Created",
+        "description": "Raised when a secret is uploaded in a Key Vault",
+        "schemaUrl": "TBD",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.SecretNewVersionCreated",
+      "name": "Microsoft.KeyVault.SecretNewVersionCreated",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Secret Near Expiry",
+        "description": "Raised when a secret is about to expire in a Key Vault",
+        "schemaUrl": "TBD",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.SecretNearExpiry",
+      "name": "Microsoft.KeyVault.SecretNearExpiry",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Secret Expired",
+        "description": "Raised when a secret is Expired in a Key Vault",
+        "schemaUrl": "TBD",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.SecretExpired",
+      "name": "Microsoft.KeyVault.SecretExpired",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Key New Version Created",
+        "description": "Raised when a key is updated in a Key Vault",
+        "schemaUrl": "TBD",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.KeyNewVersionCreated",
+      "name": "Microsoft.KeyVault.KeyNewVersionCreated",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Key Near Expiry",
+        "description": "Raised when a key is about to expire in a Key Vault",
+        "schemaUrl": "TBD",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.KeyNearExpiry",
+      "name": "Microsoft.KeyVault.KeyNearExpiry",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Key Expired",
+        "description": "Raised when a key is Expired in a Key Vault",
+        "schemaUrl": "TBD",
+        "isInDefaultSet": true
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.KeyExpired",
+      "name": "Microsoft.KeyVault.KeyExpired",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    },
+    {
+      "properties": {
+        "displayName": "Vault Access Policy Changed",
+        "description": "Raised when a vault access policy changed in a Key Vault",
+        "schemaUrl": "TBD"
+      },
+      "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.KeyVault.vaults/eventTypes/Microsoft.KeyVault.VaultAccessPolicyChanged",
+      "name": "Microsoft.KeyVault.VaultAccessPolicyChanged",
+      "type": "Microsoft.EventGrid/topicTypes/eventTypes"
+    }
+  ]
