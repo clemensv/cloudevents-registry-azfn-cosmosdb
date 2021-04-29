@@ -22,7 +22,7 @@ jobs:
     - name: Restore
       run: dotnet restore "${{ env.WORKING_DIRECTORY }}"
     - name: Codegen NSwag
-      run: dotnet build "${{ env.WORKING_DIRECTORY }}" --target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
+      run: dotnet build "${{ env.WORKING_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
     - name: Build
       run: dotnet build "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore
     - name: Publish
