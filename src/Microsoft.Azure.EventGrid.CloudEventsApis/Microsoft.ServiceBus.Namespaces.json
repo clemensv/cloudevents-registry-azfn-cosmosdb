@@ -3,7 +3,7 @@
       "properties": {
         "displayName": "ActiveMessagesAvailableWithNoListeners",
         "description": "Entity has active messages with no listeners",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ServiceBus/stable/2018-01-01/ServiceBus.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ServiceBus/stable/2018-01-01/ServiceBus.json#/definitions/ServiceBusActiveMessagesAvailableWithNoListenersEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.ServiceBus.Namespaces/eventTypes/Microsoft.ServiceBus.ActiveMessagesAvailableWithNoListeners",
@@ -14,7 +14,7 @@
       "properties": {
         "displayName": "DeadLetterMessagesAvailableWithNoListeners",
         "description": "Entity has dead letter messages with no listeners",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ServiceBus/stable/2018-01-01/ServiceBus.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ServiceBus/stable/2018-01-01/ServiceBus.json#/definitions/ServiceBusDeadletterMessagesAvailableWithNoListenersEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.ServiceBus.Namespaces/eventTypes/Microsoft.ServiceBus.DeadLetterMessagesAvailableWithNoListeners",
@@ -25,7 +25,7 @@
       "properties": {
         "displayName": "ActiveMessagesAvailablePeriodicNotifications",
         "description": "Entity has active messages. The event is emitted every 30 seconds.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ServiceBus/stable/2018-01-01/ServiceBus.json"
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ServiceBus/stable/2018-01-01/ServiceBus.json#/definitions/ServiceBusActiveMessagesAvailablePeriodicNotificationsEventData"
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.ServiceBus.Namespaces/eventTypes/Microsoft.ServiceBus.ActiveMessagesAvailablePeriodicNotifications",
       "name": "Microsoft.ServiceBus.ActiveMessagesAvailablePeriodicNotifications",
@@ -35,7 +35,7 @@
       "properties": {
         "displayName": "DeadletterMessagesAvailablePeriodicNotifications",
         "description": "Entity has active dead letter messages. The event is emitted every 30 seconds.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ServiceBus/stable/2018-01-01/ServiceBus.json"
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.ServiceBus/stable/2018-01-01/ServiceBus.json#/definitions/ServiceBusDeadletterMessagesAvailablePeriodicNotificationsEventData"
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.ServiceBus.Namespaces/eventTypes/Microsoft.ServiceBus.DeadletterMessagesAvailablePeriodicNotifications",
       "name": "Microsoft.ServiceBus.DeadletterMessagesAvailablePeriodicNotifications",

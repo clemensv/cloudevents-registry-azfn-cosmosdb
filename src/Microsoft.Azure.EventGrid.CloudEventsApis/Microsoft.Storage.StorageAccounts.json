@@ -3,7 +3,7 @@
       "properties": {
         "displayName": "Blob Created",
         "description": "Raised when a blob is created.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json#/definitions/StorageBlobCreatedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.BlobCreated",
@@ -14,7 +14,7 @@
       "properties": {
         "displayName": "Blob Deleted",
         "description": "Raised when a blob is deleted.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json#/definitions/StorageBlobDeletedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.BlobDeleted",
@@ -25,7 +25,7 @@
       "properties": {
         "displayName": "Directory Created",
         "description": "Event published when a directory is created",
-        "schemaUrl": "tbd"
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json#/definitions/StorageDirectoryCreatedEventData"
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.DirectoryCreated",
       "name": "Microsoft.Storage.DirectoryCreated",
@@ -35,7 +35,7 @@
       "properties": {
         "displayName": "Directory Deleted",
         "description": "Event published when a directory is deleted",
-        "schemaUrl": "tbd"
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json#/definitions/StorageDirectoryDeletedEventData"
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.DirectoryDeleted",
       "name": "Microsoft.Storage.DirectoryDeleted",
@@ -45,7 +45,7 @@
       "properties": {
         "displayName": "Blob Renamed",
         "description": "Event published when a blob is renamed",
-        "schemaUrl": "tbd"
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json#/definitions/StorageBlobRenamedEventData"
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.BlobRenamed",
       "name": "Microsoft.Storage.BlobRenamed",
@@ -55,7 +55,7 @@
       "properties": {
         "displayName": "Directory Renamed",
         "description": "Event published when a directory is renamed",
-        "schemaUrl": "tbd"
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Storage/stable/2018-01-01/Storage.json#/definitions/StorageDirectoryRenamedEventData"
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Storage.StorageAccounts/eventTypes/Microsoft.Storage.DirectoryRenamed",
       "name": "Microsoft.Storage.DirectoryRenamed",

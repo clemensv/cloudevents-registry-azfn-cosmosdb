@@ -3,7 +3,7 @@
       "properties": {
         "displayName": "App Updated",
         "description": "Event published when a site is updated.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebAppUpdatedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.AppUpdated",
@@ -14,7 +14,7 @@
       "properties": {
         "displayName": "Backup Operation Started",
         "description": "Event published when a site's backup operation started.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebBackupOperationStartedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.BackupOperationStarted",
@@ -25,7 +25,7 @@
       "properties": {
         "displayName": "Backup Operation Completed",
         "description": "Event published when a site's backup operation completed.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebBackupOperationCompletedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.BackupOperationCompleted",
@@ -36,7 +36,7 @@
       "properties": {
         "displayName": "Backup Operation Failed",
         "description": "Event published when a site's backup operation failed.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebBackupOperationFailedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.BackupOperationFailed",
@@ -47,7 +47,7 @@
       "properties": {
         "displayName": "Restore Operation Started",
         "description": "Event published when a site's restore operation started.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebRestoreOperationStartedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.RestoreOperationStarted",
@@ -58,7 +58,7 @@
       "properties": {
         "displayName": "Restore Operation Completed",
         "description": "Event published when a site's restore operation completed.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebRestoreOperationCompletedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.RestoreOperationCompleted",
@@ -69,7 +69,7 @@
       "properties": {
         "displayName": "Restore Operation Failed",
         "description": "Event published when a site's restore operation failed.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebRestoreOperationFailedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.RestoreOperationFailed",
@@ -80,7 +80,7 @@
       "properties": {
         "displayName": "Slot Swap Started",
         "description": "Event published when a site's slot swap operation started.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebSlotSwapStartedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.SlotSwapStarted",
@@ -91,7 +91,7 @@
       "properties": {
         "displayName": "Slot Swap Completed",
         "description": "Event published when a site's slot swap operation completed.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebSlotSwapCompletedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.SlotSwapCompleted",
@@ -102,7 +102,7 @@
       "properties": {
         "displayName": "Slot Swap Failed",
         "description": "Event published when a site's slot swap operation failed.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebSlotSwapFailedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.SlotSwapFailed",
@@ -113,7 +113,7 @@
       "properties": {
         "displayName": "Slot Swap With Preview Started",
         "description": "Event published when a site's slot swap with preview operation started.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebSlotSwapWithPreviewStartedEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.SlotSwapWithPreviewStarted",
@@ -124,7 +124,7 @@
       "properties": {
         "displayName": "Slot Swap With Preview Cancelled",
         "description": "Event published when a site's slot swap with preview operation was cancelled.",
-        "schemaUrl": "tbd",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Web/stable/2018-01-01/Web.json#/definitions/WebSlotSwapWithPreviewCancelledEventData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Web.Sites/eventTypes/Microsoft.Web.SlotSwapWithPreviewCancelled",

@@ -3,7 +3,7 @@
       "properties": {
         "displayName": "Resource Write Success",
         "description": "Raised when a resource create or update operation succeeds.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json#/definitions/ResourceWriteSuccessData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Resources.Subscriptions/eventTypes/Microsoft.Resources.ResourceWriteSuccess",
@@ -14,7 +14,7 @@
       "properties": {
         "displayName": "Resource Write Failure",
         "description": "Raised when a resource create or update operation fails.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json#/definitions/ResourceWriteFailureData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Resources.Subscriptions/eventTypes/Microsoft.Resources.ResourceWriteFailure",
@@ -25,7 +25,7 @@
       "properties": {
         "displayName": "Resource Write Cancel",
         "description": "Raised when a resource create or update operation is cancelled.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json#/definitions/äResourceWriteCancelData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Resources.Subscriptions/eventTypes/Microsoft.Resources.ResourceWriteCancel",
@@ -36,7 +36,7 @@
       "properties": {
         "displayName": "Resource Delete Success",
         "description": "Raised when a resource deletion operation succeeds.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json#/definitions/ResourceWriteDeleteSuccessData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Resources.Subscriptions/eventTypes/Microsoft.Resources.ResourceDeleteSuccess",
@@ -47,7 +47,7 @@
       "properties": {
         "displayName": "Resource Delete Failure",
         "description": "Raised when a resource delete operation fails.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json#/definitions/ResourceDeleteFailureData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Resources.Subscriptions/eventTypes/Microsoft.Resources.ResourceDeleteFailure",
@@ -58,7 +58,7 @@
       "properties": {
         "displayName": "Resource Delete Cancel",
         "description": "Raised when a resource delete is cancelled. This happens when template deployment is cancelled.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json#/definitions/ResourceDeleteCancelData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Resources.Subscriptions/eventTypes/Microsoft.Resources.ResourceDeleteCancel",
@@ -69,7 +69,7 @@
       "properties": {
         "displayName": "Resource Action Success",
         "description": "Raised when a resource action operation succeeds.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json#/definitions/ResourceActionSuccessData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Resources.Subscriptions/eventTypes/Microsoft.Resources.ResourceActionSuccess",
@@ -80,7 +80,7 @@
       "properties": {
         "displayName": "Resource Action Failure",
         "description": "Raised when a resource action operation fails.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json#/definitions/ResourceActionFailureData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Resources.Subscriptions/eventTypes/Microsoft.Resources.ResourceActionFailure",
@@ -91,7 +91,7 @@
       "properties": {
         "displayName": "Resource Action Cancel",
         "description": "Raised when a resource action operation is cancelled.",
-        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json",
+        "schemaUrl": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/eventgrid/data-plane/Microsoft.Resources/stable/2018-01-01/Resources.json#/definitions/ResourceWriteSuccessData",
         "isInDefaultSet": true
       },
       "id": "providers/Microsoft.EventGrid/topicTypes/Microsoft.Resources.Subscriptions/eventTypes/Microsoft.Resources.ResourceActionCancel",
