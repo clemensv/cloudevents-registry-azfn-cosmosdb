@@ -264,3 +264,5 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/src/ce-disco/Properties/launchSettings.json
+/src/Microsoft.Azure.EventGrid.CloudEventsApis/Properties/launchSettings.json

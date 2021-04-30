@@ -38,7 +38,8 @@ namespace ce_disco
 
         private async Task OnExecuteAsync()
         {
-            
+
+            RelayConnectionStringBuilder rsb = new RelayConnectionStringBuilder(ConnectionString);
             await StartEventListener(ConnectionString, RelayName);
 
             var httpClient = new HttpClient();
@@ -60,9 +61,11 @@ namespace ce_disco
                     SubscriptionRequest subscriptionRequest = new SubscriptionRequest()
                     {
                         Protocol = Protocol.HTTP,
-                        Sink = "https://cvrelay.servicebus.windows.net/app",
+                        Sink = $"https://{rsb.Endpoint.Host}/{RelayName}",
                         Types = types
                     };
+                    
+                    Console.WriteLine($"Subscribing for events from {service.Name} via {service.Subscriptionurl}");
                     var subscription = await subscriptionClient.CreateSubscriptionAsync(subscriptionRequest);
                     subscriptions.Add(service.Subscriptionurl, subscription);
 
@@ -88,6 +91,7 @@ namespace ce_disco
 
         static Task StartEventListener(string relayConnectionString, string hybridConnectionName)
         {
+            
             hybridConnectionlistener = new HybridConnectionListener(relayConnectionString, hybridConnectionName)
             {
                 RequestHandler = (context) =>
