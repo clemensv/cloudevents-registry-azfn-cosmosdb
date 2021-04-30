@@ -30,7 +30,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
         
         [FunctionName("CreateSubscription")]
         public async Task<IActionResult> CreateSubscriptionAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = collectionRoute)]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = collectionRoute)]
             HttpRequest req,
             string subscriptionId,
             string resourceGroup,
@@ -47,7 +47,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
 
         [FunctionName("DeleteSubscription")]
         public async Task<IActionResult> DeleteSubscriptionAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = subscriptionRoute)]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = subscriptionRoute)]
             HttpRequest req, 
             string subscriptionId,
             string resourceGroup,
@@ -63,7 +63,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
 
         [FunctionName("GetSubscription")]
         public async Task<IActionResult> GetSubscriptionAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = subscriptionRoute)]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = subscriptionRoute)]
             HttpRequest req,
             string subscriptionId,
             string resourceGroup,
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
         
         [FunctionName("GetSubscriptions")]
         public async Task<IActionResult> GetSubscriptionsAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = collectionRoute)]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = collectionRoute)]
             HttpRequest req,
             string subscriptionId,
             string resourceGroup,
@@ -100,7 +100,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
                                                                      
         [FunctionName("UpdateSubscription")]
         public async Task<IActionResult> UpdateSubscription(
-            [HttpTrigger(AuthorizationLevel.Function, "put", Route = subscriptionRoute)]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = subscriptionRoute)]
             HttpRequest req,
             string subscriptionId,
             string resourceGroup,

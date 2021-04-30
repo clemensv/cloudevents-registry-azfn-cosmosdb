@@ -24,7 +24,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
 
         [FunctionName("services")]
         public async Task<IActionResult> GetServices(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]
             HttpRequest req,
             ILogger log)
         {
