@@ -18,7 +18,6 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
     using Microsoft.Azure.Management.ResourceManager.Models;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using EventType = Microsoft.Azure.EventGrid.CloudEventsApis.EventType;
     using Filter = Microsoft.Azure.EventGrid.CloudEventsApis.Subscriptions.Filter;
     using Subscription = Microsoft.Azure.EventGrid.CloudEventsApis.Subscriptions.Subscription;
     using Type = Microsoft.Azure.EventGrid.CloudEventsApis.Discovery.Type;
@@ -41,7 +40,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
 
         ResourceManagementClient resourceGroupClient;
 
-        Dictionary<string, List<Tuple<SystemTopic, IEnumerable<EventType>>>> topicTypes;
+        Dictionary<string, List<Tuple<TopicTypeInfo, IEnumerable<EventType>>>> topicTypes;
 
         public ResourceGroupEventProxy(string subscriptionId, string resourceGroupName,
            TokenCredentials tokenCredentials)
@@ -147,13 +146,13 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
                         {
                             foreach (var eventType in typeInfo.Item2)
                             {
-                                string sourcePattern = typeInfo.Item1.Properties.SourceResourceFormat;
+                                string sourcePattern = typeInfo.Item1.SourceResourceFormat;
                                 sourcePattern = sourcePattern.Replace('<', '{').Replace('>', '}');
 
                                 service.Events.Add(new Type()
                                 {
                                     Type1 = eventType.Name,
-                                    Dataschema = eventType.Properties.SchemaUrl,
+                                    Dataschema = eventType.SchemaUrl,
                                     Specversions = new string[] { "1.0" },
                                     Sourcetemplate = new Uri(baseUri, sourcePattern).ToString(),
                                     Description = eventType.Name
@@ -267,26 +266,25 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
                 SubscriptionId = fixedSubscriptionId,
                 LongRunningOperationRetryTimeout = 2
             };
-            this.topicTypes = new Dictionary<string, List<Tuple<SystemTopic, IEnumerable<EventType>>>>();
+            this.topicTypes = new Dictionary<string, List<Tuple<TopicTypeInfo, IEnumerable<EventType>>>>();
 
             // we can fetch those just once since they're (fairly) stable
             var topics = EnumerateSystemTopics();
             foreach (var topic in topics)
             {
-                //var eventTypes = await gridClient.TopicTypes.ListEventTypesAsync(topic.Type);
+                var eventTypes = await gridClient.TopicTypes.ListEventTypesAsync(topic.Name);
                 var keys = topic.Name.Split('.');
                 var key = $"{keys[0]}.{keys[1]}".ToLowerInvariant();
 
-                var eventTypes = EnumerateEventTypes(topic.Name);
                 if (this.topicTypes.TryGetValue(key, out var info))
                 {
-                    info.Add(new Tuple<SystemTopic, IEnumerable<EventType>>(topic, eventTypes));
+                    info.Add(new Tuple<TopicTypeInfo, IEnumerable<EventType>>(topic, eventTypes));
                 }
                 else
                 {
-                    this.topicTypes.Add(key, new List<Tuple<SystemTopic, IEnumerable<EventType>>>()
+                    this.topicTypes.Add(key, new List<Tuple<TopicTypeInfo, IEnumerable<EventType>>>()
                     {
-                        new Tuple<SystemTopic, IEnumerable<EventType>>(topic, eventTypes)
+                        new Tuple<TopicTypeInfo, IEnumerable<EventType>>(topic, eventTypes)
                     });
                 }
             }
@@ -391,18 +389,9 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
             }
         }
 
-        IEnumerable<SystemTopic> EnumerateSystemTopics()
+        IEnumerable<TopicTypeInfo> EnumerateSystemTopics()
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "Microsoft.Azure.EventGrid.CloudEventsApis.topictypes.json";
-
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                return JsonConvert.DeserializeObject<SystemTopic[]>(reader.ReadToEnd());
-            }
-
-            //return gridClient.TopicTypes.ListAsync();
+            return gridClient.TopicTypes.List();
         }
 
         string GetDocsUrl(string resourceType)
