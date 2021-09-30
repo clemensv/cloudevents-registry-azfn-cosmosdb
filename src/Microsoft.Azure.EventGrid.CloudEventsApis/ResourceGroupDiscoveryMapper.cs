@@ -24,25 +24,18 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
 
     //using Microsoft.Azure.Management.EventGrid.Models;
 
-    public class ResourceGroupEventProxy : IResourceGroupEventProxy
+    public class ResourceGroupDiscoveryMapper : IResourceGroupDiscoveryMapper
     {
         readonly TokenCredentials tokenCredentials;
-
         readonly string resourceGroupName;
-
         readonly string fixedSubscriptionId;
-
         EventGridManagementClient gridClient;
-
         bool initialized = false;
-
         readonly object initializeMutex = new object();
-
         ResourceManagementClient resourceGroupClient;
-
         Dictionary<string, List<Tuple<TopicTypeInfo, IEnumerable<EventType>>>> topicTypes;
 
-        public ResourceGroupEventProxy(string subscriptionId, string resourceGroupName,
+        public ResourceGroupDiscoveryMapper(string subscriptionId, string resourceGroupName,
            TokenCredentials tokenCredentials)
         {
             this.fixedSubscriptionId = subscriptionId;
@@ -88,81 +81,96 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
         public async IAsyncEnumerable<Service> EnumerateServicesAsync(Uri baseUri)
         {
             await InitializeAsync();
-            await foreach (var resource in EnumerateResourcesAsync())
+            await foreach (var resource in EnumerateResourceGroupResourcesWithEventsAsync())
             {
                 if ( resource.Type.StartsWith("Microsoft.EventGrid", StringComparison.OrdinalIgnoreCase))
                     continue;
-                
-                var self = new Uri(baseUri, resource.Id + "/");
-                var service = new Service()
-                {
-                    Id = self.AbsoluteUri,
-                    Name = resource.Id,
-                    Description = resource.Name,
-                    Docsurl = GetDocsUrl(resource.Type),
-                    Protocols = new List<string>() { "HTTP" },
-                    Subscriptionurl = new Uri(self, "eventSubscriptions").AbsoluteUri,
-                    Url = self.AbsoluteUri,
-                    Authscope = baseUri.AbsoluteUri,
-                };
-                if (resource.ChangedTime.HasValue)
-                {
-                    service.AdditionalProperties.Add("azreschangedtime", resource.ChangedTime.Value);
-                }
 
-                if (resource.CreatedTime.HasValue)
-                {
-                    service.AdditionalProperties.Add("azrescreatedtime", resource.CreatedTime);
-                }
+                yield return MapTopicToDiscoveryServiceObject(baseUri, resource);
+            }
+        }
 
-                if (!string.IsNullOrEmpty(resource.ProvisioningState))
-                {
-                    service.AdditionalProperties.Add("azresprovisioningstate", resource.ProvisioningState);
-                }
+        Service MapTopicToDiscoveryServiceObject(Uri baseUri, GenericResourceExpanded resource)
+        {
+            string normalizedId = NormalizeId(resource.Id);
+            var authority = new Uri(baseUri, "services/");
+            var self = new Uri(authority, "./" + normalizedId);
+            var service = new Service()                  
+            {
+                Id = normalizedId,
+                Name = resource.Name,
+                Description = $"{resource.Name} {resource.Kind}",
+                Docsurl = GetDocsUrl(resource.Type),
+                Epoch = (resource.ChangedTime.HasValue? resource.ChangedTime?.Ticks : resource.CreatedTime?.Ticks)??0,
+                Protocols = new List<string>() { "HTTP" },
+                Subscriptionurl = new Uri(self, "subscriptions").AbsoluteUri,
+                Url = self.AbsoluteUri,
+                Authscope = baseUri.AbsoluteUri,
+                Authority = self.AbsoluteUri,
+            };
+            
+            if (resource.ChangedTime.HasValue)
+            {
+                service.AdditionalProperties.Add("azreschangedtime", resource.ChangedTime.Value);
+            }
 
-                if (!string.IsNullOrEmpty(resource.Kind))
-                {
-                    service.AdditionalProperties.Add("azreskind", resource.Kind);
-                }
+            if (resource.CreatedTime.HasValue)
+            {
+                service.AdditionalProperties.Add("azrescreatedtime", resource.CreatedTime);
+            }
 
-                if (!string.IsNullOrEmpty(resource.Id))
-                {
-                    service.AdditionalProperties.Add("azresid", resource.Id);
-                }
+            if (!string.IsNullOrEmpty(resource.ProvisioningState))
+            {
+                service.AdditionalProperties.Add("azresprovisioningstate", resource.ProvisioningState);
+            }
 
-                if (!string.IsNullOrEmpty(resource.Location))
-                {
-                    service.AdditionalProperties.Add("azreslocation", resource.Location);
-                }
+            if (!string.IsNullOrEmpty(resource.Kind))
+            {
+                service.AdditionalProperties.Add("azreskind", resource.Kind);
+            }
 
-                if (!string.IsNullOrEmpty(resource.Type))
+            if (!string.IsNullOrEmpty(resource.Id))
+            {
+                service.AdditionalProperties.Add("azresid", resource.Id);
+            }
+
+            if (!string.IsNullOrEmpty(resource.Location))
+            {
+                service.AdditionalProperties.Add("azreslocation", resource.Location);
+            }
+
+            if (!string.IsNullOrEmpty(resource.Type))
+            {
+                service.AdditionalProperties.Add("azrestype", resource.Type);
+                service.Events = new Eventtypes();
+                var resType = resource.Type.Split('/')[0].ToLowerInvariant();
+                if (this.topicTypes.TryGetValue(resType, out var info))
                 {
-                    service.AdditionalProperties.Add("azrestype", resource.Type);
-                    service.Events = new Eventtypes();
-                    var resType = resource.Type.Split('/')[0].ToLowerInvariant();
-                    if (this.topicTypes.TryGetValue(resType, out var info))
+                    foreach (var typeInfo in info)
                     {
-                        foreach (var typeInfo in info)
+                        foreach (var eventType in typeInfo.Item2)
                         {
-                            foreach (var eventType in typeInfo.Item2)
-                            {
-                                string sourcePattern = typeInfo.Item1.SourceResourceFormat;
-                                sourcePattern = sourcePattern.Replace('<', '{').Replace('>', '}');
+                            string sourcePattern = typeInfo.Item1.SourceResourceFormat;
+                            sourcePattern = sourcePattern.Replace('<', '{').Replace('>', '}');
 
-                                service.Events.Add(new Eventtype()
-                                {
-                                    Type = eventType.Name,
-                                    Dataschema = eventType.SchemaUrl,
-                                    Sourcetemplate = new Uri(baseUri, sourcePattern).ToString(),
-                                    Description = eventType.Name
-                                });
-                            }
+                            service.Events.Add(new Eventtype()
+                            {
+                                Type = eventType.Name,
+                                Dataschema = eventType.SchemaUrl,
+                                Sourcetemplate = new Uri(baseUri, sourcePattern).ToString(),
+                                Description = eventType.Name
+                            });
                         }
                     }
                 }
-
-                yield return service;
             }
+
+            return service;
+        }
+
+        private static string NormalizeId(string id)
+        {
+            return id.Trim('/').Replace("/", "::");
         }
 
         public async IAsyncEnumerable<Subscription> GetSubscriptions(string subscriptionId, string resourceGroup, string provider, string resourceType, string resourceName)
@@ -268,8 +276,8 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
             this.topicTypes = new Dictionary<string, List<Tuple<TopicTypeInfo, IEnumerable<EventType>>>>();
 
             // we can fetch those just once since they're (fairly) stable
-            var topics = EnumerateSystemTopics();
-            foreach (var topic in topics)
+            var systemTopics = EnumerateSystemTopics();
+            foreach (var topic in systemTopics)
             {
                 var eventTypes = await gridClient.TopicTypes.ListEventTypesAsync(topic.Name);
                 var keys = topic.Name.Split('.');
@@ -354,27 +362,8 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
             }
         }
 
-        IEnumerable<EventType> EnumerateEventTypes(string types)
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = $"Microsoft.Azure.EventGrid.CloudEventsApis.{types.ToLowerInvariant()}.json";
-
-            var manifestResourceStream = assembly.GetManifestResourceStream(resourceName);
-            if (manifestResourceStream == null)
-            {
-                return new EventType[0];
-            }
-            else
-            {
-                using (Stream stream = manifestResourceStream)
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    return JsonConvert.DeserializeObject<EventType[]>(reader.ReadToEnd());
-                }
-            }
-        }
-
-        async IAsyncEnumerable<GenericResourceExpanded> EnumerateResourcesAsync()
+       
+        async IAsyncEnumerable<GenericResourceExpanded> EnumerateResourceGroupResourcesWithEventsAsync()
         {
             var resources = await resourceGroupClient.Resources.ListByResourceGroupAsync(resourceGroupName);
 

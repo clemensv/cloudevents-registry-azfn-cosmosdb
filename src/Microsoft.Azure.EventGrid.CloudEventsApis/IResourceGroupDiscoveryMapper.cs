@@ -7,7 +7,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
     using Microsoft.Azure.EventGrid.CloudEventsApis.Discovery;
     using Microsoft.Azure.EventGrid.CloudEventsApis.Subscriptions;
 
-    public interface IResourceGroupEventProxy
+    public interface IResourceGroupDiscoveryMapper
     {
         Task <Subscription> CreateSubscription(string subscriptionId, string resourceGroup, string provider, string resourceType, string resourceName, SubscriptionRequest subscriptionRequest);
 

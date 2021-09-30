@@ -17,15 +17,15 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
 
     public class SubscriptionService 
     {
-        readonly IResourceGroupEventProxy proxy;
+        readonly IResourceGroupDiscoveryMapper _mapper;
 
         const string collectionRoute =
             "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{provider}/{resourceType}/{resourceName}/eventSubscriptions";
         const string subscriptionRoute = collectionRoute + "/{eventSubscriptionId}";
 
-        public SubscriptionService(IResourceGroupEventProxy proxy)
+        public SubscriptionService(IResourceGroupDiscoveryMapper mapper)
         {
-            this.proxy = proxy;
+            this._mapper = mapper;
         }
         
         [FunctionName("CreateSubscription")]
@@ -40,7 +40,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             ILogger log)
         {
             var subscriptionRequest = JsonConvert.DeserializeObject<SubscriptionRequest>(await req.ReadAsStringAsync());
-            var subscription = await proxy.CreateSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, subscriptionRequest);
+            var subscription = await _mapper.CreateSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, subscriptionRequest);
             
             return new CreatedResult(new Uri(new Uri(req.GetEncodedUrl()), subscription.Id).AbsoluteUri, subscription);
         }
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             string eventSubscriptionId,
             ILogger log)
         {
-            await proxy.DeleteSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, eventSubscriptionId);
+            await _mapper.DeleteSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, eventSubscriptionId);
             return new OkObjectResult(string.Empty);
         }
 
@@ -73,7 +73,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             string eventSubscriptionId,
             ILogger log)
         {
-            var sub = await proxy.GetSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, eventSubscriptionId);
+            var sub = await _mapper.GetSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, eventSubscriptionId);
             return new OkObjectResult(sub);
         }
 
@@ -91,7 +91,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
         {
             List<Subscription> subs = new List<Subscription>();
 
-            await foreach (var sub in proxy.GetSubscriptions(subscriptionId, resourceGroup, provider, resourceType, resourceName))
+            await foreach (var sub in _mapper.GetSubscriptions(subscriptionId, resourceGroup, provider, resourceType, resourceName))
             {
                 subs.Add(sub);
             }

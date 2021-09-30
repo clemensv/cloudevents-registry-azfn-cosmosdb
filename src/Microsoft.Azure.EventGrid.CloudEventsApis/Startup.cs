@@ -20,9 +20,9 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             var subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
             var resourceGroup = Environment.GetEnvironmentVariable("AZURE_RESOURCE_GROUP");
 
-            builder.Services.AddSingleton<IResourceGroupEventProxy>((s) =>
+            builder.Services.AddSingleton<IResourceGroupDiscoveryMapper>((s) =>
             {
-                return new ResourceGroupEventProxy(
+                return new ResourceGroupDiscoveryMapper(
                      subscriptionId, resourceGroup,
                      new AzureIdentityCredentialAdapter());
             });

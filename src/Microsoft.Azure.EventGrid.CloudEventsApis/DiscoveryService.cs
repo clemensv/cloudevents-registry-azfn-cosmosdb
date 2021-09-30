@@ -15,11 +15,11 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
 
     public class DiscoveryService
     {
-        readonly IResourceGroupEventProxy proxy;
+        readonly IResourceGroupDiscoveryMapper _mapper;
 
-        public DiscoveryService(IResourceGroupEventProxy proxy)
+        public DiscoveryService(IResourceGroupDiscoveryMapper mapper)
         {
-            this.proxy = proxy;
+            this._mapper = mapper;
         }
 
         [FunctionName("services")]
@@ -32,7 +32,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             {
                 string name = req.Query["name"];
                 List<Service> svcs = new List<Service>();
-                await foreach (var svc in proxy.EnumerateServicesAsync(new UriBuilder(req.Scheme, req.Host.Host,
+                await foreach (var svc in _mapper.EnumerateServicesAsync(new UriBuilder(req.Scheme, req.Host.Host,
                     req.Host.Port ?? -1).Uri))
                 {
                     if (string.IsNullOrEmpty(name) || name.Equals(svc.Name))
@@ -47,7 +47,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             }
             else
             {
-                return new OkResult();
+                return new UnauthorizedResult();
             }
         }
 
@@ -58,12 +58,13 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             string id,
             ILogger log)
         {
+            string realId = Uri.UnescapeDataString(id);
             if (req.Method.Equals("get", StringComparison.InvariantCultureIgnoreCase))
             {
-                await foreach (var svc in proxy.EnumerateServicesAsync(new UriBuilder(req.Scheme, req.Host.Host,
+                await foreach (var svc in _mapper.EnumerateServicesAsync(new UriBuilder(req.Scheme, req.Host.Host,
                     req.Host.Port ?? -1).Uri))
                 {
-                    if (id.Equals(svc.Name))
+                    if (realId.Equals(svc.Id))
                     {
                         return new OkObjectResult(svc);
                     }
@@ -73,7 +74,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             }
             else
             {
-                return new OkResult();
+                return new UnauthorizedResult();
             }
         }
 

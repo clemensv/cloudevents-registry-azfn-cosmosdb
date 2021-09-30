@@ -208,6 +208,8 @@ components:
           $ref: '#/components/schemas/serviceinstance/properties/id'
         epoch:
           $ref: '#/components/schemas/serviceinstance/properties/epoch'
+        authority:
+          type: string
         name:
           type: string
           description: A unique identifier for this Service
