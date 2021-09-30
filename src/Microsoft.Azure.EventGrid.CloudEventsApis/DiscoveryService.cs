@@ -23,24 +23,59 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
         }
 
         [FunctionName("services")]
-        public async Task<IActionResult> GetServices(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]
+        public async Task<IActionResult> Services(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "services")]
             HttpRequest req,
             ILogger log)
         {
-            string name = req.Query["name"];
-            List<Service> svcs = new List<Service>();
-            await foreach (var svc in proxy.EnumerateServicesAsync(new UriBuilder(req.Scheme, req.Host.Host, req.Host.Port ?? -1).Uri))
+            if (req.Method.Equals("get", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (string.IsNullOrEmpty(name) || name.Equals(svc.Name))
+                string name = req.Query["name"];
+                List<Service> svcs = new List<Service>();
+                await foreach (var svc in proxy.EnumerateServicesAsync(new UriBuilder(req.Scheme, req.Host.Host,
+                    req.Host.Port ?? -1).Uri))
                 {
-                    svcs.Add(svc);
+                    if (string.IsNullOrEmpty(name) || name.Equals(svc.Name))
+                    {
+                        svcs.Add(svc);
+                    }
                 }
-            }
 
-            return svcs.Count > 0
-                ? (IActionResult)new OkObjectResult(svcs)
-                : new NotFoundResult();
+                return svcs.Count > 0
+                    ? (IActionResult)new OkObjectResult(svcs)
+                    : new NotFoundResult();
+            }
+            else
+            {
+                return new OkResult();
+            }
         }
+
+        [FunctionName("service")]
+        public async Task<IActionResult> Service(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "services/{id}")]
+            HttpRequest req,
+            string id,
+            ILogger log)
+        {
+            if (req.Method.Equals("get", StringComparison.InvariantCultureIgnoreCase))
+            {
+                await foreach (var svc in proxy.EnumerateServicesAsync(new UriBuilder(req.Scheme, req.Host.Host,
+                    req.Host.Port ?? -1).Uri))
+                {
+                    if (id.Equals(svc.Name))
+                    {
+                        return new OkObjectResult(svc);
+                    }
+                }
+
+                return new NotFoundResult();
+            }
+            else
+            {
+                return new OkResult();
+            }
+        }
+
     }
 }

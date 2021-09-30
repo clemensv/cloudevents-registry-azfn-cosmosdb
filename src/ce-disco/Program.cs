@@ -55,7 +55,7 @@ namespace ce_disco
                     var types = new List<string>();
                     foreach (var serviceEvent in service.Events)
                     {
-                        types.Add(serviceEvent.Type1);
+                        types.Add(serviceEvent.Type);
                     }
 
                     SubscriptionRequest subscriptionRequest = new SubscriptionRequest()

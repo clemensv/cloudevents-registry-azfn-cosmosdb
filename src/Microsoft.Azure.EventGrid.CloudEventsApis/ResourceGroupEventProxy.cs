@@ -20,7 +20,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
     using Newtonsoft.Json;
     using Filter = Microsoft.Azure.EventGrid.CloudEventsApis.Subscriptions.Filter;
     using Subscription = Microsoft.Azure.EventGrid.CloudEventsApis.Subscriptions.Subscription;
-    using Type = Microsoft.Azure.EventGrid.CloudEventsApis.Discovery.Type;
+    
 
     //using Microsoft.Azure.Management.EventGrid.Models;
 
@@ -138,7 +138,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
                 if (!string.IsNullOrEmpty(resource.Type))
                 {
                     service.AdditionalProperties.Add("azrestype", resource.Type);
-                    service.Events = new List<Type>();
+                    service.Events = new Eventtypes();
                     var resType = resource.Type.Split('/')[0].ToLowerInvariant();
                     if (this.topicTypes.TryGetValue(resType, out var info))
                     {
@@ -149,11 +149,10 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApiBridge
                                 string sourcePattern = typeInfo.Item1.SourceResourceFormat;
                                 sourcePattern = sourcePattern.Replace('<', '{').Replace('>', '}');
 
-                                service.Events.Add(new Type()
+                                service.Events.Add(new Eventtype()
                                 {
-                                    Type1 = eventType.Name,
+                                    Type = eventType.Name,
                                     Dataschema = eventType.SchemaUrl,
-                                    Specversions = new string[] { "1.0" },
                                     Sourcetemplate = new Uri(baseUri, sourcePattern).ToString(),
                                     Description = eventType.Name
                                 });
