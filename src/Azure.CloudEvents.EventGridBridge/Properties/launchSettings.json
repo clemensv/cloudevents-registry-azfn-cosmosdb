@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "Microsoft.Azure.EventGrid.CloudEventsApis": {
+      "commandName": "Project"
+    }
+  }
+}

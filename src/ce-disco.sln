@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ce-disco", "ce-disco\ce-disco.csproj", "{60E0FD83-4BFA-46A4-9B05-68E04E4323FF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.EventGrid.CloudEventsApis", "Microsoft.Azure.EventGrid.CloudEventsApis\Microsoft.Azure.EventGrid.CloudEventsApis.csproj", "{E74960D8-0F64-4F3A-8579-8DE4D45721F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.EventGridBridge", "Azure.CloudEvents.EventGridBridge\Azure.CloudEvents.EventGridBridge.csproj", "{E74960D8-0F64-4F3A-8579-8DE4D45721F5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemTopicEnumeration", "SystemTopicEnumeration\SystemTopicEnumeration.csproj", "{FACE0356-6224-4922-9939-E57C125CCA35}"
 EndProject

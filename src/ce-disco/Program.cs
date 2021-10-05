@@ -4,20 +4,14 @@ namespace ce_disco
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
-    using System.IO;
-    using System.Linq;
     using System.Net.Http;
-    using System.Text;
     using System.Threading.Tasks;
+    using Azure.CloudEvents.Discovery;
+    using Azure.CloudEvents.Subscriptions;
     using CloudNative.CloudEvents;
     using McMaster.Extensions.CommandLineUtils;
-    using Microsoft.Azure.EventGrid.CloudEventsApiBridge;
-    using Microsoft.Azure.EventGrid.CloudEventsApis.Discovery;
-    using Microsoft.Azure.EventGrid.CloudEventsApis.Subscriptions;
     using Microsoft.Azure.Relay;
-    using Microsoft.IdentityModel.Clients.ActiveDirectory;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     class Program
     {

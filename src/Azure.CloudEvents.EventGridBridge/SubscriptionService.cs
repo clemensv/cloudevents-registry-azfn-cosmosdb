@@ -1,37 +1,32 @@
 
-namespace Microsoft.Azure.EventGrid.CloudEventsApis
+namespace Azure.CloudEvents.EventGridBridge
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Http.Extensions;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Azure.EventGrid.CloudEventsApiBridge;
-    using Microsoft.Azure.EventGrid.CloudEventsApis.Subscriptions;
-    using Microsoft.Azure.WebJobs;
-    using Microsoft.Azure.WebJobs.Extensions.Http;
+    using Azure.CloudEvents.Subscriptions;
+    using Microsoft.Azure.Functions.Worker;
+    using Microsoft.Azure.Functions.Worker.Http;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
 
     public class SubscriptionService 
     {
-        readonly IResourceGroupDiscoveryMapper _mapper;
+        readonly SubscriptionProxy _proxy;
 
         const string collectionRoute =
             "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{provider}/{resourceType}/{resourceName}/eventSubscriptions";
         const string subscriptionRoute = collectionRoute + "/{eventSubscriptionId}";
 
-        public SubscriptionService(IResourceGroupDiscoveryMapper mapper)
+        public SubscriptionService(SubscriptionProxy proxy)
         {
-            this._mapper = mapper;
+            this._proxy = proxy;
         }
         
-        [FunctionName("CreateSubscription")]
-        public async Task<IActionResult> CreateSubscriptionAsync(
+        [Function("CreateSubscription")]
+        public async Task<HttpResponseData> CreateSubscriptionAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = collectionRoute)]
-            HttpRequest req,
+            HttpRequestData req,
             string subscriptionId,
             string resourceGroup,
             string provider,
@@ -40,15 +35,18 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             ILogger log)
         {
             var subscriptionRequest = JsonConvert.DeserializeObject<SubscriptionRequest>(await req.ReadAsStringAsync());
-            var subscription = await _mapper.CreateSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, subscriptionRequest);
-            
-            return new CreatedResult(new Uri(new Uri(req.GetEncodedUrl()), subscription.Id).AbsoluteUri, subscription);
+            var subscription = await _proxy.CreateSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, subscriptionRequest);
+
+            var res = req.CreateResponse(System.Net.HttpStatusCode.Created);
+            res.Headers.Add("Location", new Uri(req.Url, subscription.Id).AbsoluteUri);
+            await res.WriteAsJsonAsync(subscription);
+            return res;
         }
 
-        [FunctionName("DeleteSubscription")]
-        public async Task<IActionResult> DeleteSubscriptionAsync(
+        [Function("DeleteSubscription")]
+        public async Task<HttpResponseData> DeleteSubscriptionAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = subscriptionRoute)]
-            HttpRequest req, 
+            HttpRequestData req, 
             string subscriptionId,
             string resourceGroup,
             string provider,
@@ -57,14 +55,14 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             string eventSubscriptionId,
             ILogger log)
         {
-            await _mapper.DeleteSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, eventSubscriptionId);
-            return new OkObjectResult(string.Empty);
+            await _proxy.DeleteSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, eventSubscriptionId);
+            return req.CreateResponse(System.Net.HttpStatusCode.OK);
         }
 
-        [FunctionName("GetSubscription")]
-        public async Task<IActionResult> GetSubscriptionAsync(
+        [Function("GetSubscription")]
+        public async Task<HttpResponseData> GetSubscriptionAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = subscriptionRoute)]
-            HttpRequest req,
+            HttpRequestData req,
             string subscriptionId,
             string resourceGroup,
             string provider,
@@ -73,15 +71,17 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             string eventSubscriptionId,
             ILogger log)
         {
-            var sub = await _mapper.GetSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, eventSubscriptionId);
-            return new OkObjectResult(sub);
+            var sub = await _proxy.GetSubscription(subscriptionId, resourceGroup, provider, resourceType, resourceName, eventSubscriptionId);
+            var res = req.CreateResponse(System.Net.HttpStatusCode.OK);
+            await res.WriteAsJsonAsync(sub);
+            return res;
         }
 
         
-        [FunctionName("GetSubscriptions")]
-        public async Task<IActionResult> GetSubscriptionsAsync(
+        [Function("GetSubscriptions")]
+        public async Task<HttpResponseData> GetSubscriptionsAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = collectionRoute)]
-            HttpRequest req,
+            HttpRequestData req,
             string subscriptionId,
             string resourceGroup,
             string provider,
@@ -91,17 +91,19 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
         {
             List<Subscription> subs = new List<Subscription>();
 
-            await foreach (var sub in _mapper.GetSubscriptions(subscriptionId, resourceGroup, provider, resourceType, resourceName))
+            await foreach (var sub in _proxy.GetSubscriptions(subscriptionId, resourceGroup, provider, resourceType, resourceName))
             {
                 subs.Add(sub);
             }
-            return new OkObjectResult(subs);
+            var res = req.CreateResponse(System.Net.HttpStatusCode.OK);
+            await res.WriteAsJsonAsync(subs);
+            return res;
         }
                                                                      
-        [FunctionName("UpdateSubscription")]
-        public async Task<IActionResult> UpdateSubscription(
+        [Function("UpdateSubscription")]
+        public async Task<HttpResponseData> UpdateSubscription(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = subscriptionRoute)]
-            HttpRequest req,
+            HttpRequestData req,
             string subscriptionId,
             string resourceGroup,
             string provider,
@@ -110,7 +112,7 @@ namespace Microsoft.Azure.EventGrid.CloudEventsApis
             string eventSubscriptionId,
             ILogger log)
         {
-            return new StatusCodeResult(405);
+            return req.CreateResponse(System.Net.HttpStatusCode.MethodNotAllowed);
         }
                           
     }

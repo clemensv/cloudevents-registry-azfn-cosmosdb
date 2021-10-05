@@ -2,7 +2,7 @@
 // Licensed under the Apache 2.0 license.
 // See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.EventGrid.CloudEventsApis
+namespace Azure.CloudEvents.EventGridBridge
 {
     using System;
     using System.Net.Http.Headers;

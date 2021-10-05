@@ -1,22 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <AzureFunctionsVersion>v3</AzureFunctionsVersion>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.4.0-beta.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.5.1" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.0.13" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.1.0-preview.1" />
     <PackageReference Include="Microsoft.Azure.Management.EventGrid" Version="6.0.0" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.11.1-preview" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.12" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
-    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.11" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="NSwag.MSBuild" Version="13.10.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Azure.CloudEvents.Subscriptions\Azure.CloudEvents.Subscriptions.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
@@ -28,10 +27,4 @@
       <Generator>SettingsSingleFileGenerator</Generator>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="generated\" />
-  </ItemGroup>
-    <Target Name="NSwag" AfterTargets="BeforeBuild">
-    <Exec Command="$(NSwagExe_Core31) run /variables:Configuration=$(Configuration),OutDir=$(OutDir)" />
-  </Target>
 </Project>

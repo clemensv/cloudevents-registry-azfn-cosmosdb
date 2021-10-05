@@ -59,7 +59,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                 Subscriptionurl = new Uri(self, "subscriptions").AbsoluteUri,
                 Url = self.AbsoluteUri,
                 Authscope = baseUri.AbsoluteUri,
-                Authority = self.AbsoluteUri,
+                Authority = authority.AbsoluteUri
             };
 
             if (resource.ChangedTime.HasValue)
@@ -177,7 +177,9 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
 
         async IAsyncEnumerable<GenericResourceExpanded> EnumerateResourceGroupResourcesWithEventsAsync(string azureSubscriptionId, string azureResourceGroupName)
         {
-            var resources = await resourceGroupClient.Resources.ListByResourceGroupAsync(azureResourceGroupName);
+            var resources = await resourceGroupClient.Resources.ListByResourceGroupAsync(
+                azureResourceGroupName, 
+                new Microsoft.Rest.Azure.OData.ODataQuery<GenericResourceFilter> { Expand = "createdTime,changedTime" });
 
             //// we will filter those down to resources that have a matching Event Grid provider 
             foreach (var resource in resources)
