@@ -34,13 +34,13 @@ namespace Azure.CloudEvents.Discovery
 
             services.AddSingleton((s) =>
             {
-                string endpoint = hostBuilder.Configuration["EndPointUrl"];
+                string endpoint = hostBuilder.Configuration["COSMOSDB_ENDPOINT"];
                 if (string.IsNullOrEmpty(endpoint))
                 {
                     throw new ArgumentNullException("Please specify a valid endpoint in the appSettings.json file or your Azure Functions Settings.");
                 }
 
-                string authKey = hostBuilder.Configuration["AuthorizationKey"];
+                string authKey = hostBuilder.Configuration["COSMOSDB_KEY"];
                 if (string.IsNullOrEmpty(authKey) || string.Equals(authKey, "Super secret key"))
                 {
                     throw new ArgumentException("Please specify a valid AuthorizationKey in the appSettings.json file or your Azure Functions Settings.");
