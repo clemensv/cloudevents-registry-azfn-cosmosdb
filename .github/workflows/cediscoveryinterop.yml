@@ -9,7 +9,7 @@ env:
   AZURE_FUNCTIONAPP_PUBLISH_PROFILE: ${{ secrets.CEDISCOVERYINTEROP_FFFF }}
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 3.1.x
-  WORKING_DIRECTORY: src\Microsoft.Azure.EventGrid.CloudEventsApis
+  WORKING_DIRECTORY: src\Azure.CloudEvents.Discovery.Service
 jobs:
   build-and-deploy:
     runs-on: windows-latest
