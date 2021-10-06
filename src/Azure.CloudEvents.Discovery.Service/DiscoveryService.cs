@@ -23,7 +23,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("services")]
         public async Task<HttpResponseData> Services(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", "delete", "options", Route = "services")]
+            [HttpTrigger(AuthorizationLevel.User|AuthorizationLevel.Function, "get", "post", "delete", "options", Route = "services")]
             HttpRequestData req,
             ILogger log)
         {
@@ -132,7 +132,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("service")]
         public async Task<HttpResponseData> Service(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", "put", "delete", "options", Route = "services/{id}")]
+            [HttpTrigger(AuthorizationLevel.User|AuthorizationLevel.Function, "get", "post", "put", "delete", "options", Route = "services/{id}")]
             HttpRequestData req,
             string id,
             ILogger log)

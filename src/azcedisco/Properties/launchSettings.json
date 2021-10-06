@@ -2,7 +2,7 @@
   "profiles": {
     "azcedisco": {
       "commandName": "Project",
-      "commandLineArgs": "import --subscription-id 041abda7-3870-4275-ae24-6bf4c5300523 --resource-group-name clemensv42 --discovery-endpoint http://localhost:7071"
+      "commandLineArgs": "import --subscription-id 041abda7-3870-4275-ae24-6bf4c5300523 --resource-group-name clemensv42 --discovery-endpoint https://cediscoveryinterop.azurewebsites.net"
     }
   }
 }
