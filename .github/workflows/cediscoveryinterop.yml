@@ -10,6 +10,9 @@ env:
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 3.1.x
   WORKING_DIRECTORY: src\Azure.CloudEvents.Discovery.Service
+  DISCOVERY_DIRECTORY: src\Azure.CloudEvents.Discovery
+  SCHEMA_DIRECTORY: src\Azure.CloudEvents.SchemaRegistry
+  SUBSCRIPTIONS_DIRECTORY: src\Azure.CloudEvents.Subscriptions
 jobs:
   build-and-deploy:
     runs-on: windows-latest
@@ -21,8 +24,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
     - name: Restore
       run: dotnet restore "${{ env.WORKING_DIRECTORY }}"
+      run: dotnet restore "${{ env.DISCOVERY_DIRECTORY }}"
+      run: dotnet restore "${{ env.SCHEMA_DIRECTORY }}"
+      run: dotnet restore "${{ env.SUBSCRIPTIONS_DIRECTORY }}"
     - name: Codegen NSwag
-      run: dotnet build "${{ env.WORKING_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
+      run: dotnet build "${{ env.DISCOVERY_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
+      run: dotnet build "${{ env.SCHEMA_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
+      run: dotnet build "${{ env.SUBSCRIPTIONS_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
     - name: Build
       run: dotnet build "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore
     - name: Publish
