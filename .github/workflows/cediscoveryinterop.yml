@@ -22,14 +22,19 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
-    - name: Restore
+    - name: Restore Service
       run: dotnet restore "${{ env.WORKING_DIRECTORY }}"
+    - name: Restore Discovery
       run: dotnet restore "${{ env.DISCOVERY_DIRECTORY }}"
+    - name: Restore Schema
       run: dotnet restore "${{ env.SCHEMA_DIRECTORY }}"
+    - name: Restore Subscriptions
       run: dotnet restore "${{ env.SUBSCRIPTIONS_DIRECTORY }}"
-    - name: Codegen NSwag
+    - name: Codegen NSwag Discovery
       run: dotnet build "${{ env.DISCOVERY_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
+    - name: Codegen NSwag Schema
       run: dotnet build "${{ env.SCHEMA_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
+    - name: Codegen NSwag Subscriptions
       run: dotnet build "${{ env.SUBSCRIPTIONS_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
     - name: Build
       run: dotnet build "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore
