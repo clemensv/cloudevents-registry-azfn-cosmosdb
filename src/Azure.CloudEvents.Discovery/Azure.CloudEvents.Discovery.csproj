@@ -1,15 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Core.NewtonsoftJson" Version="1.0.0" />
-    <PackageReference Include="NSwag.MSBuild" Version="13.13.2">
+    <PackageReference Include="NSwag.MSBuild" Version="13.17.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
   <Target Name="NSwag" AfterTargets="BeforeBuild">
-    <Exec Command="$(NSwagExe_Net50) run /variables:Configuration=$(Configuration),OutDir=$(OutDir)" />
+    <Exec Command="$(NSwagExe_Net60) run /variables:Configuration=$(Configuration),OutDir=$(OutDir)" />
   </Target>
 </Project>

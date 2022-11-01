@@ -1,267 +1,920 @@
-openapi: '3.0.2'
+openapi: "3.1.0"
 info:
   title: CloudEvents discovery API
-  description: CloudEvents discovery API specification according to [Discovery - Version 0.1-wip](https://github.com/cloudevents/spec/blob/master/discovery.md#service).
-  version: '0.1-WIP'
+  description: CloudEvents discovery API specification according to [Discovery - Version 0.1-wip](https://github.com/cloudevents/spec/blob/main/discovery/spec.md#endpoint).
+  version: "0.1-WIP"
 servers:
   - url: https://api.cloudevents.io/test/v0.1
 paths:
-  /services:
+  /endpoints:
     get:
-      operationId: getServices
-      description: Get an optionally filtered collection of the Services known by this discovery end point
+      operationId: getEndpoints
+      description: Get an optionally filtered collection of the Endpoints known by this discovery end point
       parameters:
-       - in: query
-         name: name
-         description: The name of the service to be returned
-         required: false
-         schema:
-           $ref: '#/components/schemas/service/properties/name'
+        - in: query
+          name: name
+          description: The name of the endpoint to be returned
+          required: false
+          schema:
+            $ref: "#/components/schemas/resource/properties/name"
       responses:
-        '200':
-          description: A list of services (optionally matching the query parameter)
+        "200":
+          description: A list of endpoints (optionally matching the query parameter)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/services'
+                $ref: "#/components/schemas/endpoints"
     post:
-      operationId: postServices
+      operationId: postEndpoints
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/services'
+        $ref: "#/components/requestBodies/endpointsPostRequest"
       responses:
-        '200':
-          description: A list of the resulting Service values resulting from processing the request, in the same order as in the request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/services'
-        '400':
+        "200":
+          $ref: "#/components/responses/endpointsPostResponse"
+        "400":
           description: Bad Request - constraint failure
-        '409':
+        "409":
           description: Conflict - epoch not greater
     delete:
-      operationId: deleteServices
+      operationId: deleteEndpoints
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/serviceinstances'
+        $ref: "#/components/requestBodies/endpointsDeleteRequest"
       responses:
-        '200':
-          description: A list of the Services that were deleted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/services'
-        '400':
+        "200":
+          $ref: "#/components/responses/endpointsDeleteResponse"
+        "400":
           description: Bad Request - constraint failure
-        '404':
-          description: Not Found
-        '409':
+        "409":
           description: Conflict - epoch not greater
-  /services/{id}:
+  /endpoints/{id}:
     get:
-      operationId: getService
+      operationId: getEndpoint
       parameters:
-       - in: path
-         name: id
-         description: The id of the service to be returned
-         required: true
-         schema:
-           $ref: '#/components/schemas/service/properties/id'
+        - $ref: "#/components/parameters/id"
       responses:
-        '200':
-          description: The corresponding service
+        "200":
+          description: The corresponding endpoint
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/service'
-        '404':
-          description: Not Found
-    post:
-      operationId: postService
-      parameters:
-       - in: path
-         name: id
-         description: The id of the service to be returned
-         required: true
-         schema:
-           $ref: '#/components/schemas/service/properties/id'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/service'
-      responses:
-        '200':
-          description: A Service Instance referencing the updated Service
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/service'
-        '400':
+                $ref: "#/components/schemas/endpoint"
+        "400":
           description: Bad Request - constraint failure
-        '404':
+        "404":
           description: Not Found
-        '409':
+    put:
+      operationId: putEndpoint
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        $ref: "#/components/requestBodies/endpointsPutRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/endpointsPutResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "404":
+          description: Not Found
+        "409":
           description: Conflict - epoch not greater
     delete:
-      operationId: deleteService
+      operationId: deleteEndpoint
       parameters:
-       - in: path
-         name: id
-         description: The id of the service to be returned
-         required: true
-         schema:
-           $ref: '#/components/schemas/service/properties/id'
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/serviceinstance'
+        - $ref: "#/components/parameters/id"
+        - in: query
+          name: epoch
+          description: The epoch of the endpoint to be deleted
+          required: false
+          schema:
+            $ref: "#/components/schemas/resource/properties/epoch"
+
       responses:
-        '200':
-          description: The Service that was deleted
+        "200":
+          $ref: "#/components/responses/endpointsDeleteResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "409":
+          description: Conflict - epoch not greater
+  /groups:
+    get:
+      operationId: getGroups
+      description: Get an optionally filtered collection of the Groups known by this discovery end point
+      parameters:
+        - in: query
+          name: name
+          description: The name of the group to be returned
+          required: false
+          schema:
+            $ref: "#/components/schemas/resource/properties/name"
+      responses:
+        "200":
+          description: A list of groups (optionally matching the query parameter)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/service'
-        '400':
+                $ref: "#/components/schemas/groups"
+    post:
+      operationId: postGroups
+      requestBody:
+        $ref: "#/components/requestBodies/groupsPostRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/groupsPostResponse"
+        "400":
           description: Bad Request - constraint failure
-        '404':
+        "409":
+          description: Conflict - epoch not greater
+    delete:
+      operationId: deleteGroups
+      requestBody:
+        $ref: "#/components/requestBodies/groupsDeleteRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/groupsDeleteResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "409":
+          description: Conflict - epoch not greater
+  /groups/{id}:
+    get:
+      operationId: getGroup
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: The corresponding group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/group"
+        "400":
+          description: Bad Request - constraint failure
+        "404":
           description: Not Found
-        '409':
+    put:
+      operationId: putGroup
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        $ref: "#/components/requestBodies/groupsPutRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/groupsPutResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "404":
+          description: Not Found
+        "409":
+          description: Conflict - epoch not greater
+    delete:
+      operationId: deleteGroup
+      parameters:
+        - in: query
+          name: epoch
+          description: The epoch of the group to be deleted
+          required: false
+          schema:
+            $ref: "#/components/schemas/resource/properties/epoch"
+
+      responses:
+        "200":
+          $ref: "#/components/responses/groupsDeleteResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "409":
+          description: Conflict - epoch not greater
+  /definitions:
+    get:
+      operationId: getDefinitions
+      description: Get an optionally filtered collection of the Definitions known by this discovery end point
+      parameters:
+        - in: query
+          name: name
+          description: The name of the definition to be returned
+          required: false
+          schema:
+            $ref: "#/components/schemas/resource/properties/name"
+      responses:
+        "200":
+          description: A list of definitions (optionally matching the query parameter)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/definitions"
+    post:
+      operationId: postDefinitions
+      requestBody:
+        $ref: "#/components/requestBodies/definitionsPostRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/definitionsPostResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "409":
+          description: Conflict - epoch not greater
+    delete:
+      operationId: deleteDefinitions
+      requestBody:
+        $ref: "#/components/requestBodies/definitionsDeleteRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/definitionsDeleteResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "409":
+          description: Conflict - epoch not greater
+  /definitions/{id}:
+    get:
+      operationId: getDefinition
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: The corresponding definition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/definition"
+        "400":
+          description: Bad Request - constraint failure
+        "404":
+          description: Not Found
+    put:
+      operationId: putDefinition
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        $ref: "#/components/requestBodies/definitionsPutRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/definitionsPutResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "404":
+          description: Not Found
+        "409":
+          description: Conflict - epoch not greater
+    delete:
+      operationId: deleteDefinition
+      parameters:
+        - in: query
+          name: epoch
+          description: The epoch of the definition to be deleted
+          required: false
+          schema:
+            $ref: "#/components/schemas/resource/properties/epoch"
+
+      responses:
+        "200":
+          $ref: "#/components/responses/definitionsDeleteResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "409":
           description: Conflict - epoch not greater
 components:
+  parameters:
+    id:
+      in: path
+      name: id
+      description: The id of the endpoint
+      required: true
+      schema:
+        $ref: "#/components/schemas/resource/properties/id"
+  requestBodies:
+    endpointsPostRequest:
+      description: A request to create or update the discovery endpoint's collection of endpoints with the given endpoints
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/endpoints"
+    endpointsDeleteRequest:
+      description: A request to remove the given endpoints from the discovery endpoint's collection of endpoints
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/endpointReferences"
+    endpointsPutRequest:
+      description: A request to create or update the discovery endpoint's collection of endpoints with the given endpoint
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/endpoint"
+    groupsPostRequest:
+      description: A request to create or update the discovery group's collection of groups with the given groups
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/groups"
+    groupsDeleteRequest:
+      description: A request to remove the given groups from the discovery group's collection of groups
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/groupReferences"
+    groupsPutRequest:
+      description: A request to create or update the discovery group's collection of groups with the given group
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/group"
+    definitionsPostRequest:
+      description: A request to create or update the discovery definition's collection of definitions with the given definitions
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/definitions"
+    definitionsDeleteRequest:
+      description: A request to remove the given definitions from the discovery definition's collection of definitions
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/definitionReferences"
+    definitionsPutRequest:
+      description: A request to create or update the discovery definition's collection of definitions with the given definition
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/definition"
+  responses:
+    endpointsPostResponse:
+      description: A list of the resulting Endpoint values resulting from processing the request, in the same order as in the request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/endpoints"
+    endpointsDeleteResponse:
+      description: A list of the Endpoints that were deleted
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/endpoints"
+    endpointsPutResponse:
+      description: A Endpoint Reference referencing the updated Endpoint
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/endpoint"
+    endpointDeleteResponse:
+      description: The Endpoint that was deleted
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/endpoint"
+    groupsPostResponse:
+      description: A list of the resulting Group values resulting from processing the request, in the same order as in the request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/groups"
+    groupsDeleteResponse:
+      description: A list of the Groups that were deleted
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/groups"
+    groupsPutResponse:
+      description: A Group Reference referencing the updated Group
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/group"
+    groupDeleteResponse:
+      description: The Group that was deleted
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/group"
+    definitionsPostResponse:
+      description: A list of the resulting Definition values resulting from processing the request, in the same order as in the request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/definitions"
+    definitionsDeleteResponse:
+      description: A list of the Definitions that were deleted
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/definitions"
+    definitionsPutResponse:
+      description: A Definition Reference referencing the updated Definition
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/definition"
+    definitionDeleteResponse:
+      description: The Definition that was deleted
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/definition"
   schemas:
-    eventtype:
+    groupReference:
       type: object
       properties:
-        type:
-          type: string
-          description: CloudEvents type attribute
-          example: com.github.pull.create, com.example.object.delete.v2
-        description:
-          type: string
-          description: Human readable description
-        dataschema:
-          type: string
-          description: CloudEvents datacontenttype attribute. Indicating how the data attribute of subscribed events will be encoded
-        dataschematype:
-          type: string
-          description: If using dataschemacontent for inline schema storage, the dataschematype indicates the type of schema represented there
-        dataschemacontent:
-          type: string
-          description: An inline representation of the schema of the data attribute encoding mechanism. This is an alternative to using the dataschema attribute
-        sourcetemplate:
-          type: string
-          description: A URI Template according to RFC 6570 that defines how the source attribute will be generated
-          example: "http://blob.store/{bucket}"
-        extensions:
+        id:
+          $ref: "#/components/schemas/resource/properties/id"
+        epoch:
+          $ref: "#/components/schemas/resource/properties/epoch"
+    groupReferences:
+      type: array
+      items:
+        $ref: "#/components/schemas/groupReference"
+    groupUriReferences:
+      type: array
+      items:
+        type: string
+        format: uri
+    group:
+      allOf:
+        - $ref: "#/components/schemas/resource"
+        - type: object
+          properties:
+            type:
+              type: string
+              description: CloudEvents type attribute
+              example: com.github.pull.create, com.example.object.delete.v2
+            format:
+              type: string
+              description: Specifies the `format` value of the Definitions associated with this Endpoint.
+            definitions:
+              $ref: "#/components/schemas/definitions"
+            groups:
+              $ref: "#/components/schemas/groups"
+    definitionReference:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/resource/properties/id"
+        epoch:
+          $ref: "#/components/schemas/resource/properties/epoch"
+    definitionReferences:
+      type: array
+      items:
+        $ref: "#/components/schemas/definitionReference"
+
+    definition:
+       allOf:
+        - $ref: "#/components/schemas/resource"
+        - type: object
+          description: a message definition
+          properties:
+            ownergroup:
+              type: string
+              description: A reference to the Group or Endpoint that defined this
+              format: uri-reference
+            schemaurl:
+              type: string
+              description: A URL to the schema of the message's data.
+              format: uri
+            schema:
+              type: object
+              description: An in-line definition of the schema of the message's data.
+    cloudEventDefinition:
+      allOf:
+        - $ref: "#/components/schemas/definition"
+        - type: object
+          properties:
+            format:
+              type: string
+              description: Specifies the `format` value of the Definitions associated with this Endpoint.
+              const: "CloudEvents/1.0"
+              default: "CloudEvents/1.0"
+            metadata:
+              $ref: "#/components/schemas/cloudEventMetadata"
+    amqpDefinition:
+      allOf:
+        - $ref: "#/components/schemas/definition"
+        - type: object
+          properties:
+            format:
+              type: string
+              description: Specifies the `format` value of the Definitions associated with this Endpoint.
+              const: "AMQP/1.0"
+              default: "AMQP/1.0"
+            metadata:
+              $ref: "#/components/schemas/amqpMetadata"
+    mqttDefinition:
+      allOf:
+        - $ref: "#/components/schemas/definition"
+        - type: object
+          properties:
+            format:
+              type: string
+              description: Specifies the `format` value of the Definitions associated with this Endpoint.
+              const: "MQTT/5.0"
+              default: "MQTT/5.0"
+            metadata:
+              $ref: "#/components/schemas/mqttMetadata"
+    genericDefinition:
+      allOf:
+        - $ref: "#/components/schemas/definition"
+        - type: object
+          properties:
+            format:
+              type: string
+              description: Specifies the `format` value of the Definitions associated with this Endpoint.
+            metadata:
+              type: object
+    amqpMetadata:
+      type: object
+      properties:
+        application-properties:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/metadataProperty"
+        properties:
+          type: object
+          properties:
+            message-id:
+              $ref: "#/components/schemas/metadataPropertyString"
+            user-id:
+              $ref: "#/components/schemas/metadataPropertyBinary"
+            to:
+              $ref: "#/components/schemas/metadataPropertyUriTemplate"
+            subject:
+              $ref: "#/components/schemas/metadataPropertyString"
+            reply-to:
+              $ref: "#/components/schemas/metadataPropertyUriTemplate"
+            correlation-id:
+              $ref: "#/components/schemas/metadataPropertyString"
+            content-type:
+              $ref: "#/components/schemas/metadataPropertySymbol"
+            content-encoding:
+              $ref: "#/components/schemas/metadataPropertySymbol"
+            absolute-expiry-time:
+              $ref: "#/components/schemas/metadataPropertyDateTime"
+            creation-time:
+              $ref: "#/components/schemas/metadataPropertyDateTime"
+            group-id:
+              $ref: "#/components/schemas/metadataPropertyString"
+            group-sequence:
+              $ref: "#/components/schemas/metadataPropertyInteger"
+            reply-to-group-id:
+              $ref: "#/components/schemas/metadataPropertyString"
+        delivery-annotations:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/metadataProperty"
+        message-annotations:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/metadataProperty"
+        header:
+          type: object
+          properties:
+            durable:
+              $ref: "#/components/schemas/metadataPropertyBoolean"
+            priority:
+              $ref: "#/components/schemas/metadataPropertyInteger"
+            ttl:
+              $ref: "#/components/schemas/metadataPropertyInteger"
+            first-acquirer:
+              $ref: "#/components/schemas/metadataPropertyBoolean"
+            delivery-count:
+              $ref: "#/components/schemas/metadataPropertyInteger"
+        footer:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/metadataProperty"
+    mqttMetadata:
+      type: object
+      properties:
+        qos:
+          $ref: "#/components/schemas/metadataPropertyInteger"
+        retain:
+          $ref: "#/components/schemas/metadataPropertyBoolean"
+        topic-name:
+          $ref: "#/components/schemas/metadataPropertyUriTemplate"
+        payload-format:
+          $ref: "#/components/schemas/metadataPropertyInteger"
+        message-expiry-interval:
+          $ref: "#/components/schemas/metadataPropertyInteger"
+        response-topic:
+          $ref: "#/components/schemas/metadataPropertyUriTemplate"
+        correlation-data:
+          $ref: "#/components/schemas/metadataPropertyBinary"
+        content-type:
+          $ref: "#/components/schemas/metadataPropertySymbol"
+        user-properties:
           type: array
-          description: An array or CloudEvents Extension Context Attributes that are used for this event type
+          description: User Property is allowed to appear multiple times to represent multiple name, value pairs. The same name is allowed to appear more than once.
           items:
             type: object
             properties:
               name:
                 type: string
-                description: The CloudEvents context attribute name used by this extension
-              type:
-                type: string
-                description: The data type of the extension attribute
-              specurl:
-                type: string
-                description: An attribute pointing to the specification that defines the extension
-          example: '{ "name": "dataref", "type": "URI-reference", "specurl": "https://github.com/cloudevents/spec/blob/master/extensions/dataref.md" }'
-    eventtypes:
-      type: array
-      items:
-        $ref: '#/components/schemas/eventtype'
-    serviceinstance:
+              value:
+                $ref: "#/components/schemas/metadataProperty"
+    cloudEventMetadata:
       type: object
       properties:
         id:
-          type: string
-          description: A unique identifier for this Service. This value MUST be globally unique
-          format: string
-          example: bf5ff5cc-d059-4c79-a89a-2513e45a1340
-        epoch:
-          type: integer
-          description: The Discovery Endpoint's epoch value for this Service Entry
-          format: int64
-          example: 42
-    serviceinstances:
-      type: array
-      items:
-        $ref: '#/components/schemas/serviceinstance'
-    service:
+            $ref: "#/components/schemas/metadataPropertyString"
+        type:
+            $ref: "#/components/schemas/metadataPropertyString"
+        time:
+            $ref: "#/components/schemas/metadataPropertyDateTime"
+        source:
+            $ref: "#/components/schemas/metadataPropertyUriTemplate"
+        subject:
+            $ref: "#/components/schemas/metadataPropertyString"
+        dataschema:
+            $ref: "#/components/schemas/metadataPropertyUriTemplate"
+        datacontenttype:
+            $ref: "#/components/schemas/metadataPropertySymbol"
+      additionalProperties":
+        $ref: "#/components/schemas/metadataProperty"
+    metadataPropertyBase:
       type: object
       properties:
-        id:
-          $ref: '#/components/schemas/serviceinstance/properties/id'
-        epoch:
-          $ref: '#/components/schemas/serviceinstance/properties/epoch'
-        authority:
-          type: string
-        name:
-          type: string
-          description: A unique identifier for this Service
-          example: my storage service
-        url:
-          type: string
-          description: A URL that references this Service. This value MUST be usable in subsequent requests, by authorized clients, to retrieve this Service entity
-          example: http://example.com/services/bf5ff5cc-d059-4c79-a89a-2513e45a1340
+        required:
+          type: boolean
         description:
           type: string
-          description: Human readable description
-        docsurl:
+        specurl:
           type: string
-          description: Absolute URL that provides a link to additional documentation about the service. This is intended for a developer to use in order to learn more about this service's events produced
-          example: http://cloud.example.com/docs/blobstorage
-        specversions:
-          type: array
-          description: CloudEvents specversions that can be used for events published for this service
-          items:
-            type: string
-            description: version
-          example: '[ "1.0" ]'
-        subscriptionurl:
+          format: uri
+    metadataProperty:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            type:
+              type: string
+              default: "string"
+            value:
+              oneOf:
+                - type: number
+                - type: string
+                - type: boolean
+                - type: array
+                  items:
+                    type: integer
+                    minimum: 0
+                    maximum: 255
+    metadataPropertyBoolean:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: boolean
+    metadataPropertyString:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: string
+    metadataPropertySymbol:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: string
+              pattern: "^[\\x32-\\x7F]*$"
+    metadataPropertyBinary:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: array
+              items:
+                type: integer
+                minimum: 0
+                maximum: 255
+    metadataPropertyDateTime:
+      description: This is a date-time property, holding RFC3339 string expressions. Since it ought to be rare for the value of date-time attributes to be set in a definition, this is not using the "date-time" format which might be turned intro a non-nullable type with some code generators.
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: string
+    metadataPropertyDuration:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: string
+              format: duration
+    metadataPropertyUriTemplate:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: string
+              format: uri-template
+    metadataPropertyInteger:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: integer
+    metadataPropertyNumber:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: number
+    metadataPropertyUri:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: string
+              format: uri
+    metadataPropertyUriReference:
+      allOf:
+        - "$ref": "#/components/schemas/metadataPropertyBase"
+        - type: object
+          properties:
+            value:
+              type: string
+              format: uri-reference
+    definitions:
+      type: object
+      description: A collection of Message Definitions.
+      additionalProperties:
+        $ref: "#/components/schemas/definition"
+    groups:
+      type: object
+      description: A set of Definition Groups.
+      additionalProperties:
+        $ref: "#/components/schemas/group"
+
+    resource:
+      type: object
+      properties:
+        id:
           type: string
-          description: An absolute URL indicating where CloudSubscriptions subscribe API calls MUST be sent to
-          format: url
-        subscriptionconfig:
-          type: object
-          description: "A map indicating supported options for the config parameter for the CloudSubscriptions subscribe() API call. Keys are the name of keys in the allowed config map, the values indicate the type of that parameter, confirming to the CloudEvents type system. TODO: Needs resolution with CloudSubscriptions API"
-          additionalProperties:
-            type: string
-        subscriptiondialects:
-          type: array
-          description: Filter dialects that can be used in subscriptions for this service
-          items:
-            type: string
-            description: filter dialect
-          example: '[ "basic" ]'
-        authscope:
+          description: A unique identifier for this Endpoint. This value MUST be globally unique
+          format: uri-reference
+        epoch:
+          type: integer
+          description: A number representing the version number of the resource.
+          format: int64
+        self:
           type: string
-          description: Authorization scope needed for creating subscriptions. The actual meaning of this field is determined on a per-service basis
-          example: storage.read
-        protocols:
+          description: A unique URI for the resource. The URI MUST be a combination of the base URI of the list of this resource type for the current Discovery Service appended with the `id` of this resource.
+          format: uri
+        description:
+          type: string
+          description: A summary of the purpose of the resource.
+        name:
+          type: string
+          description: The name of the resource.
+        docs:
+          type: string
+          description: Absolute URL that provides a link to additional documentation about the resource.
+          format: uri
+        origin:
+          type: string
+          description: A URI reference to the original source of this resource.
+          format: uri-reference
+        tags:
           type: array
-          description: This field describes the different values that might be passed in the protocol field of the CloudSubscriptions API. The protocols with existing CloudEvents bindings are identified as AMQP, MQTT3, MQTT5, HTTP, KAFKA, and NATS. An implementation MAY add support for further protocols. All services MUST support at least one delivery protocol, and MAY support additional protocols
           items:
-            type: string
-            description: protocol
-          example: '[ "HTTP", "AMQP", "KAFKA" ]'
-        events:
-          $ref: '#/components/schemas/eventtypes'
-    services:
+            name: tag
+            type: object
+            properties: 
+              name: 
+                type: string
+              value:
+                type: string
+    endpointReference:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/resource/properties/id"
+        epoch:
+          $ref: "#/components/schemas/resource/properties/epoch"
+    endpointReferences:
       type: array
       items:
-        $ref: '#/components/schemas/service'
+        $ref: "#/components/schemas/endpointReference"
+    endpoints:
+      type: object
+      additionalProperties:
+         $ref: "#/components/schemas/endpoint"
+    endpoint:
+      allOf:
+        - $ref: "#/components/schemas/resource"
+        - type: object
+          properties:
+            channel:
+              type: string
+              description: A string that can be used to correlate Endpoints
+            usage:
+              description: The interaction model supported by this Endpoint 
+              oneOf:              
+              - type: string
+                enum: ["consumer", "producer", "subscriber"]                
+              - type: string              
+            config:
+              $ref: "#/components/schemas/endpointConfig"
+            format:
+              type: string
+              description: Specifies the `format` value of the Definitions associated with this Endpoint.
+            deprecated:
+              type: object
+              properties:
+                effective:
+                  type: string
+                  format: date-time
+                  description: The time at which the endpoint will enter a deprecated state
+                removal:
+                  type: string
+                  format: date-time
+                  description: The time at which the endpoint will be removed
+                alternative:
+                  type: string
+                  format: uri
+                  description: A URL to an possible alternative endpoint
+                docs:
+                  type: string
+                  format: uri
+                  description: A URL to additional information concerning the deprecation of this endpoint. Possible information might include rationale behind the action, or discussion of alternatives
+            authscope:
+              type: string
+              description: Authorization scope needed for creating subscriptions. The actual meaning of this field is determined on a per-endpoint basis
+              example: storage.read
+            definitions:
+              $ref: "#/components/schemas/definitions"
+            groups:
+              $ref: "#/components/schemas/groupUriReferences"
+    endpointConfig:
+      type: object
+      properties:
+        protocol:
+          type: string
+        strict:
+          type: boolean
+        endpoints:
+          oneOf:
+            - type: array
+              items: 
+                type: string
+                format: uri         
+            - type: string
+              format: uri            
+        options:
+          $ref: "#/components/schemas/endpointOptions"
+    endpointConfigSubscriber:
+      allOf: 
+        - $ref : "#/components/schemas/endpointConfig" 
+        - type: object
+          properties:
+            subscriptionconfig:
+              type: object
+              description: "A map indicating supported options for the config parameter for the CloudSubscriptions subscribe() API call. Keys are the name of keys in the allowed config map, the values indicate the type of that parameter, confirming to the CloudEvents type system. TODO: Needs resolution with CloudSubscriptions API"
+              additionalProperties:
+                type: string
+            filterdialects:
+              type: array
+              description: Filter dialects that can be used in subscriptions for this endpoint
+              items:
+                type: string
+                description: filter dialect
+              example: '[ "basic" ]'
+    endpointConfigConsumer:
+      allOf: 
+        - $ref : "#/components/schemas/endpointConfig" 
+        - type: object    
+    endpointConfigPublisher:
+      allOf: 
+        - $ref : "#/components/schemas/endpointConfig" 
+        - type: object    
+    endpointOptions:
+      type: object
+    endpointOptionsMqtt:
+      allOf: 
+        - $ref : "#/components/schemas/endpointOptions" 
+        - type: object
+    endpointOptionsAmqp:
+      allOf: 
+        - $ref : "#/components/schemas/endpointOptions" 
+        - type: object
+    endpointOptionsHttp:
+      allOf: 
+        - $ref : "#/components/schemas/endpointOptions" 
+        - type: object
+               
+      

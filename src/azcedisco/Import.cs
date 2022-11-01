@@ -19,12 +19,13 @@ namespace azcedisco
             DiscoveryClient client = new DiscoveryClient(new System.Net.Http.HttpClient());
             client.BaseUrl = this.DiscoveryEndpoint;
 
-            await foreach (var service in rte.EnumerateDiscoveryServicesAsync(new Uri(this.DiscoveryEndpoint), this.ResourceGroupName))
+            await foreach (var group in rte.EnumerateSystemDefinitionGroups(new Uri(this.DiscoveryEndpoint)))
             {
-                Service createdService = null;
+                group.Epoch = DateTime.UtcNow.ToFileTimeUtc();
+                Group createdGroup = null;
                 try
                 {
-                    createdService = await client.PostServiceAsync(service.Id, service);
+                    createdGroup = await client.PutGroupAsync(group.Id, group);
                 }
                 catch (ApiException apiException)
                 {
@@ -34,7 +35,26 @@ namespace azcedisco
                     }
                 }
 
-                Console.WriteLine(JsonConvert.SerializeObject(service, Formatting.Indented));
+                Console.WriteLine(JsonConvert.SerializeObject(group, Formatting.Indented));
+            }
+
+            await foreach (var endpoint in rte.EnumerateDiscoveryServicesAsync(new Uri(this.DiscoveryEndpoint), this.ResourceGroupName))
+            {
+                endpoint.Epoch = DateTime.UtcNow.ToFileTimeUtc();
+                Endpoint createdService = null;
+                try
+                {
+                    createdService = await client.PutEndpointAsync(endpoint.Id, endpoint);
+                }
+                catch (ApiException apiException)
+                {
+                    if (apiException.StatusCode != 409)
+                    {
+                        Console.WriteLine(apiException.Message);
+                    }
+                }
+
+                Console.WriteLine(JsonConvert.SerializeObject(endpoint, Formatting.Indented));
             }
             return 0;
         }

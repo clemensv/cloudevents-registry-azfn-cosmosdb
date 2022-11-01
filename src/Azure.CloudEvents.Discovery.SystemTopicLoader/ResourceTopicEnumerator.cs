@@ -6,6 +6,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
 {
     using System;
     using System.Collections.Generic;
+    using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.CloudEvents.Discovery;
@@ -14,7 +15,8 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
     using Microsoft.Azure.Management.ResourceManager;
     using Microsoft.Azure.Management.ResourceManager.Models;
     using Microsoft.Rest;
-    
+    using Microsoft.Rest.Azure;
+
     public class ResourceTopicEnumerator
     {
         private readonly string azureSubscriptionId;
@@ -31,7 +33,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
             this.tokenCredentials = tokenCredentials;
         }
 
-        public async IAsyncEnumerable<Service> EnumerateDiscoveryServicesAsync(Uri referencesBaseUri, string azureResourceGroupName)
+        public async IAsyncEnumerable<Endpoint> EnumerateDiscoveryServicesAsync(Uri referencesBaseUri, string azureResourceGroupName)
         {
             await InitializeAsync();
             await foreach (var resource in EnumerateResourceGroupResourcesWithEventsAsync(azureSubscriptionId, azureResourceGroupName))
@@ -43,82 +45,143 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
             }
         }
 
-        Service MapGridTopicToDiscoveryServiceObject(Uri baseUri, GenericResourceExpanded resource)
+        public async IAsyncEnumerable<Group> EnumerateSystemDefinitionGroups(Uri baseUri)
+        {
+            var authority = new Uri(baseUri, "groups/");
+
+            await InitializeAsync();
+            foreach (var info in this.topicTypes)
+            {
+                Group group = new Group()
+                {
+                    Id = info.Key,
+                    Epoch = DateTime.UtcNow.ToFileTimeUtc(),
+                    Definitions = new Definitions(),
+                    Self = new Uri(authority, "./" + info.Key),
+                    Origin = authority.ToString(),
+                };
+
+                foreach (var typeInfo in info.Value)
+                {
+                    foreach (var eventType in typeInfo.Item2)
+                    {
+                        if (group.Definitions.ContainsKey(eventType.Name))
+                            continue;
+
+                        string sourcePattern = typeInfo.Item1.SourceResourceFormat;
+                        sourcePattern = sourcePattern?.Replace('<', '{')?.Replace('>', '}');
+
+                        Uri schemaUrl;
+                        if (!Uri.TryCreate(eventType.SchemaUrl, new UriCreationOptions(), out schemaUrl))
+                        {
+                            schemaUrl = null;
+                        }
+                        group.Definitions.Add(eventType.Name, new CloudEventDefinition()
+                        {
+                            Metadata = new CloudEventMetadata
+                            {
+                                Id = new MetadataPropertyString
+                                {
+                                    Required = true
+                                },
+                                Type = new MetadataPropertyString
+                                {
+                                    Value = eventType.Name,
+                                    Required = true,
+                                },
+                                Time = new MetadataPropertyDateTime
+                                {
+                                    Value = null,
+                                    Required = true,
+                                },
+                                Datacontenttype = new MetadataPropertySymbol
+                                {
+                                    Value = "application/json",
+                                    Required = true
+                                },
+                                Dataschema = new MetadataPropertyUriTemplate
+                                {
+                                    Value = schemaUrl?.ToString(),
+                                    Required = true,
+                                },
+                                Source = new MetadataPropertyUriTemplate
+                                {
+                                    Value = sourcePattern
+                                }
+                            },
+                            Schemaurl = schemaUrl,
+                            Description = eventType.Description,
+                            Self = new Uri(authority, "./" + info.Key + "/definitions/" + eventType.Name),
+                            Origin = authority.ToString(),
+                            Id = eventType.Name,
+                        });
+                    }
+                }
+                yield return group;
+            }
+        }
+
+        Endpoint MapGridTopicToDiscoveryServiceObject(Uri baseUri, GenericResourceExpanded resource)
         {
             string normalizedId = NormalizeId(resource.Id);
-            var authority = new Uri(baseUri, "services/");
+            var authority = new Uri(baseUri, "endpoints/");
             var self = new Uri(authority, "./" + normalizedId);
-            var service = new Service()
+            var endpoint = new Endpoint()
             {
                 Id = normalizedId,
                 Name = resource.Name,
                 Description = $"{resource.Name} {resource.Kind}",
-                Docsurl = GetDocsUrl(resource.Type),
+                Docs = GetDocsUrl(resource.Type),
                 Epoch = (resource.ChangedTime.HasValue ? resource.ChangedTime?.Ticks : resource.CreatedTime?.Ticks) ?? 0,
-                Protocols = new List<string>() { "HTTP" },
-                Subscriptionurl = new Uri(self, "subscriptions").AbsoluteUri,
-                Url = self.AbsoluteUri,
+                Usage = Usage.Subscriber,
+                Config = new EndpointConfigSubscriber
+                {
+                    Protocol = "HTTP",
+                    Endpoints = new[] { new Uri(self, "subscriptions") },
+                },
+                Self = self,
                 Authscope = baseUri.AbsoluteUri,
-                Authority = authority.AbsoluteUri
+                Origin = authority.AbsoluteUri
             };
 
             if (resource.ChangedTime.HasValue)
             {
-                service.AdditionalProperties.Add("azreschangedtime", resource.ChangedTime.Value);
+                endpoint.AdditionalProperties.Add("azreschangedtime", resource.ChangedTime.Value);
             }
 
             if (resource.CreatedTime.HasValue)
             {
-                service.AdditionalProperties.Add("azrescreatedtime", resource.CreatedTime);
+                endpoint.AdditionalProperties.Add("azrescreatedtime", resource.CreatedTime);
             }
 
             if (!string.IsNullOrEmpty(resource.ProvisioningState))
             {
-                service.AdditionalProperties.Add("azresprovisioningstate", resource.ProvisioningState);
+                endpoint.AdditionalProperties.Add("azresprovisioningstate", resource.ProvisioningState);
             }
 
             if (!string.IsNullOrEmpty(resource.Kind))
             {
-                service.AdditionalProperties.Add("azreskind", resource.Kind);
+                endpoint.AdditionalProperties.Add("azreskind", resource.Kind);
             }
 
             if (!string.IsNullOrEmpty(resource.Id))
             {
-                service.AdditionalProperties.Add("azresid", resource.Id);
+                endpoint.AdditionalProperties.Add("azresid", resource.Id);
             }
 
             if (!string.IsNullOrEmpty(resource.Location))
             {
-                service.AdditionalProperties.Add("azreslocation", resource.Location);
+                endpoint.AdditionalProperties.Add("azreslocation", resource.Location);
             }
 
             if (!string.IsNullOrEmpty(resource.Type))
             {
-                service.AdditionalProperties.Add("azrestype", resource.Type);
-                service.Events = new Eventtypes();
+                endpoint.AdditionalProperties.Add("azrestype", resource.Type);
                 var resType = resource.Type.Split('/')[0].ToLowerInvariant();
-                if (this.topicTypes.TryGetValue(resType, out var info))
-                {
-                    foreach (var typeInfo in info)
-                    {
-                        foreach (var eventType in typeInfo.Item2)
-                        {
-                            string sourcePattern = typeInfo.Item1.SourceResourceFormat;
-                            sourcePattern = sourcePattern.Replace('<', '{').Replace('>', '}');
-
-                            service.Events.Add(new Eventtype()
-                            {
-                                Type = eventType.Name,
-                                Dataschema = eventType.SchemaUrl,
-                                Sourcetemplate = new Uri(baseUri, sourcePattern).ToString(),
-                                Description = eventType.Name
-                            });
-                        }
-                    }
-                }
+                endpoint.Groups = new GroupUriReferences();
+                endpoint.Groups.Add(new Uri(baseUri, "./"+ resType));
             }
-
-            return service;
+            return endpoint;
         }
 
         static string NormalizeId(string id)
@@ -178,7 +241,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
         async IAsyncEnumerable<GenericResourceExpanded> EnumerateResourceGroupResourcesWithEventsAsync(string azureSubscriptionId, string azureResourceGroupName)
         {
             var resources = await resourceGroupClient.Resources.ListByResourceGroupAsync(
-                azureResourceGroupName, 
+                azureResourceGroupName,
                 new Microsoft.Rest.Azure.OData.ODataQuery<GenericResourceFilter> { Expand = "createdTime,changedTime" });
 
             //// we will filter those down to resources that have a matching Event Grid provider 
@@ -196,45 +259,45 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
             return gridClient.TopicTypes.List();
         }
 
-        string GetDocsUrl(string resourceType)
+        Uri GetDocsUrl(string resourceType)
         {
             string provider = resourceType.Split('/')[0].ToLowerInvariant();
 
             switch (provider)
             {
                 case "microsoft.storage":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-blob-storage";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-blob-storage");
                 case "microsoft.appconfiguration":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-app-configuration";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-app-configuration");
                 case "microsoft.web":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-app-service";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-app-service");
                 case "microsoft.communication":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-communication-services";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-communication-endpoints");
                 case "microsoft.containerregistry":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-container-registry";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-container-registry");
                 case "microsoft.eventhub":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-event-hubs";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-event-hubs");
                 case "microsoft.devices":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-iot-hub";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-iot-hub");
                 case "microsoft.keyvault":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-key-vault";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-key-vault");
                 case "microsoft.machinelearningservice":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-machine-learning";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-machine-learning");
                 case "microsoft.maps":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-azure-maps";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-azure-maps");
                 case "microsoft.media":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-media-services";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-media-endpoints");
                 case "microsoft.resources":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-resource-groups";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-resource-groups");
                 case "microsoft.servicebus":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-service-bus";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-service-bus");
                 case "microsoft.signalrservice":
-                    return "https://docs.microsoft.com/azure/event-grid/event-schema-azure-signalr";
+                    return new Uri("https://docs.microsoft.com/azure/event-grid/event-schema-azure-signalr");
             }
 
             return null;
         }
 
-        
+
     }
 }

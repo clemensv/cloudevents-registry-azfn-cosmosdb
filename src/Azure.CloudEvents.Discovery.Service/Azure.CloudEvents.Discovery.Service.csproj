@@ -1,15 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <AzureFunctionsVersion>v3</AzureFunctionsVersion>
+    <TargetFramework>net6.0</TargetFramework>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.7.0" />
+    <PackageReference Include="Azure.Messaging.EventGrid" Version="4.11.0" />
     <PackageReference Include="Microsoft.Azure.Core.NewtonsoftJson" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.21.0" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.0.13" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.0.4" OutputItemType="Analyzer" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.5.1" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.7.0" OutputItemType="Analyzer" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.10.0" />
+	  <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0"></PackageReference>
     
     
   </ItemGroup>
@@ -24,6 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Azure.CloudEvents.Discovery\Azure.CloudEvents.Discovery.csproj" />
+    <ProjectReference Include="..\Azure.CloudEvents.Subscriptions\Azure.CloudEvents.Subscriptions.csproj" />
   </ItemGroup>
   
 </Project>

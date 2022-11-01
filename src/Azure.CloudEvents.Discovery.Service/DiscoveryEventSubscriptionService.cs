@@ -12,28 +12,31 @@ namespace Azure.CloudEvents.EventGridBridge
     using Newtonsoft.Json;
     using Microsoft.Rest;
 
-    public class SubscriptionService
+    public class DiscoveryEventSubscriptionService
     {
         readonly SubscriptionProxy _proxy;
-
-        const string collectionRoute =
-            "subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{provider}/{resourceType}/{resourceName}/eventSubscriptions";
+        private readonly string subscriptionId;
+        private readonly string resourceGroup;
+        private readonly string provider;
+        private readonly string resourceType;
+        private readonly string resourceName;
+        const string collectionRoute = "subscriptions";
         const string subscriptionRoute = collectionRoute + "/{eventSubscriptionId}";
 
-        public SubscriptionService(SubscriptionProxy proxy)
+        public DiscoveryEventSubscriptionService(SubscriptionProxy proxy)
         {
             this._proxy = proxy;
+            this.subscriptionId = proxy.DefaultSubscriptionId;
+            this.resourceGroup = proxy.DefaultResourceGroup;
+            this.provider = "Microsoft.EventGrid";
+            this.resourceType = "topics";
+            this.resourceName = "cloudevents-discovery";
         }
 
         [Function("CreateSubscription")]
         public async Task<HttpResponseData> CreateSubscriptionAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = collectionRoute)]
             HttpRequestData req,
-            string subscriptionId,
-            string resourceGroup,
-            string provider,
-            string resourceType,
-            string resourceName,
             ILogger log)
         {
             var subscriptionRequest = JsonConvert.DeserializeObject<SubscriptionRequest>(await req.ReadAsStringAsync());
@@ -55,11 +58,6 @@ namespace Azure.CloudEvents.EventGridBridge
         public async Task<HttpResponseData> DeleteSubscriptionAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = subscriptionRoute)]
             HttpRequestData req,
-            string subscriptionId,
-            string resourceGroup,
-            string provider,
-            string resourceType,
-            string resourceName,
             string eventSubscriptionId,
             ILogger log)
         {
@@ -78,11 +76,6 @@ namespace Azure.CloudEvents.EventGridBridge
         public async Task<HttpResponseData> GetSubscriptionAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = subscriptionRoute)]
             HttpRequestData req,
-            string subscriptionId,
-            string resourceGroup,
-            string provider,
-            string resourceType,
-            string resourceName,
             string eventSubscriptionId,
             ILogger log)
         {
@@ -104,11 +97,6 @@ namespace Azure.CloudEvents.EventGridBridge
         public async Task<HttpResponseData> GetSubscriptionsAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = collectionRoute)]
             HttpRequestData req,
-            string subscriptionId,
-            string resourceGroup,
-            string provider,
-            string resourceType,
-            string resourceName,
             ILogger log)
         {
             List<Subscription> subs = new List<Subscription>();
@@ -133,11 +121,6 @@ namespace Azure.CloudEvents.EventGridBridge
         public async Task<HttpResponseData> UpdateSubscription(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = subscriptionRoute)]
             HttpRequestData req,
-            string subscriptionId,
-            string resourceGroup,
-            string provider,
-            string resourceType,
-            string resourceName,
             string eventSubscriptionId,
             ILogger log)
         {

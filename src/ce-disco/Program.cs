@@ -4,11 +4,16 @@ namespace ce_disco
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
+    using System.Linq;
     using System.Net.Http;
+    using System.Net.Http.Headers;
+    using System.Net.Mime;
     using System.Threading.Tasks;
     using Azure.CloudEvents.Discovery;
     using Azure.CloudEvents.Subscriptions;
+    using Azure.Identity;
     using CloudNative.CloudEvents;
+    using CloudNative.CloudEvents.NewtonsoftJson;
     using McMaster.Extensions.CommandLineUtils;
     using Microsoft.Azure.Relay;
     using Newtonsoft.Json;
@@ -33,6 +38,7 @@ namespace ce_disco
         private async Task OnExecuteAsync()
         {
 
+
             RelayConnectionStringBuilder rsb = new RelayConnectionStringBuilder(ConnectionString);
             await StartEventListener(ConnectionString, RelayName);
 
@@ -40,16 +46,21 @@ namespace ce_disco
             var discoveryClient = new DiscoveryClient(httpClient) { BaseUrl = DiscoveryEndpoint };
             var subscriptions = new Dictionary<string, Subscription>();
 
-            var services = await discoveryClient.GetServicesAsync(string.Empty);
-            foreach (var service in services)
+            var azureCredential = new DefaultAzureCredential();
+            var token = await azureCredential.GetTokenAsync(new Azure.Core.TokenRequestContext(new string[] { "https://management.azure.com/.default" }));
+            var subscriptionsHttpClient = new HttpClient();
+            subscriptionsHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
+
+            var endpoints = await discoveryClient.GetEndpointsAsync(string.Empty);
+            foreach (var service in endpoints.Values)
             {
                 try
                 {
-                    var subscriptionClient = new SubscriptionsClient(new HttpClient()) { BaseUrl = service.Subscriptionurl };
+                    var subscriptionClient = new SubscriptionsClient(subscriptionsHttpClient) { BaseUrl = service.Config?.Endpoints?.First()?.ToString() };
                     var types = new List<string>();
-                    foreach (var serviceEvent in service.Events)
+                    foreach (var serviceEvent in service.Definitions.Values)
                     {
-                        types.Add(serviceEvent.Type);
+                        types.Add(((CloudEventDefinition)serviceEvent).Metadata.Type.Value);
                     }
 
                     SubscriptionRequest subscriptionRequest = new SubscriptionRequest()
@@ -58,24 +69,24 @@ namespace ce_disco
                         Sink = $"https://{rsb.Endpoint.Host}/{RelayName}",
                         Types = types
                     };
-                    
-                    Console.WriteLine($"Subscribing for events from {service.Name} via {service.Subscriptionurl}");
+
+                    Console.WriteLine($"Subscribing for events from {service.Name} via {service.Config?.Endpoints?.First()?.ToString()}");
                     var subscription = await subscriptionClient.CreateSubscriptionAsync(subscriptionRequest);
-                    subscriptions.Add(service.Subscriptionurl, subscription);
+                    subscriptions.Add(service.Config?.Endpoints?.First()?.ToString(), subscription);
 
                 }
-                catch( Exception e)
+                catch (Exception e)
                 {
                     Console.WriteLine($"Exception {e.Message} {service.Name}");
                 }
             }
-            
+
             Console.WriteLine("Press enter to clean up");
             Console.ReadLine();
 
             foreach (var subscription in subscriptions)
             {
-                var subscriptionClient = new SubscriptionsClient(httpClient) { BaseUrl = subscription.Key };
+                var subscriptionClient = new SubscriptionsClient(subscriptionsHttpClient) { BaseUrl = subscription.Key };
                 await subscriptionClient.DeleteSubscriptionAsync(subscription.Value.Id);
             }
 
@@ -85,7 +96,7 @@ namespace ce_disco
 
         static Task StartEventListener(string relayConnectionString, string hybridConnectionName)
         {
-            
+
             hybridConnectionlistener = new HybridConnectionListener(relayConnectionString, hybridConnectionName)
             {
                 RequestHandler = (context) =>
@@ -112,7 +123,8 @@ namespace ce_disco
 
         static void ProcessEventGridEvents(RelayedHttpListenerContext context)
         {
-            var ce = jev.DecodeStructuredEvent(context.Request.InputStream);
+            ContentType contentType = new ContentType(context.Request.Headers["Content-Type"] as string ?? String.Empty);             
+            var ce = jev.DecodeStructuredModeMessage(context.Request.InputStream, contentType, null);
             Console.WriteLine(ce.Type);
         }
     }

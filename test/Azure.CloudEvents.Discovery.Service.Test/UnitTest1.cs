@@ -5,7 +5,7 @@ using Moq;
 using System;
 using Xunit;
 
-namespace Azure.CloudEvents.Discovery.Service.Test
+namespace Azure.CloudEvents.Discovery.Endpoint.Test
 {
     public class UnitTest1
     {

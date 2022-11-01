@@ -1,4 +1,6 @@
+using Azure.CloudEvents.EventGridBridge;
 using Azure.Core.Serialization;
+using Azure.Messaging.EventGrid;
 using Microsoft.Azure.Cosmos.Fluent;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Configuration;
@@ -28,11 +30,11 @@ namespace Azure.CloudEvents.Discovery
             host.Run();
         }
 
-        private static void ConfigureServices(HostBuilderContext hostBuilder, IServiceCollection services)
+        private static void ConfigureServices(HostBuilderContext hostBuilder, IServiceCollection endpoints)
         {
 
 
-            services.AddSingleton((s) =>
+            endpoints.AddSingleton((s) =>
             {
                 string endpoint = hostBuilder.Configuration["COSMOSDB_ENDPOINT"];
                 if (string.IsNullOrEmpty(endpoint))
@@ -48,6 +50,28 @@ namespace Azure.CloudEvents.Discovery
 
                 CosmosClientBuilder configurationBuilder = new CosmosClientBuilder(endpoint, authKey);
                 return configurationBuilder.Build();
+            });
+
+            endpoints.AddSingleton((s) =>
+            {
+                string endpoint = hostBuilder.Configuration["EVENTGRID_ENDPOINT"];
+                if (string.IsNullOrEmpty(endpoint))
+                {
+                    throw new ArgumentNullException("Please specify a valid endpoint in the appSettings.json file or your Azure Functions Settings.");
+                }
+
+                string authKey = hostBuilder.Configuration["EVENTGRID_KEY"];
+                if (string.IsNullOrEmpty(authKey) || string.Equals(authKey, "Super secret key"))
+                {
+                    throw new ArgumentException("Please specify a valid AuthorizationKey in the appSettings.json file or your Azure Functions Settings.");
+                }
+
+                return new EventGridPublisherClient(new Uri(endpoint), new AzureKeyCredential(authKey));
+            });
+
+            endpoints.AddSingleton<SubscriptionProxy>((s) =>
+            {
+                return new SubscriptionProxy();
             });
         }
     }

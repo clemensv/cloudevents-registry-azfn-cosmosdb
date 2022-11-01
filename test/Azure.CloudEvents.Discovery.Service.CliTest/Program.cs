@@ -11,52 +11,66 @@ namespace Azure.CloudEvents.Discovery
         static async Task Main(string[] args)
         {
             DiscoveryClient client = new DiscoveryClient(new HttpClient());
-            client.BaseUrl = "http://localhost:7071/api";
-            Console.WriteLine($"----- Existing services -----");
+            client.BaseUrl = "http://localhost:7071/";
+            Console.WriteLine($"----- Existing endpoints -----");
             try
             {
-                var services = await client.GetServicesAsync(null);
-                foreach (var item in services)
+                var endpoints = await client.GetEndpointsAsync(null);
+                foreach (var item in endpoints.Values)
                 {
-                    Console.WriteLine($"Existing: Id { item.Id }, Epoch {item.Epoch}");
+                    Console.WriteLine($"Existing: Id {item.Id}, Epoch {item.Epoch}");
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);                 
+                Console.WriteLine(e);
             }
-            
 
-            Console.WriteLine($"----- Create services -----");
+
+            Console.WriteLine($"----- Create endpoints -----");
             for (int i = 0; i < 10; i++)
             {
-                var service = new Service()
+                var service = new Endpoint()
                 {
                     Id = i.ToString(),
                     Description = $"This is service {i}",
-                    Events = new Eventtypes
+                    Definitions = new Definitions
                     {
-                        new Eventtype
+                        { $"Endpoint{i} Event1", new CloudEventDefinition
                         {
-                            Type = $"Service{i}.Event1",
-                            Description = $"Service{i} Event1"
-                        },
-                        new Eventtype
+                            Description = $"Endpoint{i} Event1",
+                            Metadata = new CloudEventMetadata {
+                                Type = new MetadataPropertyString {
+                                    Value = $"Endpoint{i}.Event1",
+                                }
+                            }
+                        } },
+                        { $"Endpoint{i} Event2",new CloudEventDefinition
                         {
-                            Type = $"Service{i}.Event2",
-                            Description = $"Service{i} Event1",
-                        }
+                            Description = $"Endpoint{i} Event2",
+                            Metadata = new CloudEventMetadata
+                            {
+                                Type = new MetadataPropertyString
+                                {
+                                    Value = $"Endpoint{i}.Event2"
+                                }
+                            }
+                        } }
                     },
-                    Protocols = new[] { "HTTP" },
-                    Subscriptionurl = "https://example.com/foo"
+                    Usage = Usage.Subscriber,
+                    Config = new EndpointConfigSubscriber
+                    {
+                        Protocol = "HTTP",
+                        Endpoints = new[] { new Uri("https://example.com/foo") },
+                   }
                 };
 
-                Service createdService = null;
+                Endpoint createdService = null;
                 try
                 {
 
-                    createdService = await client.PostServiceAsync(service.Id, service);
-                    Console.WriteLine($"Created: Id { createdService.Id }, Epoch {createdService.Epoch}");
+                    //createdService = await client.PostEndpointAsync(service);
+                    Console.WriteLine($"Created: Id {createdService.Id}, Epoch {createdService.Epoch}");
                 }
                 catch (ApiException apiException)
                 {
@@ -64,20 +78,20 @@ namespace Azure.CloudEvents.Discovery
                     {
                         throw;
                     }
-                    Console.WriteLine($"Conflict: Id { createdService?.Id }, Epoch {createdService?.Epoch}");
+                    Console.WriteLine($"Conflict: Id {createdService?.Id}, Epoch {createdService?.Epoch}");
                 }
             }
 
-            Console.WriteLine($"----- Update services -----");
+            Console.WriteLine($"----- Update endpoints -----");
             for (int i = 0; i < 10; i++)
             {
-                var existingService = await client.GetServiceAsync(i.ToString());
+                var existingService = await client.GetEndpointAsync(i.ToString());
                 existingService.Description = $"This is service {i} Update";
 
                 bool correct = false;
                 try
                 {
-                    await client.PostServiceAsync(existingService.Id, existingService);
+                    await client.PutEndpointAsync(existingService.Id, existingService);
                     throw new InvalidOperationException("Must not get here because we did not update the Eppch");
                 }
                 catch (ApiException apiException)
@@ -92,19 +106,19 @@ namespace Azure.CloudEvents.Discovery
                     throw new Exception("Epoch validation failed");
                 }
                 existingService.Epoch += 1;
-                await client.PostServiceAsync(existingService.Id, existingService);
-                Console.WriteLine($"Updated: Id { existingService.Id }, Epoch {existingService.Epoch}");
+                await client.PutEndpointAsync(existingService.Id, existingService);
+                Console.WriteLine($"Updated: Id {existingService.Id}, Epoch {existingService.Epoch}");
             }
 
             for (int i = 0; i < 10; i++)
             {
-                var existingService = await client.GetServiceAsync(i.ToString());
+                var existingService = await client.GetEndpointAsync(i.ToString());
 
-                await client.DeleteServiceAsync(
+                await client.DeleteEndpointAsync(
                     existingService.Id,
-                    new Serviceinstance { Id = existingService.Id, Epoch = existingService.Epoch });
+                    existingService.Epoch);
 
-                Console.WriteLine($"Deleted: Id { existingService.Id }, Epoch {existingService.Epoch}");
+                Console.WriteLine($"Deleted: Id {existingService.Id}, Epoch {existingService.Epoch}");
             }
         }
     }

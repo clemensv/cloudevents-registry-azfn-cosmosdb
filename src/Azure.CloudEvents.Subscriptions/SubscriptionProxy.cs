@@ -7,6 +7,7 @@ namespace Azure.CloudEvents.EventGridBridge
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Azure.Core;
     using global::Azure.CloudEvents.Subscriptions;
     using Microsoft.Azure.Management.EventGrid;
     using Microsoft.Azure.Management.EventGrid.Models;
@@ -22,30 +23,27 @@ namespace Azure.CloudEvents.EventGridBridge
 
     public class SubscriptionProxy
     {
-        readonly TokenCredentials tokenCredentials;
-        readonly string resourceGroupName;
-        readonly string fixedSubscriptionId;
-        EventGridManagementClient gridClient;
-        bool initialized = false;
-        readonly object initializeMutex = new object();
-        ResourceManagementClient resourceGroupClient;
         Dictionary<string, List<Tuple<TopicTypeInfo, IEnumerable<EventType>>>> topicTypes;
 
-        public SubscriptionProxy(string subscriptionId, string resourceGroupName,
-           TokenCredentials tokenCredentials)
+        public SubscriptionProxy()
         {
-            this.fixedSubscriptionId = subscriptionId;
-            this.resourceGroupName = resourceGroupName;
-            this.tokenCredentials = tokenCredentials;
+            
         }
 
-        public async Task<Azure.CloudEvents.Subscriptions.Subscription> CreateSubscription(string subscriptionId, string resourceGroup, string provider, string resourceType,
-            string resourceName, SubscriptionRequest subscriptionRequest)
-        {
-            if (!subscriptionId.Equals(fixedSubscriptionId))
-                throw new UnauthorizedAccessException();
+        public string DefaultSubscriptionId { get; set; }
+        public string DefaultResourceGroup { get; set; }
 
-            await InitializeAsync();
+        public async Task<Subscription> CreateSubscription(
+            string subscriptionId, string resourceGroup, string provider, string resourceType,
+            string resourceName, SubscriptionRequest subscriptionRequest,
+            TokenCredentials authorizationToken)
+        {
+            
+            var gridClient = new EventGridManagementClient(authorizationToken)
+            {
+                SubscriptionId = subscriptionId,
+                LongRunningOperationRetryTimeout = 2
+            };
 
             Guid subId = Guid.NewGuid();
             var eventSubscription = new EventSubscription()
@@ -72,12 +70,15 @@ namespace Azure.CloudEvents.EventGridBridge
             return ConvertToCloudEventsSubscription(sub);
         }
 
-        public async IAsyncEnumerable<Subscription> GetSubscriptions(string subscriptionId, string resourceGroup, string provider, string resourceType, string resourceName)
+        public async IAsyncEnumerable<Subscription> GetSubscriptions(
+            string subscriptionId, string resourceGroup, string provider, string resourceType, string resourceName, 
+            TokenCredentials authorizationToken)
         {
-            if (!subscriptionId.Equals(fixedSubscriptionId))
-                throw new UnauthorizedAccessException();
-
-            await InitializeAsync();
+            var gridClient = new EventGridManagementClient(authorizationToken)
+            {
+                SubscriptionId = subscriptionId,
+                LongRunningOperationRetryTimeout = 2
+            };
 
             var subs = await gridClient.EventSubscriptions.ListByResourceAsync(resourceGroup, provider, resourceType,
                 resourceName, top: 100);
@@ -102,12 +103,15 @@ namespace Azure.CloudEvents.EventGridBridge
             } while (subs != null);
         }
 
-        public async Task<Subscription> GetSubscription(string subscriptionId, string resourceGroup, string provider, string resourceType, string resourceName, string eventSubscriptionId)
+        public async Task<Subscription> GetSubscription(string subscriptionId, string resourceGroup, string provider, string resourceType, 
+            string resourceName, string eventSubscriptionId, TokenCredentials authorizationToken)
         {
-            if (!subscriptionId.Equals(fixedSubscriptionId))
-                throw new UnauthorizedAccessException();
-
-            await InitializeAsync();
+           
+            var gridClient = new EventGridManagementClient(authorizationToken)
+            {
+                SubscriptionId = subscriptionId,
+                LongRunningOperationRetryTimeout = 2
+            };
 
             var scope =
                 $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{provider}/{resourceType}/{resourceName}";
@@ -121,12 +125,13 @@ namespace Azure.CloudEvents.EventGridBridge
         }
 
         public async Task DeleteSubscription(string subscriptionId, string resourceGroup, string provider, string resourceType,
-            string resourceName, string eventSubscriptionId)
+            string resourceName, string eventSubscriptionId, TokenCredentials authorizationToken)
         {
-            if (!subscriptionId.Equals(fixedSubscriptionId))
-                throw new UnauthorizedAccessException();
-
-            await InitializeAsync();
+            var gridClient = new EventGridManagementClient(authorizationToken)
+            {
+                SubscriptionId = subscriptionId,
+                LongRunningOperationRetryTimeout = 2
+            };
 
             var scope =
                 $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/{provider}/{resourceType}/{resourceName}";
@@ -148,31 +153,7 @@ namespace Azure.CloudEvents.EventGridBridge
 
             return ceSub;
         }
-
-        public async Task InitializeAsync()
-        {
-            lock (initializeMutex)
-            {
-                if (initialized)
-                {
-                    return;
-                }
-                else
-                {
-                    initialized = true;
-                }
-            }
-
-            this.resourceGroupClient = new ResourceManagementClient(tokenCredentials)
-            {
-                SubscriptionId = fixedSubscriptionId
-            };
-            gridClient = new EventGridManagementClient(tokenCredentials)
-            {
-                SubscriptionId = fixedSubscriptionId,
-                LongRunningOperationRetryTimeout = 2
-            };
-        }
+          
 
         static void AddFilter(Filter filter, bool basicFilterAlreadySet, EventSubscription eventSubscription,
             List<AdvancedFilter> advancedFilters)
@@ -240,18 +221,5 @@ namespace Azure.CloudEvents.EventGridBridge
         }
 
 
-        async IAsyncEnumerable<GenericResourceExpanded> EnumerateResourceGroupResourcesWithEventsAsync()
-        {
-            var resources = await resourceGroupClient.Resources.ListByResourceGroupAsync(resourceGroupName);
-
-            //// we will filter those down to resources that have a matching Event Grid provider 
-            foreach (var resource in resources)
-            {
-                if (this.topicTypes.ContainsKey(resource.Type.Split('/')[0].ToLowerInvariant()))
-                {
-                    yield return resource;
-                }
-            }
-        }
     }
 }

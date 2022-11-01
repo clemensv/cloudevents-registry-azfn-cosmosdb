@@ -27,15 +27,9 @@ namespace Azure.CloudEvents.EventGridBridge
 
         private static void ConfigureServices(HostBuilderContext hostBuilder, IServiceCollection services)
         {
-
-            var subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
-            var resourceGroup = Environment.GetEnvironmentVariable("AZURE_RESOURCE_GROUP");
-
             services.AddSingleton<SubscriptionProxy>((s) =>
             {
-                return new SubscriptionProxy(
-                     subscriptionId, resourceGroup,
-                     new AzureIdentityCredentialAdapter());
+                return new SubscriptionProxy();
             });
 
         }
