@@ -47,6 +47,7 @@ namespace Azure.CloudEvents.Discovery
                 {
                     foreach (var ep1 in await resultSet.ReadNextAsync())
                     {
+                        ep1.Self = new Uri(req.Url, ep1.Id);
                         endpoints.Add(ep1.Id, ep1);
                     }
                 }
@@ -178,6 +179,7 @@ namespace Azure.CloudEvents.Discovery
             {
 
                 var existingItem = await container.ReadItemAsync<Endpoint>(id, new PartitionKey(id));
+                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
                 var res = req.CreateResponse(HttpStatusCode.OK);
                 await res.WriteAsJsonAsync(existingItem.Resource);
                 return res;
@@ -209,6 +211,7 @@ namespace Azure.CloudEvents.Discovery
             try
             {
                 var existingItem = await container.ReadItemAsync<Endpoint>(endpoint.Id, new PartitionKey(endpoint.Id));
+                
                 if (endpoint.Epoch <= existingItem.Resource.Epoch)
                 {
                     // define code & response
@@ -302,6 +305,7 @@ namespace Azure.CloudEvents.Discovery
             {
 
                 var existingItem = await container.ReadItemAsync<Group>(id, new PartitionKey(id));
+                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
                 var res = req.CreateResponse(HttpStatusCode.OK);
                 await res.WriteAsJsonAsync(existingItem.Resource);
                 return res;
@@ -418,6 +422,7 @@ namespace Azure.CloudEvents.Discovery
                 {
                     foreach (var ep1 in await resultSet.ReadNextAsync())
                     {
+                        ep1.Self = new Uri(req.Url, ep1.Id);
                         groups.Add(ep1.Id, ep1);
                     }
                 }

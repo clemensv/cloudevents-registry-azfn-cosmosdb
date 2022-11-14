@@ -58,7 +58,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                     Epoch = DateTime.UtcNow.ToFileTimeUtc(),
                     Definitions = new Definitions(),
                     Self = new Uri(authority, "./" + info.Key),
-                    Origin = authority.ToString(),
+                    Origin = "https://" + authority.Host
                 };
 
                 foreach (var typeInfo in info.Value)
@@ -112,7 +112,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                             Schemaurl = schemaUrl,
                             Description = eventType.Description,
                             Self = new Uri(authority, "./" + info.Key + "/definitions/" + eventType.Name),
-                            Origin = authority.ToString(),
+                            Origin = "https://" + authority.Host,
                             Id = eventType.Name,
                         });
                     }
@@ -141,7 +141,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                 },
                 Self = self,
                 Authscope = baseUri.AbsoluteUri,
-                Origin = authority.AbsoluteUri
+                Origin = "https://" + authority.Host
             };
 
             if (resource.ChangedTime.HasValue)
@@ -179,7 +179,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                 endpoint.AdditionalProperties.Add("azrestype", resource.Type);
                 var resType = resource.Type.Split('/')[0].ToLowerInvariant();
                 endpoint.Groups = new GroupUriReferences();
-                endpoint.Groups.Add(new Uri(baseUri, "./"+ resType));
+                endpoint.Groups.Add(new Uri(baseUri, "./groups/"+ resType));
             }
             return endpoint;
         }

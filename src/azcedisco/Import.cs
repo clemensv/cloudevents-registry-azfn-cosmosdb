@@ -19,7 +19,7 @@ namespace azcedisco
             DiscoveryClient client = new DiscoveryClient(new System.Net.Http.HttpClient());
             client.BaseUrl = this.DiscoveryEndpoint;
 
-            await foreach (var group in rte.EnumerateSystemDefinitionGroups(new Uri(this.DiscoveryEndpoint)))
+            await foreach (var group in rte.EnumerateSystemDefinitionGroups(new Uri("https://discovery.azure.com/")))
             {
                 group.Epoch = DateTime.UtcNow.ToFileTimeUtc();
                 Group createdGroup = null;
@@ -38,7 +38,7 @@ namespace azcedisco
                 Console.WriteLine(JsonConvert.SerializeObject(group, Formatting.Indented));
             }
 
-            await foreach (var endpoint in rte.EnumerateDiscoveryServicesAsync(new Uri(this.DiscoveryEndpoint), this.ResourceGroupName))
+            await foreach (var endpoint in rte.EnumerateDiscoveryServicesAsync(new Uri("https://discovery.azure.com/"), this.ResourceGroupName))
             {
                 endpoint.Epoch = DateTime.UtcNow.ToFileTimeUtc();
                 Endpoint createdService = null;
