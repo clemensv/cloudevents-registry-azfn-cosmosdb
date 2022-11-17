@@ -9,7 +9,9 @@ paths:
   /endpoints:
     get:
       operationId: getEndpoints
-      description: Get an optionally filtered collection of the Endpoints known by this discovery end point
+      description: >
+         Get an optionally filtered collection of the endpoints 
+         known by this discovery endpoint
       parameters:
         - in: query
           name: name
@@ -26,6 +28,7 @@ paths:
                 $ref: "#/components/schemas/endpoints"
     post:
       operationId: postEndpoints
+      description: Posts (uploads) an endpoints list
       requestBody:
         $ref: "#/components/requestBodies/endpointsPostRequest"
       responses:
@@ -37,6 +40,7 @@ paths:
           description: Conflict - epoch not greater
     delete:
       operationId: deleteEndpoints
+      description: Deletes the endpoints identified by the references in the request body
       requestBody:
         $ref: "#/components/requestBodies/endpointsDeleteRequest"
       responses:
@@ -47,13 +51,18 @@ paths:
         "409":
           description: Conflict - epoch not greater
   /endpoints/{id}:
+    parameters:
+        - $ref: "#/components/parameters/id"
     get:
       operationId: getEndpoint
-      parameters:
-        - $ref: "#/components/parameters/id"
+      description: > 
+         Gets the metadata for a specific endpoint as a combined document
+         The implementation MAY allow for navigating into the endpoint's local 
+         groups and definitions. The operations listed below for /groups/... 
+         then also apply to /endpoints/{id}/groups/...
       responses:
         "200":
-          description: The corresponding endpoint
+          description: The endpoint metadata
           content:
             application/json:
               schema:
@@ -64,8 +73,6 @@ paths:
           description: Not Found
     put:
       operationId: putEndpoint
-      parameters:
-        - $ref: "#/components/parameters/id"
       requestBody:
         $ref: "#/components/requestBodies/endpointsPutRequest"
       responses:
@@ -79,15 +86,14 @@ paths:
           description: Conflict - epoch not greater
     delete:
       operationId: deleteEndpoint
+      description: Deletes the endpoint. The epoch must be provided as query parameter
       parameters:
-        - $ref: "#/components/parameters/id"
         - in: query
           name: epoch
           description: The epoch of the endpoint to be deleted
           required: false
           schema:
             $ref: "#/components/schemas/resource/properties/epoch"
-
       responses:
         "200":
           $ref: "#/components/responses/endpointsDeleteResponse"
@@ -98,7 +104,9 @@ paths:
   /groups:
     get:
       operationId: getGroups
-      description: Get an optionally filtered collection of the Groups known by this discovery end point
+      description: >
+        Get an optionally filtered collection of the message 
+        description groups known by this discovery endpoint
       parameters:
         - in: query
           name: name
@@ -115,6 +123,7 @@ paths:
                 $ref: "#/components/schemas/groups"
     post:
       operationId: postGroups
+      description: Posts (uploads) a set of groups
       requestBody:
         $ref: "#/components/requestBodies/groupsPostRequest"
       responses:
@@ -126,6 +135,7 @@ paths:
           description: Conflict - epoch not greater
     delete:
       operationId: deleteGroups
+      description: deletes the groups indicated in the request
       requestBody:
         $ref: "#/components/requestBodies/groupsDeleteRequest"
       responses:
@@ -136,13 +146,14 @@ paths:
         "409":
           description: Conflict - epoch not greater
   /groups/{groupid}:
+    parameters:
+      - $ref: "#/components/parameters/groupid"
     get:
       operationId: getGroup
-      parameters:
-        - $ref: "#/components/parameters/groupid"
+      description: gets the metadata of a group
       responses:
         "200":
-          description: The corresponding group
+          description: Group metadata
           content:
             application/json:
               schema:
@@ -153,8 +164,6 @@ paths:
           description: Not Found
     put:
       operationId: putGroup
-      parameters:
-        - $ref: "#/components/parameters/groupid"
       requestBody:
         $ref: "#/components/requestBodies/groupsPutRequest"
       responses:
@@ -184,11 +193,14 @@ paths:
         "409":
           description: Conflict - epoch not greater
   /groups/{groupid}/definitions:
+    parameters:
+      - $ref: "#/components/parameters/groupid"  
     get:
       operationId: getDefinitions
-      description: Get an optionally filtered collection of the Definitions known by this discovery end point
+      description: >
+        Get an optionally filtered collection of the 
+        definitions inside this group
       parameters:
-        - $ref: "#/components/parameters/groupid"  
         - in: query
           name: name
           description: The name of the definition to be returned
@@ -204,8 +216,6 @@ paths:
                 $ref: "#/components/schemas/definitions"
     post:
       operationId: postDefinitions
-      parameters:
-        - $ref: "#/components/parameters/groupid"
       requestBody:
         $ref: "#/components/requestBodies/definitionsPostRequest"
       responses:
@@ -217,8 +227,6 @@ paths:
           description: Conflict - epoch not greater
     delete:
       operationId: deleteDefinitions
-      parameters:
-        - $ref: "#/components/parameters/groupid"
       requestBody:
         $ref: "#/components/requestBodies/definitionsDeleteRequest"
       responses:
@@ -229,14 +237,14 @@ paths:
         "409":
           description: Conflict - epoch not greater
   /groups/{groupid}/definitions/{defid}:
-    get:
-      operationId: getDefinition
-      parameters:
+    parameters:
         - $ref: "#/components/parameters/groupid"
         - $ref: "#/components/parameters/defid"
+    get:
+      operationId: getDefinition
       responses:
         "200":
-          description: The corresponding definition
+          description: The current definition version
           content:
             application/json:
               schema:
@@ -245,16 +253,13 @@ paths:
           description: Bad Request - constraint failure
         "404":
           description: Not Found
-    put:
-      operationId: putDefinition
-      parameters:
-        - $ref: "#/components/parameters/groupid"
-        - $ref: "#/components/parameters/defid"
+    post:
+      operationId: postDefinition
       requestBody:
-        $ref: "#/components/requestBodies/definitionsPutRequest"
+        $ref: "#/components/requestBodies/definitionPostRequest"
       responses:
         "200":
-          $ref: "#/components/responses/definitionsPutResponse"
+          $ref: "#/components/responses/definitionPostResponse"
         "400":
           description: Bad Request - constraint failure
         "404":
@@ -264,8 +269,6 @@ paths:
     delete:
       operationId: deleteDefinition
       parameters:
-        - $ref: "#/components/parameters/groupid"
-        - $ref: "#/components/parameters/defid"
         - in: query
           name: epoch
           description: The epoch of the definition to be deleted
@@ -280,40 +283,76 @@ paths:
           description: Bad Request - constraint failure
         "409":
           description: Conflict - epoch not greater
+  /groups/{groupid}/definitions/{defid}/version/{versionid}:
+    parameters:
+        - $ref: "#/components/parameters/groupid"
+        - $ref: "#/components/parameters/defid"
+        - $ref: "#/components/parameters/versionid"
+    get:
+      operationId: getDefinitionVersion
+      responses:
+        "200":
+          description: The definition version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/definition"
+        "400":
+          description: Bad Request - constraint failure
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteDefinitionVersion
+      parameters:
+        - in: query
+          name: epoch
+          description: The epoch of the definition to be deleted
+          required: false
+          schema:
+            $ref: "#/components/schemas/resource/properties/epoch"
+      responses:
+        "200":
+          $ref: "#/components/responses/definitionsDeleteResponse"
+        "400":
+          description: Bad Request - constraint failure
+        "409":
+          description: Conflict - epoch not greater
   /schemagroups:
     get:
-      operationId: getSchemagroups
-      description: Get an optionally filtered collection of all known schema groups
+      operationId: getSchemaGroups
+      description: > 
+         Get an optionally filtered collection 
+         of all known schema groups
       parameters:
         - in: query
           name: name
-          description: The name of the schemagroup to be returned
+          description: The name of the schema group to be returned
           required: false
           schema:
             $ref: "#/components/schemas/resource/properties/name"
       responses:
         "200":
-          $ref: "#/components/responses/schemagroupsGetResponse"
+          $ref: "#/components/responses/schemaGroupsGetResponse"
         "404":
           description: No groups found 
     post:
-      operationId: postSchemagroups
+      operationId: postSchemaGroups
       requestBody:
-        $ref: "#/components/requestBodies/schemagroupsPostRequest"
+        $ref: "#/components/requestBodies/schemaGroupsPostRequest"
       responses:
         "201":
-          $ref: "#/components/responses/schemagroupsPostResponse"
+          $ref: "#/components/responses/schemaGroupsPostResponse"
         "400":
           description: Bad Request - constraint failure
         "409":
           description: Conflict - epoch not greater
     delete:
-      operationId: deleteSchemagroups
+      operationId: deleteSchemaGroups
       requestBody:
-        $ref: "#/components/requestBodies/schemagroupsDeleteRequest"
+        $ref: "#/components/requestBodies/schemaGroupsDeleteRequest"
       responses:
         "200":
-          $ref: "#/components/responses/schemagroupsDeleteResponse"
+          $ref: "#/components/responses/schemaGroupsDeleteResponse"
         "400":
           description: Bad Request - constraint failure
         "409":
@@ -329,7 +368,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/schemagroup"
+                $ref: "#/components/schemas/schemaGroup"
         "400":
           description: Bad Request - constraint failure
         "404":
@@ -338,10 +377,10 @@ paths:
       operationId: putSchemagroup
       description: this creates or updates the schema group
       requestBody:
-        $ref: "#/components/requestBodies/schemagroupPutRequest"
+        $ref: "#/components/requestBodies/schemaGroupPutRequest"
       responses:
         "200":
-          $ref: "#/components/responses/schemagroupPutResponse"
+          $ref: "#/components/responses/schemaGroupPutResponse"
         "400":
           description: Bad Request - constraint failure
         "404":
@@ -359,7 +398,7 @@ paths:
             $ref: "#/components/schemas/resource/properties/epoch"
       responses:
         "200":
-          $ref: "#/components/responses/schemagroupsDeleteResponse"
+          $ref: "#/components/responses/schemaGroupsDeleteResponse"
         "400":
           description: Bad Request - constraint failure
         "409":
@@ -424,10 +463,10 @@ paths:
         "404":
           description: Not Found
     post:
-      summary: Register schema
+      summary: Register schema version
       description: >
-        Register schema.
-        If schema of specified name does not exist in specified group, schema is created at version 1.
+        Register schema version
+        If schema of specified name does not exist in specified group, schema and schema version is created at version 1.
         If schema of specified name exists already in specified group, schema is created at latest version + 1.
         If schema with identical content already exists, existing schema's ID is returned. 
       operationId: registerSchemaDocument
@@ -448,14 +487,24 @@ paths:
         - $ref: "#/components/parameters/schemaid"
         - $ref: "#/components/parameters/versionid"
     get:
+      parameters:
+        - in: query
+          description: >
+             optional parameter that indicates (true) that the document 
+             metadata shall be returned instead of the document
+          name: metadata
+          schema:
+            type: boolean
       operationId: getSchemaVersion
+      description: Gets the document stored for the schema version or its metadata (?metadata) 
       responses:
         "200":
-            description: The corresponding schema
+            description: The schema version document or its metadata (requested with ?metadata)
             content:
-            application/json:
-                schema:
-                $ref: "#/components/schemas/schema"
+              application/octet-stream: {}
+              application/json:
+                  schema:
+                     $ref: "#/components/schemas/schemaversion"
         "400":
             description: Bad Request - constraint failure
         "404":
@@ -570,34 +619,34 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/definitionReferences"
-    definitionsPutRequest:
+    definitionPostRequest:
       description: A request to create or update the discovery definition's collection of definitions with the given definition
       required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/definition"
-    schemagroupsPostRequest:
+    schemaGroupsPostRequest:
       description: A request to create new schema groups
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemagroups"
-    schemagroupsDeleteRequest:
+            $ref: "#/components/schemas/schemaGroups"
+    schemaGroupsDeleteRequest:
       description: A request to remove the given schemagroups 
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemagroupReferences"
-    schemagroupPutRequest:
+            $ref: "#/components/schemas/schemaGroupReferences"
+    schemaGroupPutRequest:
       description: A request to create or update the discovery group's collection of schemagroups with the given group
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemagroup"
+            $ref: "#/components/schemas/schemaGroup"
     schemasPutRequest:
       description: A request to create or update the discovery definition's collection of schemas with the given schemas
       required: true
@@ -619,7 +668,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/schemaversion"
-        application/octet-stream: {}
+        "application/octet-stream; schemaformat=avro": {}
           
   responses:
     endpointsPostResponse:
@@ -682,8 +731,14 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/definitions"
-    definitionsPutResponse:
-      description: A Definition Reference referencing the updated Definition
+    definitionPostResponse:
+      description: Returns the accepted definition 
+      headers:
+        Location:
+           description: URI of the created definition
+           schema:
+             type: string
+             format: uri
       content:
         application/json:
           schema:
@@ -694,36 +749,36 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/definition"
-    schemagroupsGetResponse:
+    schemaGroupsGetResponse:
       description: A list of the resulting Group values resulting from processing the request, in the same order as in the request
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemagroups"
-    schemagroupsPostResponse:
+            $ref: "#/components/schemas/schemaGroups"
+    schemaGroupsPostResponse:
       description: A list of the resulting Group values resulting from processing the request, in the same order as in the request
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemagroups"
-    schemagroupsDeleteResponse:
+            $ref: "#/components/schemas/schemaGroups"
+    schemaGroupsDeleteResponse:
       description: A list of the Groups that were deleted
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemagroups"
-    schemagroupPutResponse:
+            $ref: "#/components/schemas/schemaGroups"
+    schemaGroupPutResponse:
       description: A Group Reference referencing the updated Group
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemagroup"
-    schemagroupDeleteResponse:
+            $ref: "#/components/schemas/schemaGroup"
+    schemaGroupDeleteResponse:
       description: The Group that was deleted
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemagroup"
+            $ref: "#/components/schemas/schemaGroup"
     schemasPutResponse:
       description: A list of the resulting Definition values resulting from processing the request, in the same order as in the request
       content:
@@ -743,11 +798,17 @@ components:
           schema:
             $ref: "#/components/schemas/schema"
     registerSchemaDocumentResponse:
-      description: The Definition that was created
+      description: Newly created schema version metadata
+      headers:
+         Location:
+            description: The URI of the created schema version
+            schema:
+              type: string
+              format: uri
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schema"
+            $ref: "#/components/schemas/schemaversion"
     schemaVersionDeleteResponse:
       description: The Definition that was deleted
       content:
@@ -1253,39 +1314,51 @@ components:
       allOf: 
         - $ref : "#/components/schemas/endpointOptions" 
         - type: object
-    schemagroupReference:
+    schemaGroupReference:
       type: object
       properties:
         id:
           $ref: "#/components/schemas/resource/properties/id"
         epoch:
           $ref: "#/components/schemas/resource/properties/epoch"
-    schmemagroupReferences:
+    schemaGroupReferences:
       type: array
       items:
-        $ref: "#/components/schemas/schemagroupReference"
-    schmemagroupUriReferences:
+        $ref: "#/components/schemas/schemaGroupReference"
+    schemaGroupUriReferences:
       type: array
       items:
         type: string
         format: uri
-    schemagroups:
+    schemaGroups:
       type: object
       description: A collection of schemagroups
       additionalProperties:
-        $ref: "#/components/schemas/schemagroup"  
-    schemagroup:
+        $ref: "#/components/schemas/schemaGroup"  
+    schemaGroup:
       allOf:
         - $ref: "#/components/schemas/resource"
         - type: object
           properties:
             format:
               type: string
-              description: Specifies the `format` of the schema
+              description: Specifies the format of all schemas in this group
+              example: ["json", "avro", "xsd", "protobuf"]
             schemas:
               $ref: "#/components/schemas/schemas"
             schemagroups:
-              $ref: "#/components/schemas/schemagroups"           
+              $ref: "#/components/schemas/schemaGroups"           
+    schemaReference:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/resource/properties/id"
+        epoch:
+          $ref: "#/components/schemas/resource/properties/epoch"
+    schemaReferences:
+      type: array
+      items:
+        $ref: "#/components/schemas/schemaReference"
     schemas:
       type: object
       description: A collection of schemas
@@ -1307,12 +1380,12 @@ components:
        allOf:
         - $ref: "#/components/schemas/resource"
         - type: object
-          description: a schema version
+          description: a schema version (a document)
           properties:
             schemaurl:
               type: string
               description: A URL to the schema document.
               format: uri
-            schema:
+            schemaobject:
               type: object
               description: An in-line definition of the schema document (JSON).

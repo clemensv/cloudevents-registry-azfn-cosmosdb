@@ -1,17 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 using Azure.Messaging;
 using Azure.Messaging.EventGrid;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow.Schemas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Threading.Tasks;
 using PartitionKey = Microsoft.Azure.Cosmos.PartitionKey;
 
 namespace Azure.CloudEvents.Discovery
@@ -30,6 +28,9 @@ namespace Azure.CloudEvents.Discovery
             this.cosmosClient = cosmosClient;
             this.eventGridClient = eventGridClient;
         }
+
+
+
 
         [Function("endpoints_get")]
         public async Task<HttpResponseData> Endpoints(
@@ -534,28 +535,21 @@ namespace Azure.CloudEvents.Discovery
 
         }
 
-#if later
 
-        [Function("schema_get")]
-        public async Task<HttpResponseData> Schema(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemas/{id}")]
+
+        [Function("schemaGroup_get")]
+        public async Task<HttpResponseData> GetSchemaGroup(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemagroups/{id}")]
             HttpRequestData req,
             string id,
             ILogger log)
         {
             var container = this.cosmosClient.GetContainer("discovery", "schemas");
 
-            if (id.Equals("self", StringComparison.InvariantCultureIgnoreCase))
-            {
-                var res = req.CreateResponse(HttpStatusCode.OK);
-                await res.WriteAsJsonAsync(GetSelfReference(new Uri(req.Url.GetLeftPart(UriPartial.Path))));
-                return res;
-            }
-
             try
             {
 
-                var existingItem = await container.ReadItemAsync<Schema>(id, new PartitionKey(id));
+                var existingItem = await container.ReadItemAsync<SchemaGroup>(id, new PartitionKey(id));
                 var res = req.CreateResponse(HttpStatusCode.OK);
                 await res.WriteAsJsonAsync(existingItem.Resource);
                 return res;
@@ -573,9 +567,9 @@ namespace Azure.CloudEvents.Discovery
 
 
 
-        [Function("schema_put")]
-        public async Task<HttpResponseData> SchemaPut(
-            [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "schemas/{id}")]
+        [Function("schemaGroup_put")]
+        public async Task<HttpResponseData> SchemaGroupPut(
+            [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "schemagroups/{id}")]
             HttpRequestData req,
             string id,
             ILogger log)
@@ -583,18 +577,18 @@ namespace Azure.CloudEvents.Discovery
             var container = this.cosmosClient.GetContainer("discovery", "schemas");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            Schema schema = JsonConvert.DeserializeObject<Schema>(requestBody);
+            SchemaGroup schemaGroup = JsonConvert.DeserializeObject<SchemaGroup>(requestBody);
             try
             {
-                var existingItem = await container.ReadItemAsync<Schema>(schema.Id, new PartitionKey(schema.Id));
-                if (schema.Epoch <= existingItem.Resource.Epoch)
+                var existingItem = await container.ReadItemAsync<SchemaGroup>(schemaGroup.Id, new PartitionKey(schemaGroup.Id));
+                if (schemaGroup.Epoch <= existingItem.Resource.Epoch)
                 {
                     // define code & response
                     return req.CreateResponse(HttpStatusCode.Conflict);
                 }
-                var result1 = await container.UpsertItemAsync<Schema>(schema);
+                var result1 = await container.UpsertItemAsync<SchemaGroup>(schemaGroup);
 
-                var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, schema);
+                var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, schemaGroup);
                 await this.eventGridClient.SendEventAsync(createdEvent);
 
                 var res1 = req.CreateResponse(HttpStatusCode.OK);
@@ -611,9 +605,9 @@ namespace Azure.CloudEvents.Discovery
 
             try
             {
-                var result = await container.CreateItemAsync<Schema>(schema, new PartitionKey(schema.Id));
+                var result = await container.CreateItemAsync<SchemaGroup>(schemaGroup, new PartitionKey(schemaGroup.Id));
 
-                var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, schema);
+                var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, schemaGroup);
                 await this.eventGridClient.SendEventAsync(createdEvent);
 
                 var res = req.CreateResponse(HttpStatusCode.OK);
@@ -627,9 +621,9 @@ namespace Azure.CloudEvents.Discovery
 
         }
 
-        [Function("schema_delete")]
-        public async Task<HttpResponseData> SchemaDelete(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemas/{id}")]
+        [Function("schemaGroup_delete")]
+        public async Task<HttpResponseData> SchemaGroupDelete(
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemagroups/{id}")]
             HttpRequestData req,
             string id,
             ILogger log)
@@ -641,7 +635,7 @@ namespace Azure.CloudEvents.Discovery
             try
             {
                 var existingItem = await container.ReadItemAsync<SchemaReference>(service.Id, new PartitionKey(service.Id));
-                var result = await container.DeleteItemAsync<Schema>(service.Id, new PartitionKey(service.Id));
+                var result = await container.DeleteItemAsync<SchemaGroup>(service.Id, new PartitionKey(service.Id));
 
                 var deletedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, service);
                 await this.eventGridClient.SendEventAsync(deletedEvent);
@@ -661,23 +655,22 @@ namespace Azure.CloudEvents.Discovery
         }
 
 
-        [Function("schemas_get")]
+        [Function("schemaGroups_get")]
         public async Task<HttpResponseData> Schemas(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemas")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemagroups")]
             HttpRequestData req,
             ILogger log)
         {
-            Schemas schemas = new Schemas();
+            SchemaGroups schemas = new SchemaGroups();
             var self = GetSelfReference(new Uri(req.Url.GetLeftPart(UriPartial.Path)));
-            schemas.Add(self.Id, self);
             var container = this.cosmosClient.GetContainer("discovery", "schemas");
-            using (FeedIterator<Schema> resultSet = container.GetItemQueryIterator<Schema>())
+            using (FeedIterator<SchemaGroup> resultSet = container.GetItemQueryIterator<SchemaGroup>())
             {
                 while (resultSet.HasMoreResults)
                 {
-                    foreach (var ep1 in await resultSet.ReadNextAsync())
+                    foreach (var grp in await resultSet.ReadNextAsync())
                     {
-                        schemas.Add(ep1.Id, ep1);
+                        schemas.Add(grp.Id, grp);
                     }
                 }
             }
@@ -686,123 +679,16 @@ namespace Azure.CloudEvents.Discovery
             return res;
         }
 
-        [Function("schemas_post")]
-        public async Task<HttpResponseData> SchemasPost(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "schemas")]
-            HttpRequestData req,
-            ILogger log)
-        {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            Schemas requestSchemas = JsonConvert.DeserializeObject<Schemas>(requestBody);
-            Schemas responseSchemas = new Schemas();
-            if (requestSchemas == null)
-            {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
-            }
-
-            var container = this.cosmosClient.GetContainer("discovery", "schemas");
-
-            foreach (var service in requestSchemas.Values)
-            {
-
-                try
-                {
-                    var existingItem = await container.ReadItemAsync<Schema>(service.Id, new PartitionKey(service.Id));
-                    if (existingItem.StatusCode == HttpStatusCode.OK)
-                    {
-                        if (service.Epoch <= existingItem.Resource.Epoch)
-                        {
-                            // define code & response
-                            return req.CreateResponse(HttpStatusCode.Conflict);
-                        }
-                        var result = await container.UpsertItemAsync<Schema>(service);
-                        responseSchemas.Add(result.Resource.Id, result.Resource);
-
-                        var changedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), ChangedEventType, service);
-                        await this.eventGridClient.SendEventAsync(changedEvent);
-                    }
-                    else
-                    {
-
-                        var result = await container.CreateItemAsync<Schema>(service);
-                        responseSchemas.Add(result.Resource.Id, result.Resource);
-
-                        var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, service);
-                        await this.eventGridClient.SendEventAsync(createdEvent);
-                    }
-                }
-                catch (CosmosException)
-                {
-                    return req.CreateResponse(HttpStatusCode.BadRequest);
-
-                }
-            }
-            var res = req.CreateResponse(HttpStatusCode.OK);
-            await res.WriteAsJsonAsync(responseSchemas);
-            return res;
-
-        }
-
-        [Function("schemas_delete")]
-        public async Task<HttpResponseData> SchemasDelete(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemas")]
-            HttpRequestData req,
-            ILogger log)
-        {
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            List<SchemaReference> requestServices = JsonConvert.DeserializeObject<List<SchemaReference>>(requestBody);
-            Schemas responseSchemas = new Schemas();
-            if (requestServices == null)
-            {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
-            }
-
-            var container = this.cosmosClient.GetContainer("discovery", "schemas");
-
-            foreach (var service in requestServices)
-            {
-
-                try
-                {
-                    var existingItem = await container.ReadItemAsync<Schema>(service.Id, new PartitionKey(service.Id));
-                    if (existingItem.StatusCode == HttpStatusCode.OK)
-                    {
-                        var result = await container.DeleteItemAsync<Schema>(service.Id, new PartitionKey(service.Id));
-                        responseSchemas.Add(existingItem.Resource.Id, existingItem.Resource);
-
-                        var deletedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, existingItem);
-                        await this.eventGridClient.SendEventAsync(deletedEvent);
-                    }
-
-                }
-                catch (CosmosException)
-                {
-                    return req.CreateResponse(HttpStatusCode.BadRequest);
-
-                }
-            }
-            var res = req.CreateResponse(HttpStatusCode.OK);
-            await res.WriteAsJsonAsync(responseSchemas);
-            return res;
-
-        }
 
         [Function("schema_get")]
-        public async Task<HttpResponseData> Schema(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemas/{id}")]
+        public async Task<HttpResponseData> SchemaGet(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemagroups/{id}/schemas/{schemaid}")]
             HttpRequestData req,
             string id,
+            string schemaid,
             ILogger log)
         {
             var container = this.cosmosClient.GetContainer("discovery", "schemas");
-
-            if (id.Equals("self", StringComparison.InvariantCultureIgnoreCase))
-            {
-                var res = req.CreateResponse(HttpStatusCode.OK);
-                await res.WriteAsJsonAsync(GetSelfReference(new Uri(req.Url.GetLeftPart(UriPartial.Path))));
-                return res;
-            }
 
             try
             {
@@ -823,11 +709,12 @@ namespace Azure.CloudEvents.Discovery
 
         }
 
-        [Function("schema_put")]
-        public async Task<HttpResponseData> SchemaPut(
-            [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "schemas/{id}")]
+        [Function("schema_post")]
+        public async Task<HttpResponseData> SchemaPost(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "schemagroups/{id}/schemas/{schemaid}")]
             HttpRequestData req,
             string id,
+            string schemaid,
             ILogger log)
         {
             var container = this.cosmosClient.GetContainer("discovery", "schemas");
@@ -878,10 +765,11 @@ namespace Azure.CloudEvents.Discovery
         }
 
         [Function("schema_delete")]
-        public async Task<HttpResponseData> SchemaDelete(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemas/{id}")]
+        public async Task<HttpResponseData> DeleteSchema(
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemagroups/{id}/schemas/{schemaid}")]
             HttpRequestData req,
             string id,
+            string schemaid,
             ILogger log)
         {
             var container = this.cosmosClient.GetContainer("discovery", "schemas");
@@ -909,7 +797,7 @@ namespace Azure.CloudEvents.Discovery
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
-#endif
+
 
         Endpoint GetSelfReference(Uri baseUri)
         {
