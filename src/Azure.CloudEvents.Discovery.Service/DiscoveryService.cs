@@ -341,8 +341,8 @@ namespace Azure.CloudEvents.Discovery
         public async Task<HttpResponseData> GetGroups<T, TDict>(
             HttpRequestData req,
             ILogger log,
-            Container container) 
-                where T : Resource, new() 
+            Container container)
+                where T : Resource, new()
                 where TDict : IDictionary<string, T>, new()
         {
             TDict groupDict = new TDict();
@@ -805,12 +805,69 @@ namespace Azure.CloudEvents.Discovery
             }
 
         }
-        public async Task<HttpResponseData> DeleteResource<T>(
+
+
+        public async Task<HttpResponseData> PostResourceVersion<T>(
             HttpRequestData req,
             string groupid,
             string id,
             ILogger log,
-            Container container) where T : Resource
+            Container container,
+            Action<T> add) where T : Resource, new()
+        {
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            T resource = JsonConvert.DeserializeObject<T>(requestBody);
+            try
+            {
+                var existingItem = await container.ReadItemAsync<T>(resource.Id, new PartitionKey(groupid));
+                
+                var result1 = await container.UpsertItemAsync<T>(resource, new PartitionKey(groupid));
+
+                if (eventGridClient != null)
+                {
+                    var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, resource);
+                    await this.eventGridClient.SendEventAsync(createdEvent);
+                }
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                await response.WriteAsJsonAsync(result1.Resource);
+                return response;
+            }
+            catch (CosmosException ce)
+            {
+                if (ce.StatusCode != HttpStatusCode.NotFound)
+                {
+                    throw;
+                }
+            }
+
+            try
+            {
+                var result = await container.CreateItemAsync<T>(resource, new PartitionKey(groupid));
+
+                if (eventGridClient != null)
+                {
+                    var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resource);
+                    await this.eventGridClient.SendEventAsync(createdEvent);
+                }
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                await response.WriteAsJsonAsync(result.Resource);
+                return response;
+            }
+            catch (CosmosException ce)
+            {
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
+        }
+
+        public async Task<HttpResponseData> DeleteResource<T>(
+        HttpRequestData req,
+        string groupid,
+        string id,
+        ILogger log,
+        Container container) where T : Resource
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             Reference reference = JsonConvert.DeserializeObject<Reference>(requestBody);
