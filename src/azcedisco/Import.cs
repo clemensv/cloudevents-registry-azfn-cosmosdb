@@ -25,7 +25,7 @@ namespace azcedisco
                 Group createdGroup = null;
                 try
                 {
-                    createdGroup = await client.PutGroupAsync(group.Id, group);
+                    createdGroup = await client.PutGroupAsync(group, group.Id);
                 }
                 catch (ApiException apiException)
                 {
@@ -44,7 +44,7 @@ namespace azcedisco
                 Endpoint createdService = null;
                 try
                 {
-                    createdService = await client.PutEndpointAsync(endpoint.Id, endpoint);
+                    createdService = await client.PutEndpointAsync(endpoint, endpoint.Id);
                 }
                 catch (ApiException apiException)
                 {

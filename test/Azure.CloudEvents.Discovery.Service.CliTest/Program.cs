@@ -91,7 +91,7 @@ namespace Azure.CloudEvents.Discovery
                 bool correct = false;
                 try
                 {
-                    await client.PutEndpointAsync(existingService.Id, existingService);
+                    await client.PutEndpointAsync(existingService, existingService.Id);
                     throw new InvalidOperationException("Must not get here because we did not update the Eppch");
                 }
                 catch (ApiException apiException)
@@ -106,7 +106,7 @@ namespace Azure.CloudEvents.Discovery
                     throw new Exception("Epoch validation failed");
                 }
                 existingService.Epoch += 1;
-                await client.PutEndpointAsync(existingService.Id, existingService);
+                await client.PutEndpointAsync(existingService, existingService.Id );
                 Console.WriteLine($"Updated: Id {existingService.Id}, Epoch {existingService.Epoch}");
             }
 
@@ -115,8 +115,8 @@ namespace Azure.CloudEvents.Discovery
                 var existingService = await client.GetEndpointAsync(i.ToString());
 
                 await client.DeleteEndpointAsync(
-                    existingService.Id,
-                    existingService.Epoch);
+                    existingService.Epoch, existingService.Id
+                    );
 
                 Console.WriteLine($"Deleted: Id {existingService.Id}, Epoch {existingService.Epoch}");
             }

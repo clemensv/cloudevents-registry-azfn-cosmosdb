@@ -816,13 +816,15 @@ components:
           schema:
             $ref: "#/components/schemas/schemaversion"
   schemas:
-    groupReference:
+    reference:
       type: object
       properties:
         id:
           $ref: "#/components/schemas/resource/properties/id"
         epoch:
           $ref: "#/components/schemas/resource/properties/epoch"
+    groupReference:
+      $ref: "#/components/schemas/reference"
     groupReferences:
       type: array
       items:
@@ -849,12 +851,7 @@ components:
             groups:
               $ref: "#/components/schemas/groups"
     definitionReference:
-      type: object
-      properties:
-        id:
-          $ref: "#/components/schemas/resource/properties/id"
-        epoch:
-          $ref: "#/components/schemas/resource/properties/epoch"
+      $ref: "#/components/schemas/reference"
     definitionReferences:
       type: array
       items:
@@ -1198,12 +1195,7 @@ components:
               value:
                 type: string
     endpointReference:
-      type: object
-      properties:
-        id:
-          $ref: "#/components/schemas/resource/properties/id"
-        epoch:
-          $ref: "#/components/schemas/resource/properties/epoch"
+      $ref: "#/components/schemas/reference"
     endpointReferences:
       type: array
       items:
@@ -1349,12 +1341,7 @@ components:
             schemagroups:
               $ref: "#/components/schemas/schemaGroups"           
     schemaReference:
-      type: object
-      properties:
-        id:
-          $ref: "#/components/schemas/resource/properties/id"
-        epoch:
-          $ref: "#/components/schemas/resource/properties/epoch"
+      $ref: "#/components/schemas/reference"
     schemaReferences:
       type: array
       items:
