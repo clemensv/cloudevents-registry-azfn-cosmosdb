@@ -1,6 +1,7 @@
-using Azure.CloudEvents.Discovery.Service;
 using Azure.Messaging;
 using Azure.Messaging.EventGrid;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -9,9 +10,13 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using PartitionKey = Microsoft.Azure.Cosmos.PartitionKey;
+using Container = Microsoft.Azure.Cosmos.Container;
+using System.Threading;
 
 namespace Azure.CloudEvents.Discovery
 {
@@ -24,11 +29,13 @@ namespace Azure.CloudEvents.Discovery
 
         private CosmosClient cosmosClient;
         private readonly EventGridPublisherClient eventGridClient;
+        private BlobContainerClient schemasBlobClient;
 
-        public DiscoveryService(CosmosClient cosmosClient, EventGridPublisherClient eventGridClient)
+        public DiscoveryService(CosmosClient cosmosClient, EventGridPublisherClient eventGridClient, BlobServiceClient blobClient)
         {
             this.cosmosClient = cosmosClient;
             this.eventGridClient = eventGridClient;
+            this.schemasBlobClient = blobClient.GetBlobContainerClient("schemas");
         }
 
 
@@ -219,8 +226,7 @@ namespace Azure.CloudEvents.Discovery
             HttpRequestData req,
             ILogger log)
         {
-            var self = GetSelfReference(new Uri(req.Url.GetLeftPart(UriPartial.Path)));
-            return await GetGroups<SchemaGroup, SchemaGroups>(req, log, this.cosmosClient.GetContainer("discovery", "schemaGroups"));
+            return await GetGroups<SchemaGroup, SchemaGroups>(req, log, this.cosmosClient.GetContainer("discovery", "schemagroups"));
         }
 
         [Function("postSchemaGroups")]
@@ -229,7 +235,7 @@ namespace Azure.CloudEvents.Discovery
             HttpRequestData req,
             ILogger log)
         {
-            return await PostGroups<SchemaGroup, SchemaGroups>(req, log, this.cosmosClient.GetContainer("discovery", "schemaGroups"));
+            return await PostGroups<SchemaGroup, SchemaGroups>(req, log, this.cosmosClient.GetContainer("discovery", "schemagroups"));
         }
 
         [Function("deleteSchemaGroups")]
@@ -238,7 +244,7 @@ namespace Azure.CloudEvents.Discovery
             HttpRequestData req,
             ILogger log)
         {
-            return await DeleteGroups<Reference, SchemaGroup, SchemaGroups>(req, log, this.cosmosClient.GetContainer("discovery", "schemaGroups"));
+            return await DeleteGroups<Reference, SchemaGroup, SchemaGroups>(req, log, this.cosmosClient.GetContainer("discovery", "schemagroups"));
         }
 
         [Function("getSchemaGroup")]
@@ -248,7 +254,7 @@ namespace Azure.CloudEvents.Discovery
             string id,
             ILogger log)
         {
-            return await GetGroup<SchemaGroup>(req, id, log, this.cosmosClient.GetContainer("discovery", "schemaGroups"));
+            return await GetGroup<SchemaGroup>(req, id, log, this.cosmosClient.GetContainer("discovery", "schemagroups"));
         }
 
         [Function("putSchemaGroup")]
@@ -258,7 +264,7 @@ namespace Azure.CloudEvents.Discovery
            string id,
            ILogger log)
         {
-            return await PutGroup<SchemaGroup>(req, id, log, this.cosmosClient.GetContainer("discovery", "schemaGroups"));
+            return await PutGroup<SchemaGroup>(req, id, log, this.cosmosClient.GetContainer("discovery", "schemagroups"));
         }
 
         [Function("deleteSchemaGroup")]
@@ -268,7 +274,7 @@ namespace Azure.CloudEvents.Discovery
             string id,
             ILogger log)
         {
-            return await DeleteGroup<SchemaGroup>(req, id, log, this.cosmosClient.GetContainer("discovery", "schemaGroups"));
+            return await DeleteGroup<SchemaGroup>(req, id, log, this.cosmosClient.GetContainer("discovery", "schemagroups"));
         }
 
 
@@ -316,13 +322,108 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("putSchema")]
         public async Task<HttpResponseData> PutSchema(
-           [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "schemaGroups/{schemaGroupid}/schemas/{id}")]
+           [HttpTrigger(AuthorizationLevel.Function, "put", Route = "schemaGroups/{schemaGroupid}/schemas/{id}")]
             HttpRequestData req,
            string schemaGroupid,
            string id,
            ILogger log)
         {
             return await PutResource<Schema>(req, schemaGroupid, id, log, this.cosmosClient.GetContainer("discovery", "schemas"));
+        }
+
+        [Function("postSchemaVersion")]
+        public async Task<HttpResponseData> PostSchemaVersion(
+           [HttpTrigger(AuthorizationLevel.Function, "post", Route = "schemaGroups/{schemaGroupid}/schemas/{id}")]
+            HttpRequestData req,
+           string schemaGroupid,
+           string id,
+           ILogger log)
+        {
+            var self = $"schemagroups/{schemaGroupid}/schemas/{id}";
+            var container = this.cosmosClient.GetContainer("discovery", "schemas");
+            var contentType = req.Headers.GetValues("Content-Type").First();
+
+            if (contentType != "application/json")
+            {
+                Schemaversion schemaversion = new()
+                {
+                    Id = id
+                };
+
+                try
+                {
+                    var existingContainer = await container.ReadItemAsync<Schema>(id, new PartitionKey(self));
+                    var nextVersion = existingContainer.Resource.Versions.Values.Max(v => int.Parse(v.Version)) + 1;
+                    schemaversion.Version = nextVersion.ToString();
+                    existingContainer.Resource.Versions.Add(schemaversion.Version, schemaversion);
+
+                    var path = $"{self}/versions/{schemaversion.Version}";
+                    var blobClient = this.schemasBlobClient.GetBlobClient(path);
+                    await blobClient.UploadAsync(req.Body, new BlobUploadOptions() { HttpHeaders = new BlobHttpHeaders { ContentType = contentType } }, CancellationToken.None);
+                                       
+                    var result1 = await container.UpsertItemAsync<Schema>(existingContainer.Resource, new PartitionKey(self));
+                    if (eventGridClient != null)
+                    {
+                        var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, schemaversion);
+                        await this.eventGridClient.SendEventAsync(createdEvent);
+                    }
+
+                    var response = req.CreateResponse(HttpStatusCode.Created);
+                    response.Headers.Add("Location", new Uri(req.Url, "versions/" + schemaversion.Version).ToString());
+                    await response.WriteAsJsonAsync(result1.Resource);
+
+                    return response;
+                }
+                catch (CosmosException ce)
+                {
+                    if (ce.StatusCode != HttpStatusCode.NotFound)
+                    {
+                        throw;
+                    }
+                }
+
+                try
+                {
+                    
+
+                    Schema schema = new Schema();
+                    schema.Id = id;
+                    schema.Self = new Uri(self, UriKind.Relative);
+                    schema.Versions = new Dictionary<string, ResourceWithVersion>();
+                    schema.Versions.Add("1", schemaversion);
+                    schemaversion.Version = "1";
+                                        
+                    var path = $"{self}/versions/{schemaversion.Version}";
+                    var blobClient = this.schemasBlobClient.GetBlobClient(path);
+                    await blobClient.UploadAsync(req.Body, new BlobUploadOptions() { HttpHeaders = new BlobHttpHeaders { ContentType = contentType } }, CancellationToken.None);
+
+                    var result = await container.CreateItemAsync<Schema>(schema, new PartitionKey(self));
+
+                    if (eventGridClient != null)
+                    {
+                        var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, schemaversion);
+                        await this.eventGridClient.SendEventAsync(createdEvent);
+                    }
+
+                    var response = req.CreateResponse(HttpStatusCode.Created);
+                    response.Headers.Add("Location", new Uri(req.Url, "/" + path).ToString());
+                    await response.WriteAsJsonAsync(result.Resource);
+                    return response;
+                }
+                catch (CosmosException ce)
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                }
+                catch(Exception ex)
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                }
+
+            }
+            else
+            {
+                return await PostResourceVersion<Schemaversion, Schema>(req, schemaGroupid, id, log, container);
+            }
         }
 
         [Function("deleteSchema")]
@@ -334,6 +435,45 @@ namespace Azure.CloudEvents.Discovery
             ILogger log)
         {
             return await DeleteResource<Schema>(req, schemaGroupid, id, log, this.cosmosClient.GetContainer("discovery", "schemas"));
+        }
+
+        [Function("getSchemaVersion")]
+        public async Task<HttpResponseData> GetSchemaVersion(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemaGroups/{schemaGroupid}/schemas/{id}/versions/{versionid}")]
+            HttpRequestData req,
+            string schemaGroupid,
+            string id,
+            string versionid,
+            ILogger log)
+        {
+            var queryDictionary = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(req.Url.Query);
+            if (queryDictionary.ContainsKey("metadata"))
+            {
+                if (queryDictionary["metadata"].First().ToLower() != "false")
+                {
+                    return await GetResourceVersion<Schemaversion, Schema>(req, schemaGroupid, id, versionid, log, this.cosmosClient.GetContainer("discovery", "schemas"));
+                }
+            }
+            else
+            {
+                var blobClient = schemasBlobClient.GetBlobClient(req.Url.AbsolutePath);
+                if (!await blobClient.ExistsAsync())
+                {
+                    var res = req.CreateResponse(HttpStatusCode.NotFound);
+                    return res;
+                }
+                else
+                {
+                    var props = await blobClient.GetPropertiesAsync();
+                    var contentType = props.Value.ContentType;
+                    var res = req.CreateResponse(HttpStatusCode.OK);
+                    res.Headers.Add("Content-Type", contentType);
+                    res.Body = blobClient.OpenRead();
+                    return res;
+
+                }
+            }
+            return req.CreateResponse(HttpStatusCode.InternalServerError);
         }
 
         // --------------------------------------------------------------------------------------------------
@@ -559,16 +699,15 @@ namespace Azure.CloudEvents.Discovery
             ILogger log,
             Container container) where T : Resource
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            Reference reference = JsonConvert.DeserializeObject<Reference>(requestBody);
+            
             try
             {
-                var existingResource = await container.ReadItemAsync<Reference>(reference.Id, new PartitionKey(reference.Id));
-                var result = await container.DeleteItemAsync<T>(reference.Id, new PartitionKey(reference.Id));
+                var existingResource = await container.ReadItemAsync<Reference>(id, new PartitionKey(id));
+                var result = await container.DeleteItemAsync<T>(id, new PartitionKey(id));
 
                 if (this.eventGridClient != null)
                 {
-                    var deletedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, reference);
+                    var deletedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, existingResource.Resource);
                     await this.eventGridClient.SendEventAsync(deletedEvent);
                 }
 
@@ -807,31 +946,64 @@ namespace Azure.CloudEvents.Discovery
         }
 
 
-        public async Task<HttpResponseData> PostResourceVersion<T>(
+        public async Task<HttpResponseData> GetResourceVersion<T, TV>(
+            HttpRequestData req,
+            string groupid,
+            string id,
+            string versionid,
+            ILogger log,
+            Container container) where T : ResourceWithVersion
+                                 where TV : ResourceWithVersionedResources, new()
+        {
+            try
+            {
+                var existingContainer = await container.ReadItemAsync<TV>(id, new PartitionKey(groupid));
+                if (existingContainer.Resource.Versions.ContainsKey(versionid))
+                {
+                    var response = req.CreateResponse(HttpStatusCode.OK);
+                    await response.WriteAsJsonAsync(existingContainer.Resource.Versions[versionid]);
+                    return response;
+                }
+            }
+            catch (CosmosException ce)
+            {
+                if (ce.StatusCode != HttpStatusCode.NotFound)
+                {
+                    throw;
+                }
+            }
+            return req.CreateResponse(HttpStatusCode.NotFound);
+        }
+
+        public async Task<HttpResponseData> PostResourceVersion<T, TV>(
             HttpRequestData req,
             string groupid,
             string id,
             ILogger log,
-            Container container,
-            Action<T> add) where T : Resource, new()
+            Container container) where T : ResourceWithVersion
+                                 where TV : ResourceWithVersionedResources, new()
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             T resource = JsonConvert.DeserializeObject<T>(requestBody);
             try
             {
-                var existingItem = await container.ReadItemAsync<T>(resource.Id, new PartitionKey(groupid));
-                
-                var result1 = await container.UpsertItemAsync<T>(resource, new PartitionKey(groupid));
-
+                var existingContainer = await container.ReadItemAsync<TV>(resource.Id, new PartitionKey(groupid));
+                var nextVersion = existingContainer.Resource.Versions.Values.Max(v => int.Parse(v.Version)) + 1;
+                resource.Version = nextVersion.ToString();
+                existingContainer.Resource.Versions.Add(resource.Version, resource);
+                var result1 = await container.UpsertItemAsync<TV>(existingContainer.Resource, new PartitionKey(groupid));
                 if (eventGridClient != null)
                 {
-                    var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, resource);
+                    var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resource);
                     await this.eventGridClient.SendEventAsync(createdEvent);
                 }
 
-                var response = req.CreateResponse(HttpStatusCode.OK);
+                var response = req.CreateResponse(HttpStatusCode.Created);
+                response.Headers.Add("Location", new Uri(req.Url, "versions/" + resource.Version).ToString());
                 await response.WriteAsJsonAsync(result1.Resource);
+
                 return response;
+
             }
             catch (CosmosException ce)
             {
@@ -843,7 +1015,10 @@ namespace Azure.CloudEvents.Discovery
 
             try
             {
-                var result = await container.CreateItemAsync<T>(resource, new PartitionKey(groupid));
+                TV newContainer = new TV();
+                newContainer.Id = id;
+                newContainer.Versions.Add("1", resource);
+                var result = await container.CreateItemAsync<TV>(newContainer, new PartitionKey(groupid));
 
                 if (eventGridClient != null)
                 {

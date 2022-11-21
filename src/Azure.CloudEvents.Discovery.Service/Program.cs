@@ -1,6 +1,8 @@
 using Azure.CloudEvents.EventGridBridge;
 using Azure.Core.Serialization;
 using Azure.Messaging.EventGrid;
+using Azure.Storage;
+using Azure.Storage.Blobs;
 using Microsoft.Azure.Cosmos.Fluent;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Configuration;
@@ -67,6 +69,29 @@ namespace Azure.CloudEvents.Discovery
                 }
 
                 return new EventGridPublisherClient(new Uri(endpoint), new AzureKeyCredential(authKey));
+            });
+
+            endpoints.AddSingleton((s) =>
+            {
+                string endpoint = hostBuilder.Configuration["BLOB_ENDPOINT"];
+                if (string.IsNullOrEmpty(endpoint))
+                {
+                    throw new ArgumentNullException("Please specify a valid endpoint in the appSettings.json file or your Azure Functions Settings.");
+                }
+
+                string authName = hostBuilder.Configuration["BLOB_ACCOUNT"];
+                if (string.IsNullOrEmpty(authName) || string.Equals(authName, "Account name"))
+                {
+                    throw new ArgumentException("Please specify a valid AuthorizationKey in the appSettings.json file or your Azure Functions Settings.");
+                }
+
+                string authKey = hostBuilder.Configuration["BLOB_KEY"];
+                if (string.IsNullOrEmpty(authKey) || string.Equals(authKey, "Super secret key"))
+                {
+                    throw new ArgumentException("Please specify a valid AuthorizationKey in the appSettings.json file or your Azure Functions Settings.");
+                }
+
+                return new BlobServiceClient(new Uri(endpoint), new StorageSharedKeyCredential(authName, authKey));
             });
 
             endpoints.AddSingleton<SubscriptionProxy>((s) =>

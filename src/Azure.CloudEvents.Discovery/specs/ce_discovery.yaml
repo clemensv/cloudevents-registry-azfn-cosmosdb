@@ -96,7 +96,7 @@ paths:
             $ref: "#/components/schemas/resource/properties/epoch"
       responses:
         "200":
-          $ref: "#/components/responses/endpointsDeleteResponse"
+          $ref: "#/components/responses/endpointDeleteResponse"
         "400":
           description: Bad Request - constraint failure
         "409":
@@ -165,10 +165,10 @@ paths:
     put:
       operationId: putGroup
       requestBody:
-        $ref: "#/components/requestBodies/groupsPutRequest"
+        $ref: "#/components/requestBodies/groupPutRequest"
       responses:
         "200":
-          $ref: "#/components/responses/groupsPutResponse"
+          $ref: "#/components/responses/groupPutResponse"
         "400":
           description: Bad Request - constraint failure
         "404":
@@ -187,7 +187,7 @@ paths:
             $ref: "#/components/schemas/resource/properties/epoch"
       responses:
         "200":
-          $ref: "#/components/responses/groupsDeleteResponse"
+          $ref: "#/components/responses/groupDeleteResponse"
         "400":
           description: Bad Request - constraint failure
         "409":
@@ -455,9 +455,10 @@ paths:
         "200":
           description: The corresponding schema
           content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/schema"
+            application/octet-stream: {}
+            application/schema; schemaformat=json: {}
+            application/schema; schemaformat=avro: {}
+            application/schema; schemaformat=proto: {}
         "400":
           description: Bad Request - constraint failure
         "404":
@@ -470,11 +471,34 @@ paths:
         If schema of specified name exists already in specified group, schema is created at latest version + 1.
         If schema with identical content already exists, existing schema's ID is returned. 
       operationId: registerSchemaDocument
+      parameters:
+        - in: header
+          description: description
+          name: description
+          schema:
+            type: string
+        - in: header
+          description: format
+          name: format
+          schema:
+            type: string
       requestBody:
-        $ref: "#/components/requestBodies/registerSchemaDocumentRequest"
+         description: A request to add a new schema document to the schema's document collection
+         required: true
+         content:
+           application/octet-stream: {}
+           application/schema; schemaformat=json: {}
+           application/schema; schemaformat=avro: {}
+           application/schema; schemaformat=proto: {}
       responses:
         "201":
-          $ref: "#/components/responses/registerSchemaDocumentResponse"
+         description: A request to add a new schema document to the schema's document collection
+         required: true
+         content:
+           application/octet-stream: {}
+           application/schema; schemaformat=json: {}
+           application/schema; schemaformat=avro: {}
+           application/schema; schemaformat=proto: {} 
         "400":
           description: Bad Request - constraint failure
         "404":
@@ -661,15 +685,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/schemasReferences"
-    registerSchemaDocumentRequest:
-      description: A request to add a new schema document to the schema's document collection
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/schemaversion"
-        "application/octet-stream; schemaformat=avro": {}
-          
   responses:
     endpointsPostResponse:
       description: A list of the resulting Endpoint values resulting from processing the request, in the same order as in the request
@@ -707,7 +722,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/groups"
-    groupsPutResponse:
+    groupPutResponse:
       description: A Group Reference referencing the updated Group
       content:
         application/json:
@@ -839,10 +854,6 @@ components:
         - $ref: "#/components/schemas/resource"
         - type: object
           properties:
-            type:
-              type: string
-              description: CloudEvents type attribute
-              example: com.github.pull.create, com.example.object.delete.v2
             format:
               type: string
               description: Specifies the `format` value of the Definitions associated with this Endpoint.
@@ -1154,7 +1165,6 @@ components:
       description: A set of Definition Groups.
       additionalProperties:
         $ref: "#/components/schemas/group"
-
     resource:
       type: object
       properties:
@@ -1194,6 +1204,25 @@ components:
                 type: string
               value:
                 type: string
+    resourceWithVersion:
+      allOf:
+        - $ref: "#/components/schemas/resource"
+        - type: object
+          description: resource with version identifier
+          properties:
+             version:
+                type: string
+                description: Server assigned version identifier. 
+    resourceWithVersionedResources:
+      allOf:
+        - $ref: "#/components/schemas/resource"
+        - type: object
+          description: collection of versioned resources
+          properties:
+             versions:
+                type: object
+                additionalProperties:
+                    $ref: "#/components/schemas/resourceWithVersion"
     endpointReference:
       $ref: "#/components/schemas/reference"
     endpointReferences:
@@ -1353,19 +1382,17 @@ components:
         $ref: "#/components/schemas/schema"  
     schema:
        allOf:
-        - $ref: "#/components/schemas/resource"
+        - $ref: "#/components/schemas/resourceWithVersionedResources"
         - type: object
           description: a schema is a collection of schema version documents that describe semantically the same data item
           versions:
-              $ref: "#/components/schemas/schemaversions"
-    schemaversions:
-      type: object
-      description: A collection of schema versions
-      additionalProperties:
-        $ref: "#/components/schemas/schemaversion"  
+              type: object
+              description: A collection of schema versions
+              additionalProperties:
+                $ref: "#/components/schemas/schemaversion"  
     schemaversion:
        allOf:
-        - $ref: "#/components/schemas/resource"
+        - $ref: "#/components/schemas/resourceWithVersion"
         - type: object
           description: a schema version (a document)
           properties:
