@@ -8,7 +8,7 @@ env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: src\Microsoft.Azure.EventGrid.CloudEventsApis\published
   AZURE_FUNCTIONAPP_PUBLISH_PROFILE: ${{ secrets.CEDISCOVERYINTEROP_FFFF }}
   CONFIGURATION: Release
-  DOTNET_VERSION: 5.0.x
+  DOTNET_VERSION: 6.0.x
   WORKING_DIRECTORY: src\Azure.CloudEvents.Discovery.Service
   DISCOVERY_DIRECTORY: src\Azure.CloudEvents.Discovery
   SCHEMA_DIRECTORY: src\Azure.CloudEvents.SchemaRegistry
@@ -18,14 +18,10 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@master
-    - name: Setup .NET 5.0
+    - name: Setup .NET 6.0
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-    - name: Setup .NET 3.1
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '3.1.x'
     - name: Restore Service
       run: dotnet restore "${{ env.WORKING_DIRECTORY }}"
     - name: Restore Discovery
