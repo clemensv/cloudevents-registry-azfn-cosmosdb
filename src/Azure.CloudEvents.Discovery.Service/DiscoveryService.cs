@@ -1027,6 +1027,7 @@ namespace Azure.CloudEvents.Discovery
                 }
 
                 var response = req.CreateResponse(HttpStatusCode.Created);
+                response.Headers.Add("Location", new Uri(req.Url, "versions/" + resource.Version).ToString());
                 await response.WriteAsJsonAsync(result.Resource);
                 return response;
             }
