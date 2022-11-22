@@ -1026,7 +1026,7 @@ namespace Azure.CloudEvents.Discovery
                     await this.eventGridClient.SendEventAsync(createdEvent);
                 }
 
-                var response = req.CreateResponse(HttpStatusCode.OK);
+                var response = req.CreateResponse(HttpStatusCode.Created);
                 await response.WriteAsJsonAsync(result.Resource);
                 return response;
             }
