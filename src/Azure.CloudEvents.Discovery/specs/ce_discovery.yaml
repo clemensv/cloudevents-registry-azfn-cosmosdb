@@ -1,8 +1,8 @@
-openapi: "3.1.0"
+openapi: "3.0.0"
 info:
   title: CloudEvents discovery API
   description: CloudEvents discovery API specification according to [Discovery - Version 0.1-wip](https://github.com/cloudevents/spec/blob/main/discovery/spec.md#endpoint).
-  version: "0.1-WIP"
+  version: "0.5-WIP"
 servers:
   - url: https://api.cloudevents.io/test/v0.1
 paths:
@@ -455,22 +455,23 @@ paths:
         "200":
           description: The corresponding schema
           content:
-            application/octet-stream: {}
-            application/schema; schemaformat=json: {}
-            application/schema; schemaformat=avro: {}
-            application/schema; schemaformat=proto: {}
+            application/octet-stream:              
+              schema:
+                # a binary file of any type
+                type: string
+                format: binary
         "400":
           description: Bad Request - constraint failure
         "404":
           description: Not Found
     post:
-      summary: Register schema version
+      summary: Post new schema version
       description: >
         Register schema version
         If schema of specified name does not exist in specified group, schema and schema version is created at version 1.
         If schema of specified name exists already in specified group, schema is created at latest version + 1.
         If schema with identical content already exists, existing schema's ID is returned. 
-      operationId: registerSchemaDocument
+      operationId: postSchemaDocument
       parameters:
         - in: header
           description: description
@@ -484,51 +485,80 @@ paths:
             type: string
       requestBody:
          description: A request to add a new schema document to the schema's document collection
-         required: true
          content:
-           application/octet-stream: {}
-           application/schema; schemaformat=json: {}
-           application/schema; schemaformat=avro: {}
-           application/schema; schemaformat=proto: {}
+           application/octet-stream: 
+              schema:
+                # a binary file of any type
+                type: string
+                format: binary
       responses:
         "201":
          description: A request to add a new schema document to the schema's document collection
-         required: true
          content:
-           application/octet-stream: {}
-           application/schema; schemaformat=json: {}
-           application/schema; schemaformat=avro: {}
-           application/schema; schemaformat=proto: {} 
+           application/octet-stream:
+              schema:
+                # a binary file of any type
+                type: string
+                format: binary
         "400":
           description: Bad Request - constraint failure
         "404":
           description: Not Found
         "409":
           description: Conflict - epoch not greater
+  /schemagroups/{schemagroupid}/schemas/{schemaid}?meta:
+    parameters:
+        - $ref: "#/components/parameters/schemagroupid"
+        - $ref: "#/components/parameters/schemaid"
+    get:
+      operationId: getLatestSchemaMetadata
+      responses:
+        "200":
+          description: The corresponding schema
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/schemaversion"
+        "400":
+          description: Bad Request - constraint failure
+        "404":
+          description: Not Found
+    put:
+      operationId: updateLatestSchemaVersionMetadata
+      description: Updates metadata of the document stored for the schema version
+      requestBody:
+        content:
+            application/json:
+                schema:
+                    $ref: "#/components/schemas/schemaversion"
+      responses:
+        "200":
+            description: The metadata of the schema version document
+            content:
+              application/json:
+                  schema:
+                     $ref: "#/components/schemas/schemaversion"
+        "400":
+            description: Bad Request - constraint failure
+        "404":
+            description: Not Found
   /schemagroups/{schemagroupid}/schemas/{schemaid}/versions/{versionid}: 
     parameters:
         - $ref: "#/components/parameters/schemagroupid"
         - $ref: "#/components/parameters/schemaid"
         - $ref: "#/components/parameters/versionid"
     get:
-      parameters:
-        - in: query
-          description: >
-             optional parameter that indicates (true) that the document 
-             metadata shall be returned instead of the document
-          name: metadata
-          schema:
-            type: boolean
       operationId: getSchemaVersion
-      description: Gets the document stored for the schema version or its metadata (?metadata) 
+      description: Gets the document stored for the schema version
       responses:
         "200":
-            description: The schema version document or its metadata (requested with ?metadata)
+            description: The schema version document
             content:
-              application/octet-stream: {}
-              application/json:
-                  schema:
-                     $ref: "#/components/schemas/schemaversion"
+              application/octet-stream:
+                schema:
+                  # a binary file of any type
+                  type: string
+                  format: binary
         "400":
             description: Bad Request - constraint failure
         "404":
@@ -542,6 +572,44 @@ paths:
           description: Bad Request - constraint failure
         "409":
           description: Conflict - epoch not greater
+  /schemagroups/{schemagroupid}/schemas/{schemaid}/versions/{versionid}?meta: 
+    parameters:
+        - $ref: "#/components/parameters/schemagroupid"
+        - $ref: "#/components/parameters/schemaid"
+        - $ref: "#/components/parameters/versionid"
+    get:
+      operationId: getSchemaVersionMetadata
+      description: Gets metadata of the document stored for the schema version
+      responses:
+        "200":
+            description: The metadata of the schema version document
+            content:
+              application/json:
+                  schema:
+                     $ref: "#/components/schemas/schemaversion"
+        "400":
+            description: Bad Request - constraint failure
+        "404":
+            description: Not Found
+    put:
+      operationId: updateSchemaVersionMetadata
+      description: Updates metadata of the document stored for the schema version
+      requestBody:
+        content:
+            application/json:
+                schema:
+                    $ref: "#/components/schemas/schemaversion"
+      responses:
+        "200":
+            description: The metadata of the schema version document
+            content:
+              application/json:
+                  schema:
+                     $ref: "#/components/schemas/schemaversion"
+        "400":
+            description: Bad Request - constraint failure
+        "404":
+            description: Not Found
 components:
   parameters:
     id:
@@ -550,141 +618,139 @@ components:
       description: The id of the endpoint
       required: true
       schema:
-        $ref: "#/components/schemas/resource/properties/id"
+        type: string
+        description: A unique identifier 
+        format: uri-reference
     groupid:
       in: path
       name: groupid
       description: The id of the group
       required: true
       schema:
-        $ref: "#/components/schemas/resource/properties/id"
+        type: string
+        description: A unique identifier 
+        format: uri-reference
     defid:
       in: path
       name: defid
       description: The id of the definition
       required: true
       schema:
-        $ref: "#/components/schemas/resource/properties/id"
+        type: string
+        description: A unique identifier 
+        format: uri-reference
     schemaid:
       in: path
       name: schemaid
       description: The id of the schema
       required: true
       schema:
-        $ref: "#/components/schemas/resource/properties/id"
+        type: string
+        description: A unique identifier 
+        format: uri-reference
     schemagroupid:
       in: path
       name: schemagroupid
       description: The id of the schemagroup
       required: true
       schema:
-        $ref: "#/components/schemas/resource/properties/id"
+        type: string
+        description: A unique identifier 
+        format: uri-reference
     versionid:
       in: path
       name: versionid
       description: The id of the schema
       required: true
       schema:
-        $ref: "#/components/schemas/resource/properties/id"
+        type: string
+        description: A unique identifier 
+        format: uri-reference
   requestBodies:
     endpointsPostRequest:
       description: A request to create or update the discovery endpoint's collection of endpoints with the given endpoints
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/endpoints"
     endpointsDeleteRequest:
       description: A request to remove the given endpoints from the discovery endpoint's collection of endpoints
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/endpointReferences"
     endpointsPutRequest:
       description: A request to create or update the discovery endpoint's collection of endpoints with the given endpoint
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/endpoint"
     groupsPostRequest:
       description: A request to create or update the discovery group's collection of groups with the given groups
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/groups"
     groupsDeleteRequest:
       description: A request to remove the given groups from the discovery group's collection of groups
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/groupReferences"
-    groupsPutRequest:
+    groupPutRequest:
       description: A request to create or update the discovery group's collection of groups with the given group
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/group"
     definitionsPostRequest:
       description: A request to create or update the discovery definition's collection of definitions with the given definitions
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/definitions"
     definitionsDeleteRequest:
       description: A request to remove the given definitions from the discovery definition's collection of definitions
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/definitionReferences"
     definitionPostRequest:
       description: A request to create or update the discovery definition's collection of definitions with the given definition
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/definition"
     schemaGroupsPostRequest:
       description: A request to create new schema groups
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/schemaGroups"
     schemaGroupsDeleteRequest:
       description: A request to remove the given schemagroups 
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/schemaGroupReferences"
     schemaGroupPutRequest:
       description: A request to create or update the discovery group's collection of schemagroups with the given group
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/schemaGroup"
     schemasPutRequest:
       description: A request to create or update the discovery definition's collection of schemas with the given schemas
-      required: true
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/schemas"
     schemasDeleteRequest:
       description: A request to remove the given schemas from the discovery definition's collection of schemas
-      required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemasReferences"
+            $ref: "#/components/schemas/schemaReferences"
   responses:
     endpointsPostResponse:
       description: A list of the resulting Endpoint values resulting from processing the request, in the same order as in the request
@@ -835,9 +901,13 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/resource/properties/id"
+          type: string
+          description: A unique identifier 
+          format: uri-reference
         epoch:
-          $ref: "#/components/schemas/resource/properties/epoch"
+          type: integer
+          description: A number representing the version number of the resource.
+          format: int64
     groupReference:
       $ref: "#/components/schemas/reference"
     groupReferences:
@@ -893,7 +963,7 @@ components:
             format:
               type: string
               description: Specifies the `format` value of the Definitions associated with this Endpoint.
-              const: "CloudEvents/1.0"
+#              const: "CloudEvents/1.0"
               default: "CloudEvents/1.0"
             metadata:
               $ref: "#/components/schemas/cloudEventMetadata"
@@ -905,7 +975,7 @@ components:
             format:
               type: string
               description: Specifies the `format` value of the Definitions associated with this Endpoint.
-              const: "AMQP/1.0"
+#              const: "AMQP/1.0"
               default: "AMQP/1.0"
             metadata:
               $ref: "#/components/schemas/amqpMetadata"
@@ -917,7 +987,7 @@ components:
             format:
               type: string
               description: Specifies the `format` value of the Definitions associated with this Endpoint.
-              const: "MQTT/5.0"
+#              const: "MQTT/5.0"
               default: "MQTT/5.0"
             metadata:
               $ref: "#/components/schemas/mqttMetadata"
@@ -1038,7 +1108,7 @@ components:
             $ref: "#/components/schemas/metadataPropertyUriTemplate"
         datacontenttype:
             $ref: "#/components/schemas/metadataPropertySymbol"
-      additionalProperties":
+      additionalProperties:
         $ref: "#/components/schemas/metadataProperty"
     metadataPropertyBase:
       type: object
@@ -1197,7 +1267,6 @@ components:
         tags:
           type: array
           items:
-            name: tag
             type: object
             properties: 
               name: 
@@ -1339,9 +1408,13 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/resource/properties/id"
+          type: string
+          description: A unique identifier 
+          format: uri-reference
         epoch:
-          $ref: "#/components/schemas/resource/properties/epoch"
+          type: integer
+          description: A number representing the version number of the resource.
+          format: int64
     schemaGroupReferences:
       type: array
       items:
@@ -1385,7 +1458,8 @@ components:
         - $ref: "#/components/schemas/resourceWithVersionedResources"
         - type: object
           description: a schema is a collection of schema version documents that describe semantically the same data item
-          versions:
+          properties:
+            versions:
               type: object
               description: A collection of schema versions
               additionalProperties:

@@ -266,3 +266,4 @@ __pycache__/
 *.pyc
 /src/ce-disco/Properties/launchSettings.json
 /src/Microsoft.Azure.EventGrid.CloudEventsApis/Properties/launchSettings.json
+/src/Azure.CloudEvents.Discovery/specs/openapitools.json

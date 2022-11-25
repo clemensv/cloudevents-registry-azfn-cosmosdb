@@ -389,7 +389,7 @@ namespace Azure.CloudEvents.Discovery
                     Schema schema = new Schema();
                     schema.Id = id;
                     schema.Self = new Uri(self, UriKind.Relative);
-                    schema.Versions = new Dictionary<string, ResourceWithVersion>();
+                    schema.Versions = new Dictionary<string, Schemaversion>();
                     schema.Versions.Add("1", schemaversion);
                     schemaversion.Version = "1";
                                         

@@ -12,8 +12,11 @@ namespace Azure.CloudEvents.Discovery
     {
         static async Task Main(string[] args)
         {
-            DiscoveryClient client = new DiscoveryClient(new HttpClient());
-            client.BaseUrl = "http://localhost:11000/";
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("x-functions-key", "Ojw5RfuXwu3NNvHRKvcOiS2/W8/c4hAIUwAV/UQHjyUwxgz5lzafSA==");
+            DiscoveryClient client = new DiscoveryClient(httpClient);
+            client.BaseUrl = "https://cediscoveryinterop.azurewebsites.net/";
+            
             Console.WriteLine($"----- Existing endpoints -----");
             try
             {
@@ -260,13 +263,15 @@ namespace Azure.CloudEvents.Discovery
                     {
                         Schema schema = new()
                         {
-                            Id = $"Group{i} Event1",
-                            Description = $"Group{i} Event1"
+                            Id = $"schema{i}.{j}",
+                            Description = $"schema{i}.{j}"
                         };
 
                         string schemaText = "This is a fake schema format";
 
-                        await client.RegisterSchemaDocumentAsync("", "text", new FileParameter(new MemoryStream(Encoding.UTF8.GetBytes(schemaText)), "", "application/schema; format=text"), SchemaGroup.Id, schema.Id); ;
+                        await client.PostSchemaDocumentAsync("", "text", 
+                            new MemoryStream(Encoding.UTF8.GetBytes(schemaText)), 
+                            SchemaGroup.Id, schema.Id); ;
 
                     }
                     
