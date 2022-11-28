@@ -18,6 +18,7 @@ using PartitionKey = Microsoft.Azure.Cosmos.PartitionKey;
 using Container = Microsoft.Azure.Cosmos.Container;
 using System.Threading;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using System.ComponentModel;
 
 namespace Azure.CloudEvents.Discovery
 {
@@ -122,8 +123,8 @@ namespace Azure.CloudEvents.Discovery
             HttpRequestData req,
             ILogger log)
         {
-            var self = GetSelfReference(new Uri(req.Url.GetLeftPart(UriPartial.Path)));
-            return await GetGroups<Group, Groups>(req, log, this.cosmosClient.GetContainer("discovery", "groups"));
+            var container = this.cosmosClient.GetContainer("discovery", "groups");
+            return await GetGroups<Group, Groups>(req, log, container);
         }
 
         [Function("postGroups")]
@@ -178,62 +179,234 @@ namespace Azure.CloudEvents.Discovery
         [Function("getDefinitions")]
         public async Task<HttpResponseData> GetGroupDefinitions(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "groups/{groupid}/definitions")]
+            string groupid,
             HttpRequestData req,
             ILogger log)
         {
-            var self = GetSelfReference(new Uri(req.Url.GetLeftPart(UriPartial.Path)));
-            return await GetGroups<Definition, Definitions>(req, log, this.cosmosClient.GetContainer("discovery", "definitions"));
+            var container = this.cosmosClient.GetContainer("discovery", "groups");
+            try
+            {
+                var existingItem = await container.ReadItemAsync<Group>(groupid, new PartitionKey(groupid));
+                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
+                var res = req.CreateResponse(HttpStatusCode.OK);
+                await res.WriteAsJsonAsync(existingItem.Resource.Definitions);
+                return res;
+            }
+            catch (CosmosException ce)
+            {
+                if (ce.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
         }
 
         [Function("postDefinitions")]
         public async Task<HttpResponseData> PostGroupDefinitions(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "groups/{groupid}/definitions")]
+            string groupid,
             HttpRequestData req,
             ILogger log)
         {
-            return await PostGroups<Definition, Definitions>(req, log, this.cosmosClient.GetContainer("discovery", "definitions"));
+            var container = this.cosmosClient.GetContainer("discovery", "groups");
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            Definitions groups = JsonConvert.DeserializeObject<Definitions>(requestBody);
+            if (groups == null)
+            {
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
+            try
+            {
+                var existingItem = await container.ReadItemAsync<Group>(groupid, new PartitionKey(groupid));
+                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
+                foreach(var definition in groups)
+                {
+                    if (existingItem.Resource.Definitions.ContainsKey(definition.Key))
+                    {
+                        existingItem.Resource.Definitions[definition.Key] = definition.Value;
+                    }
+                    else
+                    {
+                        existingItem.Resource.Definitions.Add(definition.Key, definition.Value);
+                    }
+                }
+                await container.UpsertItemAsync<Group>(existingItem, new PartitionKey(groupid));
+                var res = req.CreateResponse(HttpStatusCode.OK);
+                await res.WriteAsJsonAsync(existingItem.Resource.Definitions);
+                return res;
+            }
+            catch (CosmosException ce)
+            {
+                if (ce.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
         }
 
         [Function("deleteDefinitions")]
         public async Task<HttpResponseData> DeleteGroupDefinitions(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "groups/{groupid}/definitions")]
             HttpRequestData req,
+            string groupid,
             ILogger log)
         {
-            return await DeleteGroups<Reference, Definition, Definitions>(req, log, this.cosmosClient.GetContainer("discovery", "definitions"));
+            var container = this.cosmosClient.GetContainer("discovery", "groups");
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            Definitions groups = JsonConvert.DeserializeObject<Definitions>(requestBody);
+            if (groups == null)
+            {
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
+            try
+            {
+                var existingItem = await container.ReadItemAsync<Group>(groupid, new PartitionKey(groupid));
+                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
+                existingItem.Resource.Definitions.Clear();
+                await container.UpsertItemAsync<Group>(existingItem, new PartitionKey(groupid));
+                var res = req.CreateResponse(HttpStatusCode.OK);
+                await res.WriteAsJsonAsync(existingItem.Resource.Definitions);
+                return res;
+            }
+            catch (CosmosException ce)
+            {
+                if (ce.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
         }
 
         [Function("getDefinition")]
-        public async Task<HttpResponseData> GetDefinitionDefinition(
+        public async Task<HttpResponseData> GetDefinition(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "groups/{groupid}/definitions/{id}")]
             HttpRequestData req,
             string groupid,
             string id,
             ILogger log)
         {
-            return await GetResource<Definition>(req, groupid, id, log, this.cosmosClient.GetContainer("discovery", "definitions"));
+            var container = this.cosmosClient.GetContainer("discovery", "groups");
+            try
+            {
+                var existingItem = await container.ReadItemAsync<Group>(groupid, new PartitionKey(groupid));
+                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
+                if (existingItem.Resource.Definitions.ContainsKey(id))
+                {
+                    var res = req.CreateResponse(HttpStatusCode.OK);
+                    await res.WriteAsJsonAsync(existingItem.Resource.Definitions[id]);
+                    return res;
+                }
+                else
+                {
+                    var res = req.CreateResponse(HttpStatusCode.NotFound);
+                    return res;
+                }
+            }
+            catch (CosmosException ce)
+            {
+                if (ce.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
         }
 
         [Function("putDefinition")]
-        public async Task<HttpResponseData> PutDefinitionDefinition(
+        public async Task<HttpResponseData> PutDefinition(
            [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "groups/{groupid}/definitions/{id}")]
             HttpRequestData req,
            string groupid,
            string id,
            ILogger log)
         {
-            return await PutResource<Definition>(req, groupid, id, log, this.cosmosClient.GetContainer("discovery", "definitions"));
+            var container = this.cosmosClient.GetContainer("discovery", "groups");
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            Definition definition = JsonConvert.DeserializeObject<Definition>(requestBody);
+            if (definition == null)
+            {
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
+            try
+            {
+                var existingItem = await container.ReadItemAsync<Group>(groupid, new PartitionKey(groupid));
+                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
+                if (existingItem.Resource.Definitions.ContainsKey(id))
+                {
+                    existingItem.Resource.Definitions[id] = definition;
+                }
+                else
+                {
+                    existingItem.Resource.Definitions.Add(id, definition);
+                }
+                
+                await container.UpsertItemAsync<Group>(existingItem, new PartitionKey(groupid));
+                var res = req.CreateResponse(HttpStatusCode.OK);
+                await res.WriteAsJsonAsync(existingItem.Resource.Definitions);
+                return res;
+            }
+            catch (CosmosException ce)
+            {
+                if (ce.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
         }
 
         [Function("deleteDefinition")]
-        public async Task<HttpResponseData> DeleteDefinitionDefinition(
+        public async Task<HttpResponseData> DeleteDefinition(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "groups/{groupid}/definitions/{id}")]
             HttpRequestData req,
             string groupid,
             string id,
             ILogger log)
         {
-            return await DeleteResource<Definition>(req, groupid, id, log, this.cosmosClient.GetContainer("discovery", "definitions"));
+            var container = this.cosmosClient.GetContainer("discovery", "groups");
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            Definition definition = JsonConvert.DeserializeObject<Definition>(requestBody);
+            if (definition == null)
+            {
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
+            try
+            {
+                var existingItem = await container.ReadItemAsync<Group>(groupid, new PartitionKey(groupid));
+                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
+                if (existingItem.Resource.Definitions.ContainsKey(id))
+                {
+                    existingItem.Resource.Definitions.Remove(id);
+                    await container.UpsertItemAsync<Group>(existingItem, new PartitionKey(groupid));
+                    var res = req.CreateResponse(HttpStatusCode.OK);
+                    return res;
+                }
+                else
+                {
+                    existingItem.Resource.Definitions.Add(id, definition);
+                    var res = req.CreateResponse(HttpStatusCode.NotFound);
+                    return res;
+                }
+            }
+            catch (CosmosException ce)
+            {
+                if (ce.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
         }
 
         [Function("getSchemaGroups")]
