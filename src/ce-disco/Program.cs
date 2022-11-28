@@ -60,7 +60,13 @@ namespace ce_disco
                     var types = new List<string>();
                     foreach (var serviceEvent in service.Definitions.Values)
                     {
-                        types.Add(((CloudEventDefinition)serviceEvent).Metadata.Type.Value);
+                        if (serviceEvent is CloudEventDefinition)
+                        {
+                            if (((CloudEventDefinition)serviceEvent).Metadata.Attributes != null)
+                            {
+                                types.Add(((CloudEventDefinition)serviceEvent).Metadata.Attributes.Type.Value);
+                            }
+                        }
                     }
 
                     SubscriptionRequest subscriptionRequest = new SubscriptionRequest()

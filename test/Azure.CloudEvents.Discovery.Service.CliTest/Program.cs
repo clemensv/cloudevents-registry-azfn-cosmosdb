@@ -16,7 +16,7 @@ namespace Azure.CloudEvents.Discovery
             httpClient.DefaultRequestHeaders.Add("x-functions-key", args[0]);
             DiscoveryClient client = new DiscoveryClient(httpClient);
             client.BaseUrl = "https://cediscoveryinterop.azurewebsites.net/";
-            
+
             Console.WriteLine($"----- Existing endpoints -----");
             try
             {
@@ -45,8 +45,8 @@ namespace Azure.CloudEvents.Discovery
                         {
                             Description = $"Endpoint{i} Event1",
                             Metadata = new CloudEventMetadata {
-                                Type = new MetadataPropertyString {
-                                    Value = $"Endpoint{i}.Event1",
+                                Attributes = new Attributes { 
+                                    Type = new MetadataPropertyString { Value = $"Endpoint{i}.Event1" } 
                                 }
                             }
                         } },
@@ -55,9 +55,11 @@ namespace Azure.CloudEvents.Discovery
                             Description = $"Endpoint{i} Event2",
                             Metadata = new CloudEventMetadata
                             {
-                                Type = new MetadataPropertyString
-                                {
-                                    Value = $"Endpoint{i}.Event2"
+                                Attributes = new Attributes{
+                                    Type = new MetadataPropertyString
+                                    {
+                                        Value = $"Endpoint{i}.Event2"
+                                    }
                                 }
                             }
                         } }
@@ -155,9 +157,10 @@ namespace Azure.CloudEvents.Discovery
                         {
                             Description = $"Group{i} Event1",
                             Metadata = new CloudEventMetadata {
-                                Type = new MetadataPropertyString {
+                                Attributes = new Attributes{
+                                    Type = new MetadataPropertyString {
                                     Value = $"Group{i}.Event1",
-                                }
+                                } }
                             }
                         } },
                         { $"Group{i} Event2",new CloudEventDefinition
@@ -165,9 +168,11 @@ namespace Azure.CloudEvents.Discovery
                             Description = $"Group{i} Event2",
                             Metadata = new CloudEventMetadata
                             {
-                                Type = new MetadataPropertyString
-                                {
-                                    Value = $"Group{i}.Event2"
+                                Attributes= new Attributes {
+                                    Type = new MetadataPropertyString
+                                    {
+                                        Value = $"Group{i}.Event2"
+                                    }
                                 }
                             }
                         } }
@@ -251,7 +256,7 @@ namespace Azure.CloudEvents.Discovery
                 {
                     Id = i.ToString(),
                     Description = $"This is service {i}",
-                   
+
                 };
 
                 SchemaGroup createdGroup = null;
@@ -269,12 +274,12 @@ namespace Azure.CloudEvents.Discovery
 
                         string schemaText = "This is a fake schema format";
 
-                        await client.PostSchemaDocumentAsync("", "text", 
-                            new MemoryStream(Encoding.UTF8.GetBytes(schemaText)), 
+                        await client.PostSchemaDocumentAsync("", "text",
+                            new MemoryStream(Encoding.UTF8.GetBytes(schemaText)),
                             SchemaGroup.Id, schema.Id); ;
 
                     }
-                    
+
                     Console.WriteLine($"Created: Id {createdGroup.Id}, Version {createdGroup.Version}");
                 }
                 catch (ApiException apiException)

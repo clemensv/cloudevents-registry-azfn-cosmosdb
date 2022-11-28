@@ -80,32 +80,36 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                         {
                             Metadata = new CloudEventMetadata
                             {
-                                Id = new MetadataPropertyString
+                                Attributes = new Attributes
                                 {
-                                    Required = true
-                                },
-                                Type = new MetadataPropertyString
-                                {
-                                    Value = eventType.Name,
-                                    Required = true,
-                                },
-                                Time = new MetadataPropertyDateTime
-                                {
-                                    Required = true,
-                                },
-                                Datacontenttype = new MetadataPropertySymbol
-                                {
-                                    Value = "application/json",
-                                    Required = true
-                                },
-                                Dataschema = new MetadataPropertyUriTemplate
-                                {
-                                    Value = schemaUrl?.ToString(),
-                                    Required = true,
-                                },
-                                Source = new MetadataPropertyUriTemplate
-                                {
-                                    Value = sourcePattern
+
+                                    Id = new MetadataPropertyString
+                                    {
+                                        Required = true
+                                    },
+                                    Type = new MetadataPropertyString
+                                    {
+                                        Value = eventType.Name,
+                                        Required = true,
+                                    },
+                                    Time = new MetadataPropertyDateTime
+                                    {
+                                        Required = true,
+                                    },
+                                    Datacontenttype = new MetadataPropertySymbol
+                                    {
+                                        Value = "application/json",
+                                        Required = true
+                                    },
+                                    Dataschema = new MetadataPropertyUriTemplate
+                                    {
+                                        Value = schemaUrl?.ToString(),
+                                        Required = true,
+                                    },
+                                    Source = new MetadataPropertyUriTemplate
+                                    {
+                                        Value = sourcePattern
+                                    }
                                 }
                             },
                             Schemaurl = schemaUrl,

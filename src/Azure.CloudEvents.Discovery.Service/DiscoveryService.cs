@@ -1285,19 +1285,23 @@ namespace Azure.CloudEvents.Discovery
                     { CreatedEventType,  new CloudEventDefinition()
                     {
                         Metadata = new CloudEventMetadata {
-                            Type = new MetadataPropertyString {
+                            Attributes = new Attributes{
+                                    Type = new MetadataPropertyString {
                                 Value = CreatedEventType,
                                 Required = true
-                            }
+                            } }
                         },
                         Description = "Discovery Endpoint Entry Created",
                     } },
                     { ChangedEventType, new CloudEventDefinition()
                     {
                         Metadata = new CloudEventMetadata {
-                            Type = new MetadataPropertyString {
-                                Value = ChangedEventType,
-                                Required = true
+                            Attributes = new Attributes
+                                {
+                                    Type = new MetadataPropertyString {
+                                    Value = ChangedEventType,
+                                    Required = true
+                                } 
                             }
                         },
                         Description = "Discovery Endpoint Entry Changed"
@@ -1305,9 +1309,8 @@ namespace Azure.CloudEvents.Discovery
                     { DeletedEventType, new CloudEventDefinition()
                     {
                         Metadata = new CloudEventMetadata {
-                            Type = new MetadataPropertyString {
-                                Value = DeletedEventType,
-                                Required = true
+                            Attributes = new Attributes {
+                                Type = new MetadataPropertyString { Value = DeletedEventType, Required = true }
                             }
                         },
                         Description = "Discovery Endpoint Entry Deleted"

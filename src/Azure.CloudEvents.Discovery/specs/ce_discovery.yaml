@@ -1157,22 +1157,25 @@ components:
     cloudEventMetadata:
       type: object
       properties:
-        id:
-            $ref: "#/components/schemas/metadataPropertyString"
-        type:
-            $ref: "#/components/schemas/metadataPropertyString"
-        time:
-            $ref: "#/components/schemas/metadataPropertyDateTime"
-        source:
-            $ref: "#/components/schemas/metadataPropertyUriTemplate"
-        subject:
-            $ref: "#/components/schemas/metadataPropertyString"
-        dataschema:
-            $ref: "#/components/schemas/metadataPropertyUriTemplate"
-        datacontenttype:
-            $ref: "#/components/schemas/metadataPropertySymbol"
-      additionalProperties:
-        $ref: "#/components/schemas/metadataProperty"
+        attributes:
+          type: object
+          properties:
+            id:
+              $ref: "#/components/schemas/metadataPropertyString"
+            type:
+              $ref: "#/components/schemas/metadataPropertyString"
+            time:
+              $ref: "#/components/schemas/metadataPropertyDateTime"
+            source:
+              $ref: "#/components/schemas/metadataPropertyUriTemplate"
+            subject:
+              $ref: "#/components/schemas/metadataPropertyString"
+            dataschema:
+              $ref: "#/components/schemas/metadataPropertyUriTemplate"
+            datacontenttype:
+              $ref: "#/components/schemas/metadataPropertySymbol"
+          additionalProperties:
+            $ref: "#/components/schemas/metadataProperty"
     metadataPropertyBase:
       type: object
       discriminator:
