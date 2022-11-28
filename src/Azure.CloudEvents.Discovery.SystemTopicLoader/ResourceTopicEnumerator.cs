@@ -55,7 +55,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                 Group group = new Group()
                 {
                     Id = info.Key,
-                    Epoch = DateTime.UtcNow.ToFileTimeUtc(),
+                    Version = DateTime.UtcNow.ToFileTimeUtc(),
                     Definitions = new Definitions(),
                     Self = new Uri(authority, "./" + info.Key),
                     Origin = "https://" + authority.Host
@@ -91,7 +91,6 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                                 },
                                 Time = new MetadataPropertyDateTime
                                 {
-                                    Value = null,
                                     Required = true,
                                 },
                                 Datacontenttype = new MetadataPropertySymbol
@@ -132,8 +131,8 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                 Name = resource.Name,
                 Description = $"{resource.Name} {resource.Kind}",
                 Docs = GetDocsUrl(resource.Type),
-                Epoch = (resource.ChangedTime.HasValue ? resource.ChangedTime?.Ticks : resource.CreatedTime?.Ticks) ?? 0,
-                Usage = Usage.Subscriber,
+                Version = (resource.ChangedTime.HasValue ? resource.ChangedTime?.Ticks : resource.CreatedTime?.Ticks) ?? 0,
+                Usage = EndpointUsage.Subscriber,
                 Config = new EndpointConfigSubscriber
                 {
                     Protocol = "HTTP",

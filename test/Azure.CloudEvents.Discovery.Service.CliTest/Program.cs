@@ -13,7 +13,7 @@ namespace Azure.CloudEvents.Discovery
         static async Task Main(string[] args)
         {
             HttpClient httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("x-functions-key", "Ojw5RfuXwu3NNvHRKvcOiS2/W8/c4hAIUwAV/UQHjyUwxgz5lzafSA==");
+            httpClient.DefaultRequestHeaders.Add("x-functions-key", "");
             DiscoveryClient client = new DiscoveryClient(httpClient);
             client.BaseUrl = "https://cediscoveryinterop.azurewebsites.net/";
             
@@ -23,7 +23,7 @@ namespace Azure.CloudEvents.Discovery
                 var endpoints = await client.GetEndpointsAsync(null);
                 foreach (var item in endpoints.Values)
                 {
-                    Console.WriteLine($"Existing: Id {item.Id}, Epoch {item.Epoch}");
+                    Console.WriteLine($"Existing: Id {item.Id}, Version {item.Version}");
                 }
             }
             catch (Exception e)
@@ -62,7 +62,7 @@ namespace Azure.CloudEvents.Discovery
                             }
                         } }
                     },
-                    Usage = Usage.Subscriber,
+                    Usage = EndpointUsage.Subscriber,
                     Config = new EndpointConfigSubscriber
                     {
                         Protocol = "HTTP",
@@ -75,7 +75,7 @@ namespace Azure.CloudEvents.Discovery
                 {
 
                     createdEndpoint = await client.PutEndpointAsync(endpoint, endpoint.Id);
-                    Console.WriteLine($"Created: Id {createdEndpoint.Id}, Epoch {createdEndpoint.Epoch}");
+                    Console.WriteLine($"Created: Id {createdEndpoint.Id}, Version {createdEndpoint.Version}");
                 }
                 catch (ApiException apiException)
                 {
@@ -83,7 +83,7 @@ namespace Azure.CloudEvents.Discovery
                     {
                         throw;
                     }
-                    Console.WriteLine($"Conflict: Id {createdEndpoint?.Id}, Epoch {createdEndpoint?.Epoch}");
+                    Console.WriteLine($"Conflict: Id {createdEndpoint?.Id}, Version {createdEndpoint?.Version}");
                 }
             }
 
@@ -108,11 +108,11 @@ namespace Azure.CloudEvents.Discovery
                 }
                 if (!correct)
                 {
-                    throw new Exception("Epoch validation failed");
+                    throw new Exception("Version validation failed");
                 }
-                existingEndpoint.Epoch += 1;
+                existingEndpoint.Version += 1;
                 await client.PutEndpointAsync(existingEndpoint, existingEndpoint.Id);
-                Console.WriteLine($"Updated: Id {existingEndpoint.Id}, Epoch {existingEndpoint.Epoch}");
+                Console.WriteLine($"Updated: Id {existingEndpoint.Id}, Version {existingEndpoint.Version}");
             }
 
             for (int i = 0; i < 10; i++)
@@ -120,10 +120,10 @@ namespace Azure.CloudEvents.Discovery
                 var existingEndpoint = await client.GetEndpointAsync(i.ToString());
 
                 await client.DeleteEndpointAsync(
-                    existingEndpoint.Epoch, existingEndpoint.Id
+                    existingEndpoint.Version, existingEndpoint.Id
                     );
 
-                Console.WriteLine($"Deleted: Id {existingEndpoint.Id}, Epoch {existingEndpoint.Epoch}");
+                Console.WriteLine($"Deleted: Id {existingEndpoint.Id}, Version {existingEndpoint.Version}");
             }
 
 
@@ -133,7 +133,7 @@ namespace Azure.CloudEvents.Discovery
                 var Groups = await client.GetGroupsAsync(null);
                 foreach (var item in Groups.Values)
                 {
-                    Console.WriteLine($"Existing: Id {item.Id}, Epoch {item.Epoch}");
+                    Console.WriteLine($"Existing: Id {item.Id}, Version {item.Version}");
                 }
             }
             catch (Exception e)
@@ -179,7 +179,7 @@ namespace Azure.CloudEvents.Discovery
                 {
 
                     createdGroup = await client.PutGroupAsync(Group, Group.Id);
-                    Console.WriteLine($"Created: Id {createdGroup.Id}, Epoch {createdGroup.Epoch}");
+                    Console.WriteLine($"Created: Id {createdGroup.Id}, Version {createdGroup.Version}");
                 }
                 catch (ApiException apiException)
                 {
@@ -187,7 +187,7 @@ namespace Azure.CloudEvents.Discovery
                     {
                         throw;
                     }
-                    Console.WriteLine($"Conflict: Id {createdGroup?.Id}, Epoch {createdGroup?.Epoch}");
+                    Console.WriteLine($"Conflict: Id {createdGroup?.Id}, Version {createdGroup?.Version}");
                 }
             }
 
@@ -212,20 +212,20 @@ namespace Azure.CloudEvents.Discovery
                 }
                 if (!correct)
                 {
-                    throw new Exception("Epoch validation failed");
+                    throw new Exception("Version validation failed");
                 }
-                existingGroup.Epoch += 1;
+                existingGroup.Version += 1;
                 await client.PutGroupAsync(existingGroup, existingGroup.Id);
-                Console.WriteLine($"Updated: Id {existingGroup.Id}, Epoch {existingGroup.Epoch}");
+                Console.WriteLine($"Updated: Id {existingGroup.Id}, Version {existingGroup.Version}");
             }
 
             for (int i = 0; i < 10; i++)
             {
                 var existingGroup = await client.GetGroupAsync(i.ToString());
 
-                await client.DeleteGroupAsync(existingGroup.Id, existingGroup.Epoch);
+                await client.DeleteGroupAsync(existingGroup.Id, existingGroup.Version);
 
-                Console.WriteLine($"Deleted: Id {existingGroup.Id}, Epoch {existingGroup.Epoch}");
+                Console.WriteLine($"Deleted: Id {existingGroup.Id}, Version {existingGroup.Version}");
             }
 
 
@@ -235,7 +235,7 @@ namespace Azure.CloudEvents.Discovery
                 var SchemaGroups = await client.GetSchemaGroupsAsync(null);
                 foreach (var item in SchemaGroups.Values)
                 {
-                    Console.WriteLine($"Existing: Id {item.Id}, Epoch {item.Epoch}");
+                    Console.WriteLine($"Existing: Id {item.Id}, Version {item.Version}");
                 }
             }
             catch (Exception e)
@@ -275,7 +275,7 @@ namespace Azure.CloudEvents.Discovery
 
                     }
                     
-                    Console.WriteLine($"Created: Id {createdGroup.Id}, Epoch {createdGroup.Epoch}");
+                    Console.WriteLine($"Created: Id {createdGroup.Id}, Version {createdGroup.Version}");
                 }
                 catch (ApiException apiException)
                 {
@@ -283,7 +283,7 @@ namespace Azure.CloudEvents.Discovery
                     {
                         throw;
                     }
-                    Console.WriteLine($"Conflict: Id {createdGroup?.Id}, Epoch {createdGroup?.Epoch}");
+                    Console.WriteLine($"Conflict: Id {createdGroup?.Id}, Version {createdGroup?.Version}");
                 }
             }
 
@@ -308,20 +308,20 @@ namespace Azure.CloudEvents.Discovery
                 }
                 if (!correct)
                 {
-                    throw new Exception("Epoch validation failed");
+                    throw new Exception("Version validation failed");
                 }
-                existingGroup.Epoch += 1;
+                existingGroup.Version += 1;
                 await client.PutSchemagroupAsync(existingGroup, existingGroup.Id);
-                Console.WriteLine($"Updated: Id {existingGroup.Id}, Epoch {existingGroup.Epoch}");
+                Console.WriteLine($"Updated: Id {existingGroup.Id}, Version {existingGroup.Version}");
             }
 
             for (int i = 0; i < 10; i++)
             {
                 var existingGroup = await client.GetSchemagroupAsync(i.ToString());
 
-                await client.DeleteSchemagroupAsync(existingGroup.Epoch, existingGroup.Id);
+                await client.DeleteSchemagroupAsync(existingGroup.Version, existingGroup.Id);
 
-                Console.WriteLine($"Deleted: Id {existingGroup.Id}, Epoch {existingGroup.Epoch}");
+                Console.WriteLine($"Deleted: Id {existingGroup.Id}, Version {existingGroup.Version}");
             }
 
         }

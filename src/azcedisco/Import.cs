@@ -21,7 +21,7 @@ namespace azcedisco
 
             await foreach (var group in rte.EnumerateSystemDefinitionGroups(new Uri("https://discovery.azure.com/")))
             {
-                group.Epoch = DateTime.UtcNow.ToFileTimeUtc();
+                group.Version = DateTime.UtcNow.ToFileTimeUtc();
                 Group createdGroup = null;
                 try
                 {
@@ -40,7 +40,7 @@ namespace azcedisco
 
             await foreach (var endpoint in rte.EnumerateDiscoveryServicesAsync(new Uri("https://discovery.azure.com/"), this.ResourceGroupName))
             {
-                endpoint.Epoch = DateTime.UtcNow.ToFileTimeUtc();
+                endpoint.Version = DateTime.UtcNow.ToFileTimeUtc();
                 Endpoint createdService = null;
                 try
                 {

@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using PartitionKey = Microsoft.Azure.Cosmos.PartitionKey;
 using Container = Microsoft.Azure.Cosmos.Container;
 using System.Threading;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace Azure.CloudEvents.Discovery
 {
@@ -39,6 +40,21 @@ namespace Azure.CloudEvents.Discovery
         }
 
 
+        [Function("getManifest")]
+        public async Task<HttpResponseData> GetManifest(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "")]
+            HttpRequestData req,
+            ILogger log)
+        {
+            Manifest manifest = new Manifest { 
+                EndpointsUrl = new Uri(req.Url,"/endpoints"),
+                GroupsUrl = new Uri(req.Url, "/groups"),
+                SchemaGroupsUrl = new Uri(req.Url, "/schemagroups")
+            };
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(manifest);
+            return response;
+        }
 
 
         [Function("getEndpoints")]
@@ -525,7 +541,7 @@ namespace Azure.CloudEvents.Discovery
                     var existingItem = await container.ReadItemAsync<T>(group.Id, new PartitionKey(group.Id));
                     if (existingItem.StatusCode == HttpStatusCode.OK)
                     {
-                        if (group.Epoch <= existingItem.Resource.Epoch)
+                        if (group.Version <= existingItem.Resource.Version)
                         {
                             // define code & response
                             return req.CreateResponse(HttpStatusCode.Conflict);
@@ -648,7 +664,7 @@ namespace Azure.CloudEvents.Discovery
             try
             {
                 var existingResource = await container.ReadItemAsync<T>(resource.Id, new PartitionKey(resource.Id));
-                if (resource.Epoch <= existingResource.Resource.Epoch)
+                if (resource.Version <= existingResource.Resource.Version)
                 {
                     // define code & response
                     return req.CreateResponse(HttpStatusCode.Conflict);
@@ -773,7 +789,7 @@ namespace Azure.CloudEvents.Discovery
                     var existingItem = await container.ReadItemAsync<T>(item.Id, new PartitionKey(groupid));
                     if (existingItem.StatusCode == HttpStatusCode.OK)
                     {
-                        if (item.Epoch <= existingItem.Resource.Epoch)
+                        if (item.Version <= existingItem.Resource.Version)
                         {
                             // define code & response
                             return req.CreateResponse(HttpStatusCode.Conflict);
@@ -899,7 +915,7 @@ namespace Azure.CloudEvents.Discovery
             try
             {
                 var existingItem = await container.ReadItemAsync<T>(resource.Id, new PartitionKey(groupid));
-                if (resource.Epoch <= existingItem.Resource.Epoch)
+                if (resource.Version <= existingItem.Resource.Version)
                 {
                     // define code & response
                     return req.CreateResponse(HttpStatusCode.Conflict);
@@ -1081,14 +1097,14 @@ namespace Azure.CloudEvents.Discovery
             {
                 Origin = baseUri.AbsoluteUri,
                 Authscope = baseUri.AbsoluteUri,
-                Usage = Usage.Subscriber,
+                Usage = EndpointUsage.Subscriber,
                 Config = new EndpointConfigSubscriber
                 {
                     Protocol = "HTTP",
                     Endpoints = new[] { new Uri(baseUri, "subscriptions") },
                 },
                 Description = "Discovery Endpoint",
-                Epoch = 0,
+                Version = 0,
                 Id = "self",
                 Definitions = new Definitions
                 {
