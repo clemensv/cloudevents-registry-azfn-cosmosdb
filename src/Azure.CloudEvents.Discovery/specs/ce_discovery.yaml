@@ -1311,6 +1311,9 @@ components:
       mapping:
         group: "#/components/schemas/group"
         definition: "#/components/schemas/definition"
+        amqp: "#/components/schemas/amqpDefinition"
+        mqtt: "#/components/schemas/mqttDefinition"
+        cloudevent: "#/components/schemas/cloudEventDefinition"
         schemagroup: "#/components/schemas/schemaGroup"
         endpoint: "#/components/schemas/endpoint"
         schema: "#/components/schemas/schema"

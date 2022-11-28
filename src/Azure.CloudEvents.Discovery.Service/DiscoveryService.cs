@@ -47,8 +47,9 @@ namespace Azure.CloudEvents.Discovery
             HttpRequestData req,
             ILogger log)
         {
-            Manifest manifest = new Manifest { 
-                EndpointsUrl = new Uri(req.Url,"/endpoints"),
+            Manifest manifest = new Manifest
+            {
+                EndpointsUrl = new Uri(req.Url, "/endpoints"),
                 GroupsUrl = new Uri(req.Url, "/groups"),
                 SchemaGroupsUrl = new Uri(req.Url, "/schemagroups")
             };
@@ -179,8 +180,8 @@ namespace Azure.CloudEvents.Discovery
         [Function("getDefinitions")]
         public async Task<HttpResponseData> GetGroupDefinitions(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "groups/{groupid}/definitions")]
-            string groupid,
             HttpRequestData req,
+            string groupid,
             ILogger log)
         {
             var container = this.cosmosClient.GetContainer("discovery", "groups");
@@ -205,8 +206,8 @@ namespace Azure.CloudEvents.Discovery
         [Function("postDefinitions")]
         public async Task<HttpResponseData> PostGroupDefinitions(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "groups/{groupid}/definitions")]
-            string groupid,
             HttpRequestData req,
+            string groupid,
             ILogger log)
         {
             var container = this.cosmosClient.GetContainer("discovery", "groups");
@@ -222,7 +223,7 @@ namespace Azure.CloudEvents.Discovery
             {
                 var existingItem = await container.ReadItemAsync<Group>(groupid, new PartitionKey(groupid));
                 existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
-                foreach(var definition in groups)
+                foreach (var definition in groups)
                 {
                     if (existingItem.Resource.Definitions.ContainsKey(definition.Key))
                     {
@@ -348,7 +349,7 @@ namespace Azure.CloudEvents.Discovery
                 {
                     existingItem.Resource.Definitions.Add(id, definition);
                 }
-                
+
                 await container.UpsertItemAsync<Group>(existingItem, new PartitionKey(groupid));
                 var res = req.CreateResponse(HttpStatusCode.OK);
                 await res.WriteAsJsonAsync(existingItem.Resource.Definitions);
@@ -549,7 +550,7 @@ namespace Azure.CloudEvents.Discovery
                     var path = $"{self}/versions/{schemaversion.Version}";
                     var blobClient = this.schemasBlobClient.GetBlobClient(path);
                     await blobClient.UploadAsync(req.Body, new BlobUploadOptions() { HttpHeaders = new BlobHttpHeaders { ContentType = contentType } }, CancellationToken.None);
-                                       
+
                     var result1 = await container.UpsertItemAsync<Schema>(existingContainer.Resource, new PartitionKey(self));
                     if (eventGridClient != null)
                     {
@@ -573,7 +574,7 @@ namespace Azure.CloudEvents.Discovery
 
                 try
                 {
-                    
+
 
                     Schema schema = new Schema();
                     schema.Id = id;
@@ -581,7 +582,7 @@ namespace Azure.CloudEvents.Discovery
                     schema.Versions = new Dictionary<string, Schemaversion>();
                     schema.Versions.Add("1", schemaversion);
                     schemaversion.Version = "1";
-                                        
+
                     var path = $"{self}/versions/{schemaversion.Version}";
                     var blobClient = this.schemasBlobClient.GetBlobClient(path);
                     await blobClient.UploadAsync(req.Body, new BlobUploadOptions() { HttpHeaders = new BlobHttpHeaders { ContentType = contentType } }, CancellationToken.None);
@@ -603,7 +604,7 @@ namespace Azure.CloudEvents.Discovery
                 {
                     return req.CreateResponse(HttpStatusCode.BadRequest);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     return req.CreateResponse(HttpStatusCode.BadRequest);
                 }
@@ -888,7 +889,7 @@ namespace Azure.CloudEvents.Discovery
             ILogger log,
             Container container) where T : Resource
         {
-            
+
             try
             {
                 var existingResource = await container.ReadItemAsync<Reference>(id, new PartitionKey(id));
