@@ -1317,7 +1317,7 @@ components:
           schemagroup: "#/components/schemas/schemaGroup"
           endpoint: "#/components/schemas/endpoint"
           schema: "#/components/schemas/schema"
-          schemaversion: "#/components/schemas/schemversion"
+          schemaversion: "#/components/schemas/schemaversion"
       required:
         - type
         - id
@@ -1454,7 +1454,7 @@ components:
         mapping:
           subscriber: "#/components/schemas/endpointConfigSubscriber" 
           consumer: "#/components/schemas/endpointConfigConsumer" 
-          producer: "#/components/schemas/endpointConfigProducer" 
+          producer: "#/components/schemas/endpointConfigPublisher" 
       properties:
         usage:
           type: string
