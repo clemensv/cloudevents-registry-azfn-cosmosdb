@@ -42,7 +42,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getManifest")]
         public async Task<HttpResponseData> GetManifest(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "/")]
             HttpRequestData req,
             ILogger log)
         {
