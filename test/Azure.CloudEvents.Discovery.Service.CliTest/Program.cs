@@ -13,7 +13,7 @@ namespace Azure.CloudEvents.Discovery
         static async Task Main(string[] args)
         {
             HttpClient httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("x-functions-key", "");
+            httpClient.DefaultRequestHeaders.Add("x-functions-key", args[0]);
             DiscoveryClient client = new DiscoveryClient(httpClient);
             client.BaseUrl = "https://cediscoveryinterop.azurewebsites.net/";
             
