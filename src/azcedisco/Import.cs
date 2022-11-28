@@ -4,6 +4,7 @@ using McMaster.Extensions.CommandLineUtils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace azcedisco
@@ -16,10 +17,15 @@ namespace azcedisco
             var cred = new AzureIdentityCredentialAdapter();
             var rte = new ResourceTopicEnumerator(this.SubscriptionId, cred);
 
-            DiscoveryClient client = new DiscoveryClient(new System.Net.Http.HttpClient());
+            var httpClient = new HttpClient();
+            if (!string.IsNullOrEmpty(this.FunctionsKey))
+            {
+                httpClient.DefaultRequestHeaders.Add("x-functions-key", this.FunctionsKey);
+            }
+            DiscoveryClient client = new DiscoveryClient(httpClient);
             client.BaseUrl = this.DiscoveryEndpoint;
 
-            await foreach (var group in rte.EnumerateSystemDefinitionGroups(new Uri("https://discovery.azure.com/")))
+            await foreach (var group in rte.EnumerateSystemDefinitionGroups(new Uri(this.DiscoveryEndpoint)))
             {
                 group.Version = DateTime.UtcNow.ToFileTimeUtc();
                 Group createdGroup = null;
@@ -38,7 +44,7 @@ namespace azcedisco
                 Console.WriteLine(JsonConvert.SerializeObject(group, Formatting.Indented));
             }
 
-            await foreach (var endpoint in rte.EnumerateDiscoveryServicesAsync(new Uri("https://discovery.azure.com/"), this.ResourceGroupName))
+            await foreach (var endpoint in rte.EnumerateDiscoveryServicesAsync(new Uri(this.DiscoveryEndpoint), this.ResourceGroupName))
             {
                 endpoint.Version = DateTime.UtcNow.ToFileTimeUtc();
                 Endpoint createdService = null;

@@ -268,3 +268,4 @@ __pycache__/
 /src/Microsoft.Azure.EventGrid.CloudEventsApis/Properties/launchSettings.json
 /src/Azure.CloudEvents.Discovery/specs/openapitools.json
 /test/Azure.CloudEvents.Discovery.Service.CliTest/Properties/launchSettings.json
+/src/azcedisco/Properties/launchSettings.json

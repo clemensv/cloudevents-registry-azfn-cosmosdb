@@ -1308,6 +1308,13 @@ components:
       type: object
       discriminator:
         propertyName: type
+      mapping:
+        group: "#/components/schemas/group"
+        definition: "#/components/schemas/definition"
+        schemagroup: "#/components/schemas/schemaGroup"
+        endpoint: "#/components/schemas/endpoint"
+        schema: "#/components/schemas/schema"
+        schemaversion: "#/components/schemas/schemversion"
       required:
         - type
         - id
@@ -1441,6 +1448,10 @@ components:
       type: object
       discriminator:
         propertyName: usage
+      mapping:
+        subscriber: "#/components/schemas/endpointConfigSubscriber" 
+        consumer: "#/components/schemas/endpointConfigConsumer" 
+        producer: "#/components/schemas/endpointConfigProducer" 
       properties:
         usage:
           type: string
@@ -1487,6 +1498,10 @@ components:
       type: object
       discriminator:
          propertyName: protocol
+      mapping:
+        mqtt: "#/components/schemas/endpointOptionsMqtt" 
+        amqp: "#/components/schemas/endpointOptionsAmqp" 
+        http: "#/components/schemas/endpointOptionsHttp" 
       properties:
          protocol: 
            type: string

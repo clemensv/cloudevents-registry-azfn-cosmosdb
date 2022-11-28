@@ -145,12 +145,12 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
 
             if (resource.ChangedTime.HasValue)
             {
-                endpoint.AdditionalProperties.Add("azreschangedtime", resource.ChangedTime.Value);
+                endpoint.ModifiedOn = resource.ChangedTime.Value;
             }
 
             if (resource.CreatedTime.HasValue)
             {
-                endpoint.AdditionalProperties.Add("azrescreatedtime", resource.CreatedTime);
+                endpoint.CreatedOn = resource.ChangedTime.Value;
             }
 
             if (!string.IsNullOrEmpty(resource.ProvisioningState))

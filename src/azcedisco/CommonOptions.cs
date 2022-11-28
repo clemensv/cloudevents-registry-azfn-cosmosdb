@@ -11,5 +11,8 @@ namespace azcedisco
         public string ResourceGroupName { get; set; }
         [Option(CommandOptionType.SingleValue, Description = "Discovery endpoint", ShortName = "e")]
         public string DiscoveryEndpoint { get; set;  }
+        [Option(CommandOptionType.SingleValue, Description = "FunctionsKey", ShortName = "f")]
+        public string FunctionsKey { get; set; }
+
     }
 }
