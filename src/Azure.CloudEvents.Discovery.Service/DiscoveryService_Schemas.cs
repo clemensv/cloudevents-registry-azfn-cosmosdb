@@ -35,7 +35,89 @@ namespace Azure.CloudEvents.Discovery
         HttpRequestData req,
             ILogger log)
         {
-            return await PostGroups<SchemaGroup, SchemaGroups>(req, log, this.cosmosClient.GetContainer("discovery", "schemagroups"));
+            var ctrGroups = this.cosmosClient.GetContainer("discovery", "schemagroups");
+            var ctrSchemas = this.cosmosClient.GetContainer("discovery", "schemas");
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            SchemaGroups groups = JsonConvert.DeserializeObject<SchemaGroups>(requestBody);
+            SchemaGroups responseGroups = new SchemaGroups();
+            if (groups == null)
+            {
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
+
+            foreach (var group in groups.Values)
+            {
+
+                try
+                {
+                    var existingItem = await ctrGroups.ReadItemAsync<SchemaGroup>(group.Id, new PartitionKey(group.Id));
+                    if (existingItem.StatusCode == HttpStatusCode.OK)
+                    {
+                        if (group.Version <= existingItem.Resource.Version)
+                        {
+                            // define code & response
+                            return req.CreateResponse(HttpStatusCode.Conflict);
+                        }
+
+                        if (group.Schemas != null)
+                        {
+                            foreach (var schema in group.Schemas.Values)
+                            {
+                                try
+                                {
+                                    var existingResource1 = await ctrSchemas.ReadItemAsync<Schema>(schema.Id, new PartitionKey(group.Id));
+                                    await ctrGroups.UpsertItemAsync<Schema>(schema);
+                                }
+                                catch (CosmosException ce)
+                                {
+                                    if (ce.StatusCode != HttpStatusCode.NotFound)
+                                    {
+                                        throw;
+                                    }
+                                }
+                                try
+                                {
+                                    await ctrSchemas.CreateItemAsync<Schema>(schema, new PartitionKey(group.Id));
+                                }
+                                catch (CosmosException)
+                                {
+                                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                                }
+                            }
+                        }
+                        var result = await ctrGroups.UpsertItemAsync<SchemaGroup>(group);
+                        responseGroups.Add(result.Resource.Id, result.Resource);
+
+                        if (this.eventGridClient != null)
+                        {
+                            var changedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), ChangedEventType, group);
+                            await this.eventGridClient.SendEventAsync(changedEvent);
+                        }
+                    }
+                    else
+                    {
+
+                        var result = await ctrGroups.CreateItemAsync<SchemaGroup>(group);
+                        responseGroups.Add(result.Resource.Id, result.Resource);
+
+                        if (this.eventGridClient != null)
+                        {
+                            var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, group);
+                            await this.eventGridClient.SendEventAsync(createdEvent);
+                        }
+                    }
+                }
+                catch (CosmosException)
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+
+                }
+            }
+            var res = req.CreateResponse(HttpStatusCode.OK);
+            await res.WriteAsJsonAsync(responseGroups);
+            return res;
         }
 
         [Function("deleteSchemaGroups")]
@@ -275,7 +357,7 @@ namespace Azure.CloudEvents.Discovery
             return await DeleteResources<Reference, Schema, Schemas>(req, schemaGroupid, log, this.cosmosClient.GetContainer("discovery", "schemas"));
         }
 
-        
+
 
         [Function("getLatestSchema")]
         public async Task<HttpResponseData> getLatestSchema(
@@ -293,7 +375,7 @@ namespace Azure.CloudEvents.Discovery
                 var latest = existingItem.Resource.Versions.Max((x) => x.Key);
                 var latestVersion = existingItem.Resource.Versions[latest];
 
-                if ( req.Url.Query.Contains("meta"))
+                if (req.Url.Query.Contains("meta"))
                 {
                     var res = req.CreateResponse(HttpStatusCode.OK);
                     res.Headers.Add("Content-Type", "application/json");
@@ -345,7 +427,7 @@ namespace Azure.CloudEvents.Discovery
             {
                 res.Headers.Add("resource-description", latestVersion.Description);
             }
-            else if ( !string.IsNullOrEmpty( schema.Description))
+            else if (!string.IsNullOrEmpty(schema.Description))
             {
                 res.Headers.Add("resource-description", schema.Description);
             }
@@ -353,7 +435,7 @@ namespace Azure.CloudEvents.Discovery
             {
                 res.Headers.Add("resource-docs", latestVersion.Docs.ToString());
             }
-            else if ( schema.Docs != null)
+            else if (schema.Docs != null)
             {
                 res.Headers.Add("resource-docs", schema.Docs.ToString());
             }
@@ -361,7 +443,7 @@ namespace Azure.CloudEvents.Discovery
             {
                 res.Headers.Add("resource-name", latestVersion.Name);
             }
-            else if ( !string.IsNullOrEmpty(schema.Name))
+            else if (!string.IsNullOrEmpty(schema.Name))
             {
                 res.Headers.Add("resource-name", schema.Name);
             }
@@ -409,12 +491,19 @@ namespace Azure.CloudEvents.Discovery
             var container = this.cosmosClient.GetContainer("discovery", "schemas");
             var contentType = req.Headers.GetValues("Content-Type").First();
 
+
             if (contentType != "application/json")
             {
                 SchemaVersion schemaversion = new()
                 {
-                    Id = id
+                    Id = id,
+                    Description = req.Headers.Contains("resource-description") ? req.Headers.GetValues("resource-description").FirstOrDefault() : null,
+                    Name = req.Headers.Contains("resource-description") ? req.Headers.GetValues("resource-name").FirstOrDefault() : null,
+                    Docs = req.Headers.Contains("resource-docs") ? new Uri(req.Headers.GetValues("resource-docs").FirstOrDefault()) : null,
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
                 };
+                
 
                 try
                 {
@@ -437,7 +526,7 @@ namespace Azure.CloudEvents.Discovery
                     var response = req.CreateResponse(HttpStatusCode.Created);
                     response.Headers.Add("Location", new Uri(req.Url, "versions/" + schemaversion.Version).ToString());
                     await response.WriteAsJsonAsync(result1.Resource);
-
+                    response.StatusCode = HttpStatusCode.Created;
                     return response;
                 }
                 catch (CosmosException ce)
@@ -478,6 +567,7 @@ namespace Azure.CloudEvents.Discovery
                     var response = req.CreateResponse(HttpStatusCode.Created);
                     response.Headers.Add("Location", new Uri(req.Url, "/" + path).ToString());
                     await response.WriteAsJsonAsync(result.Resource);
+                    response.StatusCode = HttpStatusCode.Created;
                     return response;
                 }
                 catch (CosmosException)
