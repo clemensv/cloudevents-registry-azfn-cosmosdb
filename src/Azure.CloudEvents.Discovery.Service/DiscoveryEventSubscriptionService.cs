@@ -118,7 +118,9 @@ namespace Azure.CloudEvents.EventGridBridge
         }
 
         [Function("UpdateSubscription")]
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task<HttpResponseData> UpdateSubscription(
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = subscriptionRoute)]
             HttpRequestData req,
             string eventSubscriptionId,

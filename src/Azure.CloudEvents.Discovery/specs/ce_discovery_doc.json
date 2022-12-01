@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "$id": "https://cloudevents.io/2022-12/discovery",
+  "title": "JSON Schema for my JSON file format",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "default": "https://cloudevents.io/schemas/discovery"
+    },
+    "specversion": {
+      "type": "string",
+      "default": "0.5-wip"
+    },
+    "endpoints": {
+      "$ref": "#/$defs/endpoints"
+    },
+    "endpointsUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "groups": {
+      "$ref": "#/$defs/groups"
+    },
+    "groupsUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "schemaGroups": {
+      "$ref": "#/$defs/schemaGroups"
+    },
+    "schemaGroupsUrl": {
+      "type": "string",
+      "format": "uri"
+    }
+  },
+  "$defs": {
+    "$ref": "ce_discovery.yaml#/components/schema"
+  }
+}

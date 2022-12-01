@@ -16,7 +16,7 @@ paths:
           description: Set if references shall be inlined
           required: false
           schema:
-            type: bool
+            type: boolean
       responses:
         "200":
           description: A list of endpoints (optionally matching the query parameter)
@@ -300,7 +300,7 @@ paths:
           required: false
           schema:
             type: integer
-            description: A number representing the version number of the resourceresource.
+            description: A number representing the version number of the resource
             format: int64
 
       responses:
@@ -370,7 +370,7 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/schemaGroupsPostRequest"
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/schemaGroupsPostResponse"
         "400":
           description: Bad Request - constraint failure
@@ -391,10 +391,10 @@ paths:
     parameters:
       - $ref: "#/components/parameters/schemagroupid"
     get:
-      operationId: getSchemagroup
+      operationId: getSchemaGroup
       responses:
         "200":
-          description: The schemagroup
+          description: The schema group
           content:
             application/json:
               schema:
@@ -404,7 +404,7 @@ paths:
         "404":
           description: Not Found
     put:
-      operationId: putSchemagroup
+      operationId: putSchemaGroup
       description: this creates or updates the schema group
       requestBody:
         $ref: "#/components/requestBodies/schemaGroupPutRequest"
@@ -418,11 +418,11 @@ paths:
         "409":
           description: Conflict - epoch not greater
     delete:
-      operationId: deleteSchemagroup
+      operationId: deleteSchemaGroup
       parameters:
         - in: query
           name: epoch
-          description: The epoch of the schemagroup to be deleted
+          description: The epoch of the schema group to be deleted
           required: false
           schema:
             type: integer
@@ -430,7 +430,7 @@ paths:
             format: int64
       responses:
         "200":
-          $ref: "#/components/responses/schemaGroupsDeleteResponse"
+          $ref: "#/components/responses/schemaGroupDeleteResponse"
         "400":
           description: Bad Request - constraint failure
         "409":
@@ -487,6 +487,36 @@ paths:
       responses:
         "200":
           description: The corresponding schema
+          headers:
+            resource-id:
+              $ref: "#/components/headers/resource-id"
+            resource-version:
+              $ref: "#/components/headers/resource-version"
+            resource-name:
+              $ref: "#/components/headers/resource-name"
+            resource-self:
+              $ref: "#/components/headers/resource-self"
+            resource-description:
+              $ref: "#/components/headers/resource-description"
+            resource-docs:
+              $ref: "#/components/headers/resource-docs"
+            resource-origin:
+              $ref: "#/components/headers/resource-origin"
+            resource-tags:
+              $ref: "#/components/headers/resource-tags"
+            resource-createdby:
+              $ref: "#/components/headers/resource-createdby"
+            resource-createdon:
+              $ref: "#/components/headers/resource-createdon"
+            resource-modifiedby:
+              $ref: "#/components/headers/resource-modifiedby"
+            resource-modifiedon:
+              $ref: "#/components/headers/resource-modifiedon"
+            Content-Location:
+              description: permalink location of the returned version
+              schema:
+                 type: string
+                 format: uri
           content:
             application/octet-stream:              
               schema:
@@ -506,11 +536,10 @@ paths:
         If schema with identical content already exists, existing schema's ID is returned. 
       operationId: postSchemaDocument
       parameters:
-        - in: header
-          description: description
-          name: description
-          schema:
-            type: string
+        - $ref: "#/components/parameters/resource-description"
+        - $ref: "#/components/parameters/resource-docs"
+        - $ref: "#/components/parameters/resource-origin"
+        - $ref: "#/components/parameters/resource-tags"
         - in: header
           description: format
           name: format
@@ -526,8 +555,33 @@ paths:
                 format: binary
       responses:
         "201":
-         description: A request to add a new schema document to the schema's document collection
-         content:
+          description: A request to add a new schema document to the schema's document collection
+          headers:
+            resource-id:
+              $ref: "#/components/headers/resource-id"
+            resource-version:
+              $ref: "#/components/headers/resource-version"
+            resource-name:
+              $ref: "#/components/headers/resource-name"
+            resource-self:
+              $ref: "#/components/headers/resource-self"
+            resource-description:
+              $ref: "#/components/headers/resource-description"
+            resource-docs:
+              $ref: "#/components/headers/resource-docs"
+            resource-origin:
+              $ref: "#/components/headers/resource-origin"
+            resource-tags:
+              $ref: "#/components/headers/resource-tags"
+            resource-createdby:
+              $ref: "#/components/headers/resource-createdby"
+            resource-createdon:
+              $ref: "#/components/headers/resource-createdon"
+            resource-modifiedby:
+              $ref: "#/components/headers/resource-modifiedby"
+            resource-modifiedon:
+              $ref: "#/components/headers/resource-modifiedon"
+          content:
            application/octet-stream:
               schema:
                 # a binary file of any type
@@ -551,7 +605,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/schemaversion"
+                $ref: "#/components/schemas/schemaVersion"
         "400":
           description: Bad Request - constraint failure
         "404":
@@ -563,14 +617,14 @@ paths:
         content:
             application/json:
                 schema:
-                    $ref: "#/components/schemas/schemaversion"
+                    $ref: "#/components/schemas/schemaVersion"
       responses:
         "200":
             description: The metadata of the schema version document
             content:
               application/json:
                   schema:
-                     $ref: "#/components/schemas/schemaversion"
+                     $ref: "#/components/schemas/schemaVersion"
         "400":
             description: Bad Request - constraint failure
         "404":
@@ -585,13 +639,38 @@ paths:
       description: Gets the document stored for the schema version
       responses:
         "200":
-            description: The schema version document
-            content:
-              application/octet-stream:
-                schema:
-                  # a binary file of any type
-                  type: string
-                  format: binary
+          description: The schema version document
+          headers:
+            resource-id:
+              $ref: "#/components/headers/resource-id"
+            resource-version:
+              $ref: "#/components/headers/resource-version"
+            resource-name:
+              $ref: "#/components/headers/resource-name"
+            resource-self:
+              $ref: "#/components/headers/resource-self"
+            resource-description:
+              $ref: "#/components/headers/resource-description"
+            resource-docs:
+              $ref: "#/components/headers/resource-docs"
+            resource-origin:
+              $ref: "#/components/headers/resource-origin"
+            resource-tags:
+              $ref: "#/components/headers/resource-tags"
+            resource-createdby:
+              $ref: "#/components/headers/resource-createdby"
+            resource-createdon:
+              $ref: "#/components/headers/resource-createdon"
+            resource-modifiedby:
+              $ref: "#/components/headers/resource-modifiedby"
+            resource-modifiedon:
+              $ref: "#/components/headers/resource-modifiedon"
+          content:
+            application/octet-stream:
+              schema:
+                # a binary file of any type
+                type: string
+                format: binary
         "400":
             description: Bad Request - constraint failure
         "404":
@@ -619,7 +698,7 @@ paths:
             content:
               application/json:
                   schema:
-                     $ref: "#/components/schemas/schemaversion"
+                     $ref: "#/components/schemas/schemaVersion"
         "400":
             description: Bad Request - constraint failure
         "404":
@@ -631,14 +710,14 @@ paths:
         content:
             application/json:
                 schema:
-                    $ref: "#/components/schemas/schemaversion"
+                    $ref: "#/components/schemas/schemaVersion"
       responses:
         "200":
             description: The metadata of the schema version document
             content:
               application/json:
                   schema:
-                     $ref: "#/components/schemas/schemaversion"
+                     $ref: "#/components/schemas/schemaVersion"
         "400":
             description: Bad Request - constraint failure
         "404":
@@ -699,6 +778,193 @@ components:
         type: string
         description: A unique identifier 
         format: uri-reference
+    resource-type:
+       in: header
+       name: resource-type
+       required: false
+       schema:
+         type: string 
+    resource-id:
+       in: header
+       name: resource-id
+       required: false
+       description: A unique identifier for this Endpoint. This value MUST be globally unique
+       schema:
+         type: string
+         format: uri-reference
+    resource-version:
+       in: header
+       name: resource-version
+       required: false
+       description: A number representing the version number of the resource.
+       schema:
+         type: integer
+         format: int64
+    resource-self:
+       in: header
+       name: resource-self
+       required: false
+       description: > 
+           A unique URI for the resource. The URI MUST be a combination of the 
+           base URI of the list of this resource type for the current Discovery 
+           Service appended with the `id` of this resource.
+       schema:
+         type: string
+         format: uri
+    resource-description:
+       in: header
+       name: resource-description
+       required: false
+       description: A summary of the purpose of the resource.
+       schema:
+          type: string
+    resource-name:
+        in: header
+        name: resource-name
+        required: false
+        description: The name of the resource.
+        schema:
+          type: string  
+    resource-docs:
+        in: header
+        required: false
+        name: resource-docs
+        description: Absolute URL that provides a link to additional documentation about the resource.
+        schema:
+          type: string
+          format: uri
+    resource-origin:
+        in: header
+        required: false
+        name: resource-origin
+        description: A URI reference to the original source of this resource.
+        schema:
+          type: string
+          format: uri-reference
+    resource-tags:
+        in: header
+        name: resource-tags
+        required: false
+        schema:
+          type: array
+          items:
+            type: object
+            properties: 
+              name: 
+                type: string
+              value:
+                type: string
+    resource-createdby:
+        in: header
+        name: resource-createdby
+        required: false
+        description: Identity of who created this entity
+        schema:        
+          type: string
+    resource-createdon:
+        in: header
+        name: resource-createdon
+        required: false
+        description: Time when this entity was created
+        schema:
+          type: string
+          format: date-time
+    resource-modifiedby:
+        in: header
+        name: resource-modifiedby
+        required: false
+        description: Identity of who last modified this entity
+        schema:
+          type: string
+    resource-modifiedon:
+        in: header
+        name: resource-modifiedon
+        required: false
+        description: Time when this entity was last modified
+        schema:
+          type: string
+          format: date-time
+  headers:
+    resource-type:
+       required: false
+       schema:
+         type: string 
+    resource-id:
+       required: false
+       description: A unique identifier for this Endpoint. This value MUST be globally unique
+       schema:
+         type: string
+         format: uri-reference
+    resource-version:
+       required: false
+       description: A number representing the version number of the resource.
+       schema:
+         type: integer
+         format: int64
+    resource-self:
+       required: false
+       description: > 
+           A unique URI for the resource. The URI MUST be a combination of the 
+           base URI of the list of this resource type for the current Discovery 
+           Service appended with the `id` of this resource.
+       schema:
+         type: string
+         format: uri
+    resource-description:
+       required: false
+       description: A summary of the purpose of the resource.
+       schema:
+          type: string
+    resource-name:
+        required: false
+        description: The name of the resource.
+        schema:
+          type: string  
+    resource-docs:
+        name: resource-docs
+        description: Absolute URL that provides a link to additional documentation about the resource.
+        schema:
+          type: string
+          format: uri
+    resource-origin:
+        name: resource-origin
+        description: A URI reference to the original source of this resource.
+        schema:
+          type: string
+          format: uri-reference
+    resource-tags:
+        required: false
+        schema:
+          type: array
+          items:
+            type: object
+            properties: 
+              name: 
+                type: string
+              value:
+                type: string
+    resource-createdby:
+        required: false
+        description: Identity of who created this entity
+        schema:        
+          type: string
+    resource-createdon:
+        required: false
+        description: Time when this entity was created
+        schema:
+          type: string
+          format: date-time
+    resource-modifiedby:
+        required: false
+        description: Identity of who last modified this entity
+        schema:
+          type: string
+    resource-modifiedon:
+        required: false
+        description: Time when this entity was last modified
+        schema:
+          type: string
+          format: date-time
   requestBodies:
     endpointsPostRequest:
       description: A request to create or update the discovery endpoint's collection of endpoints with the given endpoints
@@ -922,13 +1188,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemaversion"
+            $ref: "#/components/schemas/schemaVersion"
     schemaVersionDeleteResponse:
       description: The Definition that was deleted
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/schemaversion"
+            $ref: "#/components/schemas/schemaVersion"
   schemas:
     manifest:
       type: object
@@ -977,23 +1243,23 @@ components:
         type: string
         format: uri
     group:
+      type: object
+      properties:
+        format:
+          type: string
+          description: Specifies the `format` value of the Definitions associated with this Endpoint.
+        definitions:
+          $ref: "#/components/schemas/definitions"
+        definitionsUrl:
+          type: string
+          format: uri
+        groups:
+          $ref: "#/components/schemas/groups"
+        groupsUrl:
+          type: string
+          format: uri
       allOf:
         - $ref: "#/components/schemas/resource"
-        - type: object
-          properties:
-            format:
-                type: string
-                description: Specifies the `format` value of the Definitions associated with this Endpoint.
-            definitions:
-                $ref: "#/components/schemas/definitions"
-            definitionsUrl:
-                type: string
-                format: uri
-            groups:
-                $ref: "#/components/schemas/groups"
-            groupsUrl:
-                type: string
-                format: uri
     definitionReference:
       $ref: "#/components/schemas/reference"
     definitionReferences:
@@ -1002,68 +1268,69 @@ components:
         $ref: "#/components/schemas/definitionReference"
 
     definition:
-       allOf:
+       
+      type: object
+      description: a message definition
+      properties:
+        ownergroup:
+          type: string
+          description: A reference to the Group or Endpoint that defined this
+          format: uri-reference
+        schemaurl:
+          type: string
+          description: A URL to the schema of the message's data.
+          format: uri
+        schema:
+          type: object
+          description: An in-line definition of the schema of the message's data.
+      allOf:
         - $ref: "#/components/schemas/resource"
-        - type: object
-          description: a message definition
-          properties:
-            ownergroup:
-              type: string
-              description: A reference to the Group or Endpoint that defined this
-              format: uri-reference
-            schemaurl:
-              type: string
-              description: A URL to the schema of the message's data.
-              format: uri
-            schema:
-              type: object
-              description: An in-line definition of the schema of the message's data.
     cloudEventDefinition:
-      allOf:
-        - $ref: "#/components/schemas/definition"
-        - type: object
-          properties:
-            format:
-              type: string
-              description: Specifies the `format` value of the Definitions associated with this Endpoint.
+      type: object
+      properties:
+        format:
+          type: string
+          description: Specifies the `format` value of the Definitions associated with this Endpoint.
 #              const: "CloudEvents/1.0"
-              default: "CloudEvents/1.0"
-            metadata:
-              $ref: "#/components/schemas/cloudEventMetadata"
+          default: "CloudEvents/1.0"
+        metadata:
+          $ref: "#/components/schemas/cloudEventMetadata"
+      allOf:
+        - $ref: "#/components/schemas/definition"
     amqpDefinition:
-      allOf:
-        - $ref: "#/components/schemas/definition"
-        - type: object
-          properties:
-            format:
-              type: string
-              description: Specifies the `format` value of the Definitions associated with this Endpoint.
+      type: object
+      properties:
+        format:
+          type: string
+          description: Specifies the `format` value of the Definitions associated with this Endpoint.
 #              const: "AMQP/1.0"
-              default: "AMQP/1.0"
-            metadata:
-              $ref: "#/components/schemas/amqpMetadata"
+          default: "AMQP/1.0"
+        metadata:
+          $ref: "#/components/schemas/amqpMetadata"
+      allOf:
+        - $ref: "#/components/schemas/definition"
     mqttDefinition:
-      allOf:
-        - $ref: "#/components/schemas/definition"
-        - type: object
-          properties:
-            format:
-              type: string
-              description: Specifies the `format` value of the Definitions associated with this Endpoint.
+      type: object
+      properties:
+        format:
+          type: string
+          description: Specifies the `format` value of the Definitions associated with this Endpoint.
 #              const: "MQTT/5.0"
-              default: "MQTT/5.0"
-            metadata:
-              $ref: "#/components/schemas/mqttMetadata"
-    genericDefinition:
+          default: "MQTT/5.0"
+        metadata:
+          $ref: "#/components/schemas/mqttMetadata"
       allOf:
         - $ref: "#/components/schemas/definition"
-        - type: object
-          properties:
-            format:
-              type: string
-              description: Specifies the `format` value of the Definitions associated with this Endpoint.
-            metadata:
-              type: object
+    genericDefinition:
+      type: object
+      properties:
+        format:
+          type: string
+          description: Specifies the `format` value of the Definitions associated with this Endpoint.
+        metadata:
+          type: object
+      allOf:
+        - $ref: "#/components/schemas/definition"
     amqpMetadata:
       type: object
       properties:
@@ -1206,97 +1473,97 @@ components:
           type: string
           format: uri
     metadataProperty:
+      type: object
+      properties:
+        value:
+          type: object
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: object
     metadataPropertyBoolean:
+      type: object
+      properties:
+        value:
+          type: boolean              
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: boolean              
     metadataPropertyString:
+      type: object
+      properties:
+        value:
+          type: string
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: string
     metadataPropertySymbol:
+      type: object
+      properties:
+        value:
+          type: string
+          pattern: "^[\\x32-\\x7F]*$"
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: string
-              pattern: "^[\\x32-\\x7F]*$"
     metadataPropertyBinary:
+      type: object
+      properties:
+        value:
+          type: string
+          format: binary
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: string
-              format: binary
     metadataPropertyDateTime:
       description: This is a date-time property, holding RFC3339 string expressions. Since it ought to be rare for the value of date-time attributes to be set in a definition, this is not using the "date-time" format which might be turned intro a non-nullable type with some code generators.
+      type: object
+      properties:
+        value:
+          type: string
+          format: date-time
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: string
-              format: date-time
     metadataPropertyDuration:
+      type: object
+      properties:
+        value:
+          type: string
+          format: duration
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: string
-              format: duration
     metadataPropertyUriTemplate:
+      type: object
+      properties:
+        value:
+          type: string
+          format: uri-template
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: string
-              format: uri-template
     metadataPropertyInteger:
+      type: object
+      properties:
+        value:
+          type: integer
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: integer
     metadataPropertyNumber:
+      type: object
+      properties:
+        value:
+          type: number
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: number
     metadataPropertyUri:
+      type: object
+      properties:
+        value:
+          type: string
+          format: uri
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: string
-              format: uri
     metadataPropertyUriReference:
+      type: object
+      properties:
+        value:
+          type: string
+          format: uri-reference
       allOf:
         - "$ref": "#/components/schemas/metadataPropertyBase"
-        - type: object
-          properties:
-            value:
-              type: string
-              format: uri-reference
     definitions:
       type: object
       description: A collection of Message Definitions.
@@ -1320,7 +1587,7 @@ components:
           schemagroup: "#/components/schemas/schemaGroup"
           endpoint: "#/components/schemas/endpoint"
           schema: "#/components/schemas/schema"
-          schemaversion: "#/components/schemas/schemaversion"
+          schemaversion: "#/components/schemas/schemaVersion"
       required:
         - type
         - id
@@ -1378,24 +1645,24 @@ components:
           format: date-time
 
     resourceWithVersion:
+      type: object
+      description: resource with version identifier
+      properties:
+          version:
+            type: string
+            description: Server assigned version identifier. 
       allOf:
         - $ref: "#/components/schemas/resource"
-        - type: object
-          description: resource with version identifier
-          properties:
-             version:
-                type: string
-                description: Server assigned version identifier. 
     resourceWithVersionedResources:
+      type: object
+      description: collection of versioned resources
+      properties:
+          versions:
+            type: object
+            additionalProperties:
+                $ref: "#/components/schemas/resourceWithVersion"
       allOf:
         - $ref: "#/components/schemas/resource"
-        - type: object
-          description: collection of versioned resources
-          properties:
-             versions:
-                type: object
-                additionalProperties:
-                    $ref: "#/components/schemas/resourceWithVersion"
     endpointReference:
       $ref: "#/components/schemas/reference"
     endpointReferences:
@@ -1407,49 +1674,49 @@ components:
       additionalProperties:
          $ref: "#/components/schemas/endpoint"
     endpoint:
+      type: object
+      properties:
+        channel:
+          type: string
+          description: A string that can be used to correlate Endpoints
+        usage:
+          description: The interaction model supported by this Endpoint 
+          type: string
+          enum: ["consumer", "producer", "subscriber"]                
+        config:
+          $ref: "#/components/schemas/endpointConfig"
+        format:
+          type: string
+          description: Specifies the `format` value of the Definitions associated with this Endpoint.
+        deprecated:
+          type: object
+          properties:
+            effective:
+              type: string
+              format: date-time
+              description: The time at which the endpoint will enter a deprecated state
+            removal:
+              type: string
+              format: date-time
+              description: The time at which the endpoint will be removed
+            alternative:
+              type: string
+              format: uri
+              description: A URL to an possible alternative endpoint
+            docs:
+              type: string
+              format: uri
+              description: A URL to additional information concerning the deprecation of this endpoint. Possible information might include rationale behind the action, or discussion of alternatives
+        authscope:
+          type: string
+          description: Authorization scope needed for creating subscriptions. The actual meaning of this field is determined on a per-endpoint basis
+          example: storage.read
+        definitions:
+          $ref: "#/components/schemas/definitions"
+        groups:
+          $ref: "#/components/schemas/groupUriReferences"
       allOf:
         - $ref: "#/components/schemas/resource"
-        - type: object
-          properties:
-            channel:
-              type: string
-              description: A string that can be used to correlate Endpoints
-            usage:
-              description: The interaction model supported by this Endpoint 
-              type: string
-              enum: ["consumer", "producer", "subscriber"]                
-            config:
-              $ref: "#/components/schemas/endpointConfig"
-            format:
-              type: string
-              description: Specifies the `format` value of the Definitions associated with this Endpoint.
-            deprecated:
-              type: object
-              properties:
-                effective:
-                  type: string
-                  format: date-time
-                  description: The time at which the endpoint will enter a deprecated state
-                removal:
-                  type: string
-                  format: date-time
-                  description: The time at which the endpoint will be removed
-                alternative:
-                  type: string
-                  format: uri
-                  description: A URL to an possible alternative endpoint
-                docs:
-                  type: string
-                  format: uri
-                  description: A URL to additional information concerning the deprecation of this endpoint. Possible information might include rationale behind the action, or discussion of alternatives
-            authscope:
-              type: string
-              description: Authorization scope needed for creating subscriptions. The actual meaning of this field is determined on a per-endpoint basis
-              example: storage.read
-            definitions:
-              $ref: "#/components/schemas/definitions"
-            groups:
-              $ref: "#/components/schemas/groupUriReferences"
     endpointConfig:
       type: object
       discriminator:
@@ -1476,30 +1743,30 @@ components:
         options:
           $ref: "#/components/schemas/endpointOptions"
     endpointConfigSubscriber:
+      type: object
+      properties:
+        subscriptionconfig:
+          type: object
+          description: "A map indicating supported options for the config parameter for the CloudSubscriptions subscribe() API call. Keys are the name of keys in the allowed config map, the values indicate the type of that parameter, confirming to the CloudEvents type system. TODO: Needs resolution with CloudSubscriptions API"
+          additionalProperties:
+            type: string
+        filterdialects:
+          type: array
+          description: Filter dialects that can be used in subscriptions for this endpoint
+          items:
+            type: string
+            description: filter dialect
+          example: '[ "basic" ]'
       allOf: 
         - $ref : "#/components/schemas/endpointConfig" 
-        - type: object
-          properties:
-            subscriptionconfig:
-              type: object
-              description: "A map indicating supported options for the config parameter for the CloudSubscriptions subscribe() API call. Keys are the name of keys in the allowed config map, the values indicate the type of that parameter, confirming to the CloudEvents type system. TODO: Needs resolution with CloudSubscriptions API"
-              additionalProperties:
-                type: string
-            filterdialects:
-              type: array
-              description: Filter dialects that can be used in subscriptions for this endpoint
-              items:
-                type: string
-                description: filter dialect
-              example: '[ "basic" ]'
     endpointConfigConsumer:
+      type: object    
       allOf: 
         - $ref : "#/components/schemas/endpointConfig" 
-        - type: object    
     endpointConfigPublisher:
+      type: object    
       allOf: 
         - $ref : "#/components/schemas/endpointConfig" 
-        - type: object    
     endpointOptions:
       type: object
       discriminator:
@@ -1512,17 +1779,17 @@ components:
          protocol: 
            type: string
     endpointOptionsMqtt:
+      type: object
       allOf: 
-        - $ref : "#/components/schemas/endpointOptions" 
-        - type: object
+        - $ref : "#/components/schemas/endpointOptions"
     endpointOptionsAmqp:
+      type: object
       allOf: 
         - $ref : "#/components/schemas/endpointOptions" 
-        - type: object
     endpointOptionsHttp:
+      type: object
       allOf: 
         - $ref : "#/components/schemas/endpointOptions" 
-        - type: object
     schemaGroupReference:
       type: object
       properties:
@@ -1549,18 +1816,18 @@ components:
       additionalProperties:
         $ref: "#/components/schemas/schemaGroup"  
     schemaGroup:
+      type: object
+      properties:
+        format:
+          type: string
+          description: Specifies the format of all schemas in this group
+          example: ["json", "avro", "xsd", "protobuf"]
+        schemas:
+          $ref: "#/components/schemas/schemas"
+        schemagroups:
+          $ref: "#/components/schemas/schemaGroups"           
       allOf:
         - $ref: "#/components/schemas/resource"
-        - type: object
-          properties:
-            format:
-              type: string
-              description: Specifies the format of all schemas in this group
-              example: ["json", "avro", "xsd", "protobuf"]
-            schemas:
-              $ref: "#/components/schemas/schemas"
-            schemagroups:
-              $ref: "#/components/schemas/schemaGroups"           
     schemaReference:
       $ref: "#/components/schemas/reference"
     schemaReferences:
@@ -1573,26 +1840,26 @@ components:
       additionalProperties:
         $ref: "#/components/schemas/schema"  
     schema:
-       allOf:
+      type: object
+      description: a schema is a collection of schema version documents that describe semantically the same data item
+      properties:
+        versions:
+          type: object
+          description: A collection of schema versions
+          additionalProperties:
+            $ref: "#/components/schemas/schemaVersion"  
+      allOf:
         - $ref: "#/components/schemas/resourceWithVersionedResources"
-        - type: object
-          description: a schema is a collection of schema version documents that describe semantically the same data item
-          properties:
-            versions:
-              type: object
-              description: A collection of schema versions
-              additionalProperties:
-                $ref: "#/components/schemas/schemaversion"  
-    schemaversion:
-       allOf:
+    schemaVersion:
+      type: object
+      description: a schema version (a document)
+      properties:
+        schemaurl:
+          type: string
+          description: A URL to the schema document.
+          format: uri
+        schemaobject:
+          type: object
+          description: An in-line definition of the schema document (JSON).
+      allOf:
         - $ref: "#/components/schemas/resourceWithVersion"
-        - type: object
-          description: a schema version (a document)
-          properties:
-            schemaurl:
-              type: string
-              description: A URL to the schema document.
-              format: uri
-            schemaobject:
-              type: object
-              description: An in-line definition of the schema document (JSON).

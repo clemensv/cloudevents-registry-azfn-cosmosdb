@@ -13,9 +13,10 @@ namespace Azure.CloudEvents.Discovery
         static async Task Main(string[] args)
         {
             HttpClient httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("x-functions-key", args[0]);
+            //httpClient.DefaultRequestHeaders.Add("x-functions-key", args[0]);
             DiscoveryClient client = new DiscoveryClient(httpClient);
-            client.BaseUrl = "https://cediscoveryinterop.azurewebsites.net/";
+            //client.BaseUrl = "https://cediscoveryinterop.azurewebsites.net/";
+            client.BaseUrl = "http://localhost:11000/";
 
             Console.WriteLine($"----- Existing endpoints -----");
             try
@@ -41,34 +42,41 @@ namespace Azure.CloudEvents.Discovery
                     Description = $"This is service {i}",
                     Definitions = new Definitions
                     {
-                        { $"Endpoint{i} Event1", new CloudEventDefinition
-                        {
-                            Description = $"Endpoint{i} Event1",
-                            Metadata = new CloudEventMetadata {
-                                Attributes = new Attributes { 
-                                    Type = new MetadataPropertyString { Value = $"Endpoint{i}.Event1" } 
-                                }
-                            }
-                        } },
-                        { $"Endpoint{i} Event2",new CloudEventDefinition
-                        {
-                            Description = $"Endpoint{i} Event2",
-                            Metadata = new CloudEventMetadata
+                        { 
+                            $"Endpoint{i} Event1", new CloudEventDefinition
                             {
-                                Attributes = new Attributes{
-                                    Type = new MetadataPropertyString
-                                    {
-                                        Value = $"Endpoint{i}.Event2"
+                                Id = $"Endpoint{i} Event1",
+                                Description = $"This is event type Endpoint{i} Event1",
+                                Metadata = new CloudEventMetadata {
+                                    Attributes = new Attributes {
+                                        Type = new MetadataPropertyString { Value = $"Endpoint{i}.Event1" }
                                     }
                                 }
-                            }
+                            } 
+                        },
+                        { 
+                            $"Endpoint{i} Event2",new CloudEventDefinition
+                            {
+                                Id = $"Endpoint{i} Event2",
+                                Description = $"This is event type Endpoint{i} Event2",
+                                Metadata = new CloudEventMetadata
+                                {
+                                    Attributes = new Attributes{
+                                        Type = new MetadataPropertyString
+                                        {
+                                            Value = $"Endpoint{i}.Event2"
+                                        }
+                                    }
+                                }
                         } }
                     },
                     Usage = EndpointUsage.Subscriber,
                     Config = new EndpointConfigSubscriber
                     {
-                        Protocol = "HTTP",
-                        Endpoints = new[] { new Uri("https://example.com/foo") },
+                        Protocol = "http",
+                        Endpoints = new[] { 
+                            new Uri("https://example.com/foo") 
+                        },
                     }
                 };
 
@@ -155,7 +163,7 @@ namespace Azure.CloudEvents.Discovery
                     {
                         { $"Group{i} Event1", new CloudEventDefinition
                         {
-                            Description = $"Group{i} Event1",
+                            Id = $"Group{i} Event1",
                             Metadata = new CloudEventMetadata {
                                 Attributes = new Attributes{
                                     Type = new MetadataPropertyString {
@@ -165,7 +173,7 @@ namespace Azure.CloudEvents.Discovery
                         } },
                         { $"Group{i} Event2",new CloudEventDefinition
                         {
-                            Description = $"Group{i} Event2",
+                            Id = $"Group{i} Event2",
                             Metadata = new CloudEventMetadata
                             {
                                 Attributes= new Attributes {
@@ -263,7 +271,7 @@ namespace Azure.CloudEvents.Discovery
                 try
                 {
 
-                    createdGroup = await client.PutSchemagroupAsync(SchemaGroup, SchemaGroup.Id);
+                    createdGroup = await client.PutSchemaGroupAsync(SchemaGroup, SchemaGroup.Id);
                     for (int j = 0; j < 10; j++)
                     {
                         Schema schema = new()
@@ -274,7 +282,7 @@ namespace Azure.CloudEvents.Discovery
 
                         string schemaText = "This is a fake schema format";
 
-                        await client.PostSchemaDocumentAsync("", "text",
+                        await client.PostSchemaDocumentAsync(schema.Description, null, null, null, "text",
                             new MemoryStream(Encoding.UTF8.GetBytes(schemaText)),
                             SchemaGroup.Id, schema.Id); ;
 
@@ -295,13 +303,13 @@ namespace Azure.CloudEvents.Discovery
             Console.WriteLine($"----- Update SchemaGroups -----");
             for (int i = 0; i < 10; i++)
             {
-                var existingGroup = await client.GetSchemagroupAsync(i.ToString());
+                var existingGroup = await client.GetSchemaGroupAsync(i.ToString());
                 existingGroup.Description = $"This is service {i} Update";
 
                 bool correct = false;
                 try
                 {
-                    await client.PutSchemagroupAsync(existingGroup, existingGroup.Id);
+                    await client.PutSchemaGroupAsync(existingGroup, existingGroup.Id);
                     throw new InvalidOperationException("Must not get here because we did not update the Eppch");
                 }
                 catch (ApiException apiException)
@@ -316,15 +324,15 @@ namespace Azure.CloudEvents.Discovery
                     throw new Exception("Version validation failed");
                 }
                 existingGroup.Version += 1;
-                await client.PutSchemagroupAsync(existingGroup, existingGroup.Id);
+                await client.PutSchemaGroupAsync(existingGroup, existingGroup.Id);
                 Console.WriteLine($"Updated: Id {existingGroup.Id}, Version {existingGroup.Version}");
             }
 
             for (int i = 0; i < 10; i++)
             {
-                var existingGroup = await client.GetSchemagroupAsync(i.ToString());
+                var existingGroup = await client.GetSchemaGroupAsync(i.ToString());
 
-                await client.DeleteSchemagroupAsync(existingGroup.Version, existingGroup.Id);
+                await client.DeleteSchemaGroupAsync(existingGroup.Version, existingGroup.Id);
 
                 Console.WriteLine($"Deleted: Id {existingGroup.Id}, Version {existingGroup.Version}");
             }
