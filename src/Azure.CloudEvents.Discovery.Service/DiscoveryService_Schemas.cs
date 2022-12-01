@@ -49,7 +49,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getSchemaGroup")]
         public async Task<HttpResponseData> GetSchemaGroup(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemaGroups/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemagroups/{id}")]
         HttpRequestData req,
             string id,
             ILogger log)
@@ -98,7 +98,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("putSchemaGroup")]
         public async Task<HttpResponseData> PutSchemaGroup(
-           [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "schemaGroups/{id}")]
+           [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "schemagroups/{id}")]
         HttpRequestData req,
            string id,
            ILogger log)
@@ -200,7 +200,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("deleteSchemaGroup")]
         public async Task<HttpResponseData> DeleteSchemaGroup(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemaGroups/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemagroups/{id}")]
         HttpRequestData req,
             string id,
             ILogger log)
@@ -246,7 +246,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getSchemas")]
         public async Task<HttpResponseData> GetSchemaGroupSchemas(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemaGroups/{schemaGroupid}/schemas")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemagroups/{schemaGroupid}/schemas")]
         HttpRequestData req,
             string schemaGroupid,
             ILogger log)
@@ -257,7 +257,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("postSchemas")]
         public async Task<HttpResponseData> PostSchemaGroupSchemas(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "schemaGroups/{schemaGroupid}/schemas")]
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "schemagroups/{schemaGroupid}/schemas")]
         HttpRequestData req,
             string schemaGroupid,
             ILogger log)
@@ -267,7 +267,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("deleteSchemas")]
         public async Task<HttpResponseData> DeleteSchemaGroupSchemas(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemaGroups/{schemaGroupid}/schemas")]
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemagroups/{schemaGroupid}/schemas")]
         HttpRequestData req,
             string schemaGroupid,
             ILogger log)
@@ -279,7 +279,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getLatestSchema")]
         public async Task<HttpResponseData> getLatestSchema(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemaGroups/{schemaGroupid}/schemas/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemagroups/{schemaGroupid}/schemas/{id}")]
         HttpRequestData req,
             string schemaGroupid,
             string id,
@@ -388,7 +388,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("putSchema")]
         public async Task<HttpResponseData> PutSchema(
-           [HttpTrigger(AuthorizationLevel.Function, "put", Route = "schemaGroups/{schemaGroupid}/schemas/{id}")]
+           [HttpTrigger(AuthorizationLevel.Function, "put", Route = "schemagroups/{schemaGroupid}/schemas/{id}")]
         HttpRequestData req,
            string schemaGroupid,
            string id,
@@ -399,7 +399,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("postSchemaVersion")]
         public async Task<HttpResponseData> PostSchemaVersion(
-           [HttpTrigger(AuthorizationLevel.Function, "post", Route = "schemaGroups/{schemaGroupid}/schemas/{id}")]
+           [HttpTrigger(AuthorizationLevel.Function, "post", Route = "schemagroups/{schemaGroupid}/schemas/{id}")]
         HttpRequestData req,
            string schemaGroupid,
            string id,
@@ -498,7 +498,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("deleteSchema")]
         public async Task<HttpResponseData> DeleteSchema(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemaGroups/{schemaGroupid}/schemas/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "schemagroups/{schemaGroupid}/schemas/{id}")]
         HttpRequestData req,
             string schemaGroupid,
             string id,
@@ -509,7 +509,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getSchemaVersion")]
         public async Task<HttpResponseData> GetSchemaVersion(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemaGroups/{schemaGroupid}/schemas/{id}/versions/{versionid}")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "schemagroups/{schemaGroupid}/schemas/{id}/versions/{versionid}")]
         HttpRequestData req,
             string schemaGroupid,
             string id,
