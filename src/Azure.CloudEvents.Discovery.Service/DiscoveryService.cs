@@ -59,6 +59,12 @@ namespace Azure.CloudEvents.Discovery
             HttpRequestData req,
             ILogger log)
         {
+            if (req.Method.Equals("post", StringComparison.InvariantCultureIgnoreCase))
+            {
+                // the dispatcher doesn't seem to work for POST at the root
+                return await UploadDoc(req, log);
+            }
+            
             Manifest manifest = new Manifest
             {
                 EndpointsUrl = new Uri(req.Url, "/endpoints"),
