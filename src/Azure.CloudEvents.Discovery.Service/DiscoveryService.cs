@@ -55,7 +55,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getManifest")]
         public async Task<HttpResponseData> GetManifest(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "/")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "")]
             HttpRequestData req,
             ILogger log)
         {
@@ -72,7 +72,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("uploadDoc")]
         public async Task<HttpResponseData> UploadDoc(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "/")]
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "")]
             HttpRequestData req,
             ILogger log)
         {
