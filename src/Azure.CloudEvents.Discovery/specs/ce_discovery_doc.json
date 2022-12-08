@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema",
   "$id": "https://cloudevents.io/2022-12/discovery",
-  "title": "JSON Schema for my JSON file format",
+  "title": "JSON Schema for CloudEvents Registry Docs",
   "type": "object",
   "properties": {
     "$schema": {
