@@ -3,7 +3,7 @@
   "defaultVariables": null,
   "documentGenerator": {
     "fromDocument": {
-      "url": "specs/ce_discovery.yaml",
+      "url": "specs/ce_discovery.json",
       "output": null,
       "newLineBehavior": "Auto"
     }
