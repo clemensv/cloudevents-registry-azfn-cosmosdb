@@ -11,7 +11,7 @@ namespace Azure.CloudEvents.Discovery
     {
         [Function("getEndpoints")]
         public async Task<HttpResponseData> GetEndpoints(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "endpoints")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "registry/endpoints")]
             HttpRequestData req,
             ILogger log)
         {
@@ -21,7 +21,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("postEndpoints")]
         public async Task<HttpResponseData> PostEndpoints(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "endpoints")]
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "registry/endpoints")]
             HttpRequestData req,
             ILogger log)
         {
@@ -32,7 +32,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("deleteEndpoints")]
         public async Task<HttpResponseData> DeleteEndpoints(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "endpoints")]
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "registry/endpoints")]
             HttpRequestData req,
             ILogger log)
         {
@@ -41,7 +41,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getEndpoint")]
         public async Task<HttpResponseData> GetEndpoint(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "endpoints/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "registry/endpoints/{id}")]
             HttpRequestData req,
             string id,
             ILogger log)
@@ -53,7 +53,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("putEndpoint")]
         public async Task<HttpResponseData> PutEndpoint(
-           [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "endpoints/{id}")]
+           [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "registry/endpoints/{id}")]
             HttpRequestData req,
            string id,
            ILogger log)
@@ -65,7 +65,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("deleteEndpoint")]
         public async Task<HttpResponseData> DeleteEndpoint(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "endpoints/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "registry/endpoints/{id}")]
             HttpRequestData req,
             string id,
             ILogger log)
@@ -77,7 +77,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getEndpointDefinitions")]
         public async Task<HttpResponseData> GetEndpointDefinitions(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "endpoints/{id}/definitions")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "registry/endpoints/{id}/definitions")]
             HttpRequestData req,
             string id,
             ILogger log)
@@ -88,7 +88,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getEndpointDefinition")]
         public async Task<HttpResponseData> GetEndpointDefinition(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "endpoints/{id}/definitions/{defid}")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "registry/endpoints/{id}/definitions/{defid}")]
             HttpRequestData req,
             string id,
             string defid,

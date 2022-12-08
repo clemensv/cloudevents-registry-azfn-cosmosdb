@@ -10,7 +10,7 @@ namespace Azure.CloudEvents.Discovery
     {
         [Function("getGroups")]
         public async Task<HttpResponseData> GetDefinitionGroups(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "groups")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "registry/groups")]
             HttpRequestData req,
             ILogger log)
         {
@@ -20,7 +20,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("postGroups")]
         public async Task<HttpResponseData> PostDefinitionGroups(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "groups")]
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "registry/groups")]
             HttpRequestData req,
             ILogger log)
         {
@@ -31,7 +31,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("deleteGroups")]
         public async Task<HttpResponseData> DeleteDefinitionGroups(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "groups")]
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "registry/groups")]
             HttpRequestData req,
             ILogger log)
         {
@@ -42,7 +42,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getGroup")]
         public async Task<HttpResponseData> GetDefinitionGroup(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "groups/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "registry/groups/{id}")]
             HttpRequestData req,
             string id,
             ILogger log)
@@ -54,7 +54,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("putGroup")]
         public async Task<HttpResponseData> PutDefinitionGroup(
-           [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "groups/{id}")]
+           [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "registry/groups/{id}")]
             HttpRequestData req,
            string id,
            ILogger log)
@@ -66,7 +66,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("deleteGroup")]
         public async Task<HttpResponseData> DeleteDefinitionGroup(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "groups/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "registry/groups/{id}")]
             HttpRequestData req,
             string id,
             ILogger log)
@@ -79,7 +79,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getDefinitions")]
         public async Task<HttpResponseData> GetGroupDefinitions(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "groups/{groupid}/definitions")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "registry/groups/{groupid}/definitions")]
             HttpRequestData req,
             string groupid,
             ILogger log)
@@ -90,7 +90,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("postDefinitions")]
         public async Task<HttpResponseData> PostGroupDefinitions(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "groups/{groupid}/definitions")]
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "registry/groups/{groupid}/definitions")]
             HttpRequestData req,
             string groupid,
             ILogger log)
@@ -101,7 +101,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("deleteDefinitions")]
         public async Task<HttpResponseData> DeleteGroupDefinitions(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "groups/{groupid}/definitions")]
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "registry/groups/{groupid}/definitions")]
             HttpRequestData req,
             string groupid,
             ILogger log)
@@ -112,7 +112,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("getDefinition")]
         public async Task<HttpResponseData> GetDefinition(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "groups/{groupid}/definitions/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "registry/groups/{groupid}/definitions/{id}")]
             HttpRequestData req,
             string groupid,
             string id,
@@ -124,7 +124,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("putDefinition")]
         public async Task<HttpResponseData> PutDefinition(
-           [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "groups/{groupid}/definitions/{id}")]
+           [HttpTrigger(AuthorizationLevel.Function, "post", "put", Route = "registry/groups/{groupid}/definitions/{id}")]
             HttpRequestData req,
            string groupid,
            string id,
@@ -136,7 +136,7 @@ namespace Azure.CloudEvents.Discovery
 
         [Function("deleteDefinition")]
         public async Task<HttpResponseData> DeleteDefinition(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "groups/{groupid}/definitions/{id}")]
+            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "registry/groups/{groupid}/definitions/{id}")]
             HttpRequestData req,
             string groupid,
             string id,
