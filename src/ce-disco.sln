@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30907.101
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ce-disco", "ce-disco\ce-disco.csproj", "{60E0FD83-4BFA-46A4-9B05-68E04E4323FF}"
 EndProject
@@ -11,19 +11,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemTopicEnumeration", "S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery.Service", "Azure.CloudEvents.Discovery.Service\Azure.CloudEvents.Discovery.Service.csproj", "{8BC01CEB-4618-470B-839C-CDDBD4BB58B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.CloudEvents.Discovery", "Azure.CloudEvents.Discovery\Azure.CloudEvents.Discovery.csproj", "{DF1BAC41-9C22-4A81-9007-9D2428D341CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery", "Azure.CloudEvents.Discovery\Azure.CloudEvents.Discovery.csproj", "{DF1BAC41-9C22-4A81-9007-9D2428D341CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.CloudEvents.Discovery.Service.Test", "..\test\Azure.CloudEvents.Discovery.Service.Test\Azure.CloudEvents.Discovery.Service.Test.csproj", "{BD3CF726-B8EC-4158-98DF-D76C0246307D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery.Service.Test", "..\test\Azure.CloudEvents.Discovery.Service.Test\Azure.CloudEvents.Discovery.Service.Test.csproj", "{BD3CF726-B8EC-4158-98DF-D76C0246307D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.CloudEvents.Discovery.Service.CliTest", "..\test\Azure.CloudEvents.Discovery.Service.CliTest\Azure.CloudEvents.Discovery.Service.CliTest.csproj", "{D4FED6E9-331F-4BEF-9EE1-60AF5D0A5C66}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery.Service.CliTest", "..\test\Azure.CloudEvents.Discovery.Service.CliTest\Azure.CloudEvents.Discovery.Service.CliTest.csproj", "{D4FED6E9-331F-4BEF-9EE1-60AF5D0A5C66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.CloudEvents.SchemaRegistry", "Azure.CloudEvents.SchemaRegistry\Azure.CloudEvents.SchemaRegistry.csproj", "{8CB43E52-2C89-47D6-BF0F-B2D37298F383}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.SchemaRegistry", "Azure.CloudEvents.SchemaRegistry\Azure.CloudEvents.SchemaRegistry.csproj", "{8CB43E52-2C89-47D6-BF0F-B2D37298F383}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.CloudEvents.Subscriptions", "Azure.CloudEvents.Subscriptions\Azure.CloudEvents.Subscriptions.csproj", "{DF6087E0-0732-4755-8BF9-469BE545D061}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Subscriptions", "Azure.CloudEvents.Subscriptions\Azure.CloudEvents.Subscriptions.csproj", "{DF6087E0-0732-4755-8BF9-469BE545D061}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.CloudEvents.Discovery.SystemTopicLoader", "Azure.CloudEvents.Discovery.SystemTopicLoader\Azure.CloudEvents.Discovery.SystemTopicLoader.csproj", "{A33D9774-7907-4177-8791-818D710CC115}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery.SystemTopicLoader", "Azure.CloudEvents.Discovery.SystemTopicLoader\Azure.CloudEvents.Discovery.SystemTopicLoader.csproj", "{A33D9774-7907-4177-8791-818D710CC115}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "azcedisco", "azcedisco\azcedisco.csproj", "{EA897094-711C-45A2-9534-A79D1B6E2A65}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "azcedisco", "azcedisco\azcedisco.csproj", "{EA897094-711C-45A2-9534-A79D1B6E2A65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ceregistry", "ceregistry\ceregistry.csproj", "{F21B3767-AA53-4C84-BE29-048849BB7ACF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -167,6 +169,18 @@ Global
 		{EA897094-711C-45A2-9534-A79D1B6E2A65}.Release|x64.Build.0 = Release|Any CPU
 		{EA897094-711C-45A2-9534-A79D1B6E2A65}.Release|x86.ActiveCfg = Release|Any CPU
 		{EA897094-711C-45A2-9534-A79D1B6E2A65}.Release|x86.Build.0 = Release|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Debug|x64.Build.0 = Debug|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Debug|x86.Build.0 = Debug|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Release|x64.ActiveCfg = Release|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Release|x64.Build.0 = Release|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Release|x86.ActiveCfg = Release|Any CPU
+		{F21B3767-AA53-4C84-BE29-048849BB7ACF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

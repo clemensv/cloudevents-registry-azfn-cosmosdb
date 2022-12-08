@@ -1,0 +1,40 @@
+{
+    "$schema": "https://raw.githubusercontent.com/clemensv/cloudevents-discovery-interop/master/src/Azure.CloudEvents.Discovery/specs/ce_discovery_doc.json",
+    "groups": {
+        "myorg.myapp": {
+            "type" : "group",
+            "id": "myorg.myapp",
+            "format": "CloudEvents/1.0",
+            "definitions": {
+                "myorg.myapp.myevent1": {
+                    "type" : "cloudevent",
+                    "id": "myorg.myapp.myevent1",
+                    "description": "my thing",
+                    "format" : "CloudEvents/1.0",
+                    "metadata": {
+                        "attributes": {
+                            "type" : {
+                                "value" : "myorg.myapp.myevent1",
+                                "required" : true
+                            }
+                        }
+                    }
+                },
+                "myorg.myapp.myevent2": {
+                    "type" : "cloudevent",
+                    "id": "myorg.myapp.myevent2",
+                    "description": "my thing",
+                    "format" : "CloudEvents/1.0",
+                    "metadata": {
+                        "attributes": {
+                            "type" : {
+                                "value" : "myorg.myapp.myevent2",
+                                "required" : true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -38,6 +38,25 @@
             }
           }
         }
+      },
+      "post": {
+        "operationId": "uploadDoc",
+        "description": "Uploads a registry document and upserts its contents into the registry",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/uploadDocPostRequest"
+        },
+        "responses": {
+          "200": {
+            "description": "A list of endpoints (optionally matching the query parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/manifest"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/endpoints": {
@@ -1445,6 +1464,16 @@
       }
     },
     "requestBodies": {
+      "uploadDocPostRequest": {
+        "description": "A request to create or update the discovery endpoint's collection of endpoints with the given endpoints",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/manifest"
+            }
+          }
+        }
+      },
       "endpointsPostRequest": {
         "description": "A request to create or update the discovery endpoint's collection of endpoints with the given endpoints",
         "content": {

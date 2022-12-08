@@ -70,6 +70,46 @@ namespace Azure.CloudEvents.Discovery
             return response;
         }
 
+        [Function("uploadDoc")]
+        public async Task<HttpResponseData> UploadDoc(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "/")]
+            HttpRequestData req,
+            ILogger log)
+        {
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            Manifest manifest = JsonConvert.DeserializeObject<Manifest>(requestBody);
+            if (manifest.SchemaGroups != null)
+            {
+                var ctrGroups = this.cosmosClient.GetContainer("discovery", "schemagroups");
+                var ctrSchemas = this.cosmosClient.GetContainer("discovery", "schemas");
+                var res = await PutGroupsHandler<SchemaGroup, SchemaGroups, Schema, Schemas>(
+                    req, (g)=>g.Schemas, ctrGroups, ctrSchemas, manifest.SchemaGroups);
+                if (res.StatusCode != HttpStatusCode.OK)
+                    return res;
+            }
+            if (manifest.Groups != null)
+            {
+                Container ctrGroups = this.cosmosClient.GetContainer("discovery", "groups");
+                Container ctrDefs = this.cosmosClient.GetContainer("discovery", "definitions");
+                var res = await PutGroupsHandler<Group, Groups, Definition, Definitions>(
+                    req, (g) => g.Definitions, ctrGroups, ctrDefs, manifest.Groups);
+                if (res.StatusCode != HttpStatusCode.OK)
+                    return res;
+            }
+            if (manifest.Endpoints != null)
+            {
+                Container ctrEndpoints = this.cosmosClient.GetContainer("discovery", "endpoints");
+                Container ctrdefs = this.cosmosClient.GetContainer("discovery", "epdefinitions");
+                var res = await PutGroupsHandler<Endpoint, Endpoints, Definition, Definitions>(req, (e) => e.Definitions, ctrEndpoints, ctrdefs, manifest.Endpoints);
+                if (res.StatusCode != HttpStatusCode.OK)
+                    return res;
+            }
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(manifest);
+            return response;
+        }
+
+
         public async Task<HttpResponseData> GetGroups<T, TDict>(
             HttpRequestData req,
             ILogger log,
@@ -95,6 +135,36 @@ namespace Azure.CloudEvents.Discovery
             return res;
         }
 
+        public async Task<HttpResponseData> PutGroups<TGroup, TGroupDict, TResource, TResourceDict>(
+            HttpRequestData req,
+            ILogger log,
+            Func<TGroup, TResourceDict> itemResolver,
+            Container ctrGroups,
+            Container ctrResource) where TGroup : Resource, new()
+                                   where TGroupDict : IDictionary<string, TGroup>, new()
+                                   where TResource : Resource, new()
+                                   where TResourceDict : IDictionary<string, TResource>, new()
+        {
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            TGroupDict groups = JsonConvert.DeserializeObject<TGroupDict>(requestBody);
+            return await PutGroupsHandler<TGroup, TGroupDict, TResource, TResourceDict>(req, itemResolver, ctrGroups, ctrResource, groups);
+        }
+
+        private async Task<HttpResponseData> PutGroupsHandler<TGroup, TGroupDict, TResource, TResourceDict>(HttpRequestData req, Func<TGroup, TResourceDict> itemResolver, Container ctrGroups, Container ctrResource, TGroupDict groups)
+            where TGroup : Resource, new()
+            where TGroupDict : IDictionary<string, TGroup>, new()
+            where TResource : Resource, new()
+            where TResourceDict : IDictionary<string, TResource>, new()
+        {
+            foreach (var group in groups.Values)
+            {
+                return await PutGroupHandler<TGroup, TResource, TResourceDict>(req, group.Id, itemResolver, ctrGroups, ctrResource, group);
+            }
+            var res = req.CreateResponse(HttpStatusCode.OK);
+            return res;
+        }
+
         public async Task<HttpResponseData> PostGroups<TGroup, TGroupDict, TResource, TResourceDict>(
             HttpRequestData req,
             ILogger log,
@@ -108,6 +178,20 @@ namespace Azure.CloudEvents.Discovery
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             TGroupDict groups = JsonConvert.DeserializeObject<TGroupDict>(requestBody);
+            return await PostGroupsHandler<TGroup, TGroupDict, TResource, TResourceDict>(req, itemResolver, ctrGroups, ctrResource, groups);
+        }
+
+        private async Task<HttpResponseData> PostGroupsHandler<TGroup, TGroupDict, TResource, TResourceDict>(
+            HttpRequestData req, 
+            Func<TGroup, TResourceDict> itemResolver, 
+            Container ctrGroups, 
+            Container ctrResource, 
+            TGroupDict groups)
+            where TGroup : Resource, new()
+            where TGroupDict : IDictionary<string, TGroup>, new()
+            where TResource : Resource, new()
+            where TResourceDict : IDictionary<string, TResource>, new()
+        {
             TGroupDict responseGroups = new TGroupDict();
             if (groups == null)
             {
@@ -137,7 +221,7 @@ namespace Azure.CloudEvents.Discovery
                                 try
                                 {
                                     var existingResource1 = await ctrResource.ReadItemAsync<Schema>(resource.Id, new PartitionKey(group.Id));
-                                    
+
                                     await ctrGroups.UpsertItemAsync<TResource>(resource);
                                 }
                                 catch (CosmosException ce)
@@ -188,7 +272,6 @@ namespace Azure.CloudEvents.Discovery
             var res = req.CreateResponse(HttpStatusCode.OK);
             await res.WriteAsJsonAsync(responseGroups);
             return res;
-
         }
 
         public async Task<HttpResponseData> DeleteGroups<TRef, T, TDict>(
@@ -299,6 +382,14 @@ namespace Azure.CloudEvents.Discovery
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             TGroup resource = JsonConvert.DeserializeObject<TGroup>(requestBody);
+            return await PutGroupHandler<TGroup, TResource, TResourceDict>(req, id, itemResolver, ctrGroups, ctrResource, resource);
+        }
+
+        private async Task<HttpResponseData> PutGroupHandler<TGroup, TResource, TResourceDict>(HttpRequestData req, string id, Func<TGroup, TResourceDict> itemResolver, Container ctrGroups, Container ctrResource, TGroup resource)
+            where TGroup : Resource, new()
+            where TResource : Resource, new()
+            where TResourceDict : IDictionary<string, TResource>, new()
+        {
             try
             {
                 var existingResource = await ctrGroups.ReadItemAsync<TGroup>(resource.Id, new PartitionKey(id));
