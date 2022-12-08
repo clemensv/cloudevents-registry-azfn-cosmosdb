@@ -14,16 +14,33 @@ using System.Net;
 using System.Threading.Tasks;
 using PartitionKey = Microsoft.Azure.Cosmos.PartitionKey;
 using Container = Microsoft.Azure.Cosmos.Container;
+using System.Text.RegularExpressions;
+using Microsoft.VisualBasic;
+using Azure.Storage.Blobs.Models;
+using System.Threading;
+using System.ComponentModel;
 
 namespace Azure.CloudEvents.Discovery
 {
 
     public partial class DiscoveryService
     {
-        private const string DeletedEventType = "io.cloudevents.discovery.deleted";
-        private const string ChangedEventType = "io.cloudevents.discovery.changed";
-        private const string CreatedEventType = "io.cloudevents.discovery.created";
-
+        private const string DeletedEventType = "io.cloudevents.resource.deleted";
+        private const string ChangedEventType = "io.cloudevents.resource.changed";
+        private const string CreatedEventType = "io.cloudevents.resource.created";
+        private const string ContentTypeHeader = "Content-Type";
+        private const string ResourceIdHeader = "resource-id";
+        private const string ResourceDescriptionHeader = "resource-description";
+        private const string ResourceDocsHeader = "resource-docs";
+        private const string ResourceNameHeader = "resource-name";
+        private const string ResourceOriginHeader = "resource-origin";
+        private const string ResourceVersionHeader = "resource-version";
+        private const string ResourceCreatedOnHeader = "resource-createdon";
+        private const string ResourceCreatedByHeader = "resource-createdby";
+        private const string ResourceModifiedOnHeader = "resource-modifiedon";
+        private const string ResourceModifiedByHeader = "resource-modifiedby";
+        private const string ApplicationJsonMediaType = "application/json";
+        private const string LocationHeader = "Location";
         private CosmosClient cosmosClient;
         private readonly EventGridPublisherClient eventGridClient;
         private BlobContainerClient schemasBlobClient;
@@ -78,14 +95,20 @@ namespace Azure.CloudEvents.Discovery
             return res;
         }
 
-        public async Task<HttpResponseData> PostGroups<T, TDict>(
+        public async Task<HttpResponseData> PostGroups<TGroup, TGroupDict, TResource, TResourceDict>(
             HttpRequestData req,
             ILogger log,
-            Container container) where T : Resource, new() where TDict : IDictionary<string, T>, new()
+            Func<TGroup, TResourceDict> itemResolver,
+            Container ctrGroups,
+            Container ctrResource) where TGroup : Resource, new()
+                                   where TGroupDict : IDictionary<string, TGroup>, new()
+                                   where TResource : Resource, new()
+                                   where TResourceDict : IDictionary<string, TResource>, new()
         {
+
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            TDict groups = JsonConvert.DeserializeObject<TDict>(requestBody);
-            TDict responseGroups = new TDict();
+            TGroupDict groups = JsonConvert.DeserializeObject<TGroupDict>(requestBody);
+            TGroupDict responseGroups = new TGroupDict();
             if (groups == null)
             {
                 return req.CreateResponse(HttpStatusCode.BadRequest);
@@ -97,7 +120,7 @@ namespace Azure.CloudEvents.Discovery
 
                 try
                 {
-                    var existingItem = await container.ReadItemAsync<T>(group.Id, new PartitionKey(group.Id));
+                    var existingItem = await ctrGroups.ReadItemAsync<TGroup>(group.Id, new PartitionKey(group.Id));
                     if (existingItem.StatusCode == HttpStatusCode.OK)
                     {
                         if (group.Version <= existingItem.Resource.Version)
@@ -105,7 +128,37 @@ namespace Azure.CloudEvents.Discovery
                             // define code & response
                             return req.CreateResponse(HttpStatusCode.Conflict);
                         }
-                        var result = await container.UpsertItemAsync<T>(group);
+
+                        var resourceDict = itemResolver(group);
+                        if (resourceDict != null)
+                        {
+                            foreach (var resource in resourceDict.Values)
+                            {
+                                try
+                                {
+                                    var existingResource1 = await ctrResource.ReadItemAsync<Schema>(resource.Id, new PartitionKey(group.Id));
+                                    
+                                    await ctrGroups.UpsertItemAsync<TResource>(resource);
+                                }
+                                catch (CosmosException ce)
+                                {
+                                    if (ce.StatusCode != HttpStatusCode.NotFound)
+                                    {
+                                        throw;
+                                    }
+                                }
+                                try
+                                {
+                                    resource.GroupId = group.Id;
+                                    await ctrResource.CreateItemAsync<TResource>(resource, new PartitionKey(group.Id));
+                                }
+                                catch (CosmosException)
+                                {
+                                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                                }
+                            }
+                        }
+                        var result = await ctrGroups.UpsertItemAsync<TGroup>(group);
                         responseGroups.Add(result.Resource.Id, result.Resource);
 
                         if (this.eventGridClient != null)
@@ -116,8 +169,7 @@ namespace Azure.CloudEvents.Discovery
                     }
                     else
                     {
-
-                        var result = await container.CreateItemAsync<T>(group);
+                        var result = await ctrGroups.CreateItemAsync<TGroup>(group);
                         responseGroups.Add(result.Resource.Id, result.Resource);
 
                         if (this.eventGridClient != null)
@@ -185,17 +237,41 @@ namespace Azure.CloudEvents.Discovery
 
         }
 
-        public async Task<HttpResponseData> GetGroup<T>(
+        public async Task<HttpResponseData> GetGroup<TGroup, TResource, TResourceDict>(
             HttpRequestData req,
             string id,
             ILogger log,
-            Container container) where T : Resource, new()
+            Func<TGroup, TResourceDict> itemResolver,
+            Container ctrGroups,
+            Container ctrResource) where TGroup : Resource, new()
+                                   where TResource : Resource, new()
+                                   where TResourceDict : IDictionary<string, TResource>, new()
         {
             try
             {
 
-                var existingItem = await container.ReadItemAsync<T>(id, new PartitionKey(id));
+                var existingItem = await ctrGroups.ReadItemAsync<TGroup>(id, new PartitionKey(id));
                 existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
+                var itemCollection = itemResolver(existingItem.Resource);
+                if (itemCollection != null)
+                {
+                    itemCollection.Clear();
+                }
+                else
+                {
+                    itemCollection = new TResourceDict();
+                }
+                using (FeedIterator<TResource> resultSet = ctrResource.GetItemQueryIterator<TResource>(default(string), null, new QueryRequestOptions { PartitionKey = new PartitionKey(id) }))
+                {
+                    while (resultSet.HasMoreResults)
+                    {
+                        foreach (var group in await resultSet.ReadNextAsync())
+                        {
+                            group.Self = new Uri(req.Url, group.Id);
+                            itemCollection.Add(group.Id, group);
+                        }
+                    }
+                }
                 var res = req.CreateResponse(HttpStatusCode.OK);
                 await res.WriteAsJsonAsync(existingItem.Resource);
                 return res;
@@ -208,27 +284,61 @@ namespace Azure.CloudEvents.Discovery
                 }
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
-
         }
 
 
-        public async Task<HttpResponseData> PutGroup<T>(
+        public async Task<HttpResponseData> PutGroup<TGroup, TResource, TResourceDict>(
             HttpRequestData req,
             string id,
             ILogger log,
-            Container container) where T : Resource, new()
+            Func<TGroup, TResourceDict> itemResolver,
+            Container ctrGroups,
+            Container ctrResource) where TGroup : Resource, new()
+                                   where TResource : Resource, new()
+                                   where TResourceDict : IDictionary<string, TResource>, new()
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            T resource = JsonConvert.DeserializeObject<T>(requestBody);
+            TGroup resource = JsonConvert.DeserializeObject<TGroup>(requestBody);
             try
             {
-                var existingResource = await container.ReadItemAsync<T>(resource.Id, new PartitionKey(resource.Id));
+                var existingResource = await ctrGroups.ReadItemAsync<TGroup>(resource.Id, new PartitionKey(id));
                 if (resource.Version <= existingResource.Resource.Version)
                 {
                     // define code & response
                     return req.CreateResponse(HttpStatusCode.Conflict);
                 }
-                var result1 = await container.UpsertItemAsync<T>(resource);
+                var result1 = await ctrGroups.UpsertItemAsync<TGroup>(resource);
+
+                var itemCollection = itemResolver(resource);
+                if (itemCollection != null)
+                {
+                    foreach (var item in itemCollection.Values)
+                    {
+                        try
+                        {
+                            var existingResource1 = await ctrResource.ReadItemAsync<TResource>(item.Id, new PartitionKey(id));
+                            item.GroupId = id;
+                            await ctrResource.UpsertItemAsync<TResource>(item, new PartitionKey(id));
+                            continue;
+                        }
+                        catch (CosmosException ce)
+                        {
+                            if (ce.StatusCode != HttpStatusCode.NotFound)
+                            {
+                                throw;
+                            }
+                        }
+                        try
+                        {
+                            item.GroupId = id;
+                            var result = await ctrResource.CreateItemAsync<TResource>(item, new PartitionKey(id));
+                        }
+                        catch (CosmosException)
+                        {
+                            return req.CreateResponse(HttpStatusCode.BadRequest);
+                        }
+                    }
+                }
 
                 if (eventGridClient != null)
                 {
@@ -250,13 +360,30 @@ namespace Azure.CloudEvents.Discovery
 
             try
             {
-                var result = await container.CreateItemAsync<T>(resource, new PartitionKey(resource.Id));
+                var result = await ctrGroups.CreateItemAsync<TGroup>(resource, new PartitionKey(id));
+                var itemCollection = itemResolver(resource);
+                if (itemCollection != null)
+                {
+                    foreach (var item in itemCollection.Values)
+                    {
+                        try
+                        {
+                            item.GroupId = id;
+                            await ctrResource.CreateItemAsync<TResource>(item, new PartitionKey(id));
+                        }
+                        catch (CosmosException)
+                        {
+                            return req.CreateResponse(HttpStatusCode.BadRequest);
+                        }
+                    }
+                }
 
                 if (eventGridClient != null)
                 {
                     var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resource);
                     await this.eventGridClient.SendEventAsync(createdEvent);
                 }
+
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 await response.WriteAsJsonAsync(result.Resource);
@@ -266,19 +393,33 @@ namespace Azure.CloudEvents.Discovery
             {
                 return req.CreateResponse(HttpStatusCode.BadRequest);
             }
-
         }
-        public async Task<HttpResponseData> DeleteGroup<T>(
+
+        public async Task<HttpResponseData> DeleteGroup<TGroup, TResource, TResourceDict>(
             HttpRequestData req,
             string id,
             ILogger log,
-            Container container) where T : Resource
+            Func<TGroup, TResourceDict> itemResolver,
+            Container ctrGroups,
+            Container ctrResource) where TGroup : Resource, new()
+                                   where TResource : Resource, new()
+                                   where TResourceDict : IDictionary<string, TResource>, new()
         {
-
             try
             {
-                var existingResource = await container.ReadItemAsync<Reference>(id, new PartitionKey(id));
-                var result = await container.DeleteItemAsync<T>(id, new PartitionKey(id));
+                PartitionKey partitionKey = new PartitionKey(id);
+                var existingResource = await ctrGroups.ReadItemAsync<TGroup>(id, partitionKey);
+                var result = await ctrGroups.DeleteItemAsync<TGroup>(id, new PartitionKey(id));
+                using (FeedIterator<TResource> resultSet = ctrResource.GetItemQueryIterator<TResource>(default(string), null, new QueryRequestOptions { PartitionKey = new PartitionKey(id) }))
+                {
+                    while (resultSet.HasMoreResults)
+                    {
+                        foreach (var group in await resultSet.ReadNextAsync())
+                        {
+                            await ctrResource.DeleteItemAsync<TResource>(group.Id, partitionKey);
+                        }
+                    }
+                }
 
                 if (this.eventGridClient != null)
                 {
@@ -364,7 +505,7 @@ namespace Azure.CloudEvents.Discovery
                     }
                     else
                     {
-
+                        item.GroupId = groupid;
                         var result = await container.CreateItemAsync<T>(item, new PartitionKey(groupid));
                         responseItems.Add(result.Resource.Id, result.Resource);
 
@@ -387,17 +528,17 @@ namespace Azure.CloudEvents.Discovery
 
         }
 
-        public async Task<HttpResponseData> DeleteResources<TRef, T, TDict>(
+        public async Task<HttpResponseData> DeleteResources<TRef, TResource, TResourceDict>(
             HttpRequestData req,
             string groupid,
             ILogger log,
-            Container container) where T : Resource, new()
-                                where TDict : IDictionary<string, T>, new()
+            Container container) where TResource : Resource, new()
+                                where TResourceDict : IDictionary<string, TResource>, new()
         {
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             List<Reference> references = JsonConvert.DeserializeObject<List<Reference>>(requestBody);
-            TDict responseItems = new TDict();
+            TResourceDict responseItems = new TResourceDict();
             if (references == null)
             {
                 return req.CreateResponse(HttpStatusCode.BadRequest);
@@ -408,10 +549,10 @@ namespace Azure.CloudEvents.Discovery
 
                 try
                 {
-                    var existingItem = await container.ReadItemAsync<T>(reference.Id, new PartitionKey(groupid));
+                    var existingItem = await container.ReadItemAsync<TResource>(reference.Id, new PartitionKey(groupid));
                     if (existingItem.StatusCode == HttpStatusCode.OK)
                     {
-                        var result = await container.DeleteItemAsync<T>(reference.Id, new PartitionKey(groupid));
+                        var result = await container.DeleteItemAsync<TResource>(reference.Id, new PartitionKey(groupid));
                         responseItems.Add(existingItem.Resource.Id, existingItem.Resource);
 
                         if (this.eventGridClient != null)
@@ -434,17 +575,17 @@ namespace Azure.CloudEvents.Discovery
 
         }
 
-        public async Task<HttpResponseData> GetResource<T>(
+        public async Task<HttpResponseData> GetResource<TResource>(
             HttpRequestData req,
             string groupid,
             string id,
             ILogger log,
-            Container container) where T : Resource, new()
+            Container container) where TResource : Resource, new()
         {
             try
             {
 
-                var existingItem = await container.ReadItemAsync<T>(id, new PartitionKey(groupid));
+                var existingItem = await container.ReadItemAsync<TResource>(id, new PartitionKey(groupid));
                 existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
                 var res = req.CreateResponse(HttpStatusCode.OK);
                 await res.WriteAsJsonAsync(existingItem.Resource);
@@ -462,24 +603,24 @@ namespace Azure.CloudEvents.Discovery
         }
 
 
-        public async Task<HttpResponseData> PutResource<T>(
+        public async Task<HttpResponseData> PutResource<TResource>(
             HttpRequestData req,
             string groupid,
             string id,
             ILogger log,
-            Container container) where T : Resource, new()
+            Container container) where TResource : Resource, new()
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            T resource = JsonConvert.DeserializeObject<T>(requestBody);
+            TResource resource = JsonConvert.DeserializeObject<TResource>(requestBody);
             try
             {
-                var existingItem = await container.ReadItemAsync<T>(resource.Id, new PartitionKey(groupid));
+                var existingItem = await container.ReadItemAsync<TResource>(resource.Id, new PartitionKey(groupid));
                 if (resource.Version <= existingItem.Resource.Version)
                 {
                     // define code & response
                     return req.CreateResponse(HttpStatusCode.Conflict);
                 }
-                var result1 = await container.UpsertItemAsync<T>(resource, new PartitionKey(groupid));
+                var result1 = await container.UpsertItemAsync<TResource>(resource, new PartitionKey(groupid));
 
                 if (eventGridClient != null)
                 {
@@ -501,7 +642,8 @@ namespace Azure.CloudEvents.Discovery
 
             try
             {
-                var result = await container.CreateItemAsync<T>(resource, new PartitionKey(groupid));
+                resource.GroupId = groupid;
+                var result = await container.CreateItemAsync<TResource>(resource, new PartitionKey(groupid));
 
                 if (eventGridClient != null)
                 {
@@ -520,97 +662,330 @@ namespace Azure.CloudEvents.Discovery
 
         }
 
+        private static void SetResourceHeaders<TResource, TResourceVersion>(TResource schema, TResourceVersion latestVersion, HttpResponseData res)
+            where TResourceVersion : ResourceWithVersion
+            where TResource : ResourceWithVersionedResources, new()
+        {
+            res.Headers.Add(ResourceIdHeader, latestVersion.Id);
+            if (!string.IsNullOrEmpty(latestVersion.Description))
+            {
+                res.Headers.Add(ResourceDescriptionHeader, latestVersion.Description);
+            }
+            else if (!string.IsNullOrEmpty(schema.Description))
+            {
+                res.Headers.Add(ResourceDescriptionHeader, schema.Description);
+            }
+            if (latestVersion.Docs != null)
+            {
+                res.Headers.Add(ResourceDocsHeader, latestVersion.Docs.ToString());
+            }
+            else if (schema.Docs != null)
+            {
+                res.Headers.Add(ResourceDocsHeader, schema.Docs.ToString());
+            }
+            if (!string.IsNullOrEmpty(latestVersion.Name))
+            {
+                res.Headers.Add(ResourceNameHeader, latestVersion.Name);
+            }
+            else if (!string.IsNullOrEmpty(schema.Name))
+            {
+                res.Headers.Add(ResourceNameHeader, schema.Name);
+            }
+            if (!string.IsNullOrEmpty(latestVersion.Origin))
+            {
+                res.Headers.Add(ResourceOriginHeader, latestVersion.Origin);
+            }
+            else if (!string.IsNullOrEmpty(schema.Origin))
+            {
+                res.Headers.Add(ResourceNameHeader, schema.Origin);
+            }
+            res.Headers.Add(ResourceVersionHeader, latestVersion.Version);
+            res.Headers.Add(ResourceCreatedOnHeader, latestVersion.CreatedOn.ToString("o"));
+            if (!string.IsNullOrEmpty(latestVersion.CreatedBy))
+            {
+                res.Headers.Add(ResourceCreatedByHeader, latestVersion.CreatedBy);
+            }
+            res.Headers.Add(ResourceModifiedOnHeader, latestVersion.ModifiedOn.ToString("o"));
+            if (!string.IsNullOrEmpty(latestVersion.ModifiedBy))
+            {
+                res.Headers.Add(ResourceModifiedByHeader, latestVersion.ModifiedBy);
+            }
+        }
 
-        public async Task<HttpResponseData> GetResourceVersion<T, TV>(
+        public async Task<HttpResponseData> GetResourceVersion<TResourceVersion, TResource>(
             HttpRequestData req,
             string groupid,
             string id,
             string versionid,
             ILogger log,
-            Container container) where T : ResourceWithVersion
-                                 where TV : ResourceWithVersionedResources, new()
+            Container container,
+            BlobContainerClient blobContainerClient) where TResourceVersion : ResourceWithVersion
+                                 where TResource : ResourceWithVersionedResources, new()
         {
-            try
+            var queryDictionary = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(req.Url.Query);
+            if (queryDictionary.ContainsKey("meta") || blobContainerClient == null)
             {
-                var existingContainer = await container.ReadItemAsync<TV>(id, new PartitionKey(groupid));
-                if (existingContainer.Resource.Versions.ContainsKey(versionid))
+                if (queryDictionary["meta"].First().ToLower() != "false")
                 {
-                    var response = req.CreateResponse(HttpStatusCode.OK);
-                    await response.WriteAsJsonAsync(existingContainer.Resource.Versions[versionid]);
-                    return response;
+                    var existingItem = await container.ReadItemAsync<TResource>(id, new PartitionKey(groupid));
+                    var latestVersion = existingItem.Resource.Versions[versionid];
+                    var res = req.CreateResponse(HttpStatusCode.OK);
+                    await res.WriteAsJsonAsync(latestVersion);
+                    return res;
                 }
             }
-            catch (CosmosException ce)
+            else
             {
-                if (ce.StatusCode != HttpStatusCode.NotFound)
+                var existingItem = await container.ReadItemAsync<TResource>(id, new PartitionKey(groupid));
+                var latestVersion = existingItem.Resource.Versions[versionid];
+                var blobClient = blobContainerClient.GetBlobClient(req.Url.AbsolutePath);
+                if (!await blobClient.ExistsAsync())
                 {
-                    throw;
+                    var res = req.CreateResponse(HttpStatusCode.NotFound);
+                    return res;
+                }
+                else
+                {
+                    var props = await blobClient.GetPropertiesAsync();
+                    var contentType = props.Value.ContentType;
+                    var res = req.CreateResponse(HttpStatusCode.OK);
+                    SetResourceHeaders(existingItem.Resource, latestVersion, res);
+                    res.Headers.Add(ContentTypeHeader, contentType);
+                    res.Body = blobClient.DownloadStreaming().Value.Content;
+                    return res;
+
                 }
             }
-            return req.CreateResponse(HttpStatusCode.NotFound);
+            return req.CreateResponse(HttpStatusCode.InternalServerError);
         }
 
-        public async Task<HttpResponseData> PostResourceVersion<T, TV>(
+        public async Task<HttpResponseData> GetLatestResourceVersion<TResourceVersion, TResource>(
             HttpRequestData req,
             string groupid,
             string id,
             ILogger log,
-            Container container) where T : ResourceWithVersion
-                                 where TV : ResourceWithVersionedResources, new()
+            Container container,
+            BlobContainerClient blobContainerClient,
+            string self,
+            Func<TResourceVersion, Uri> redirectResolver = null,
+            Func<TResourceVersion, object> objectResolver = null) where TResourceVersion : ResourceWithVersion
+                                 where TResource : ResourceWithVersionedResources, new()
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            T resource = JsonConvert.DeserializeObject<T>(requestBody);
             try
             {
-                var existingContainer = await container.ReadItemAsync<TV>(resource.Id, new PartitionKey(groupid));
-                var nextVersion = existingContainer.Resource.Versions.Values.Max(v => int.Parse(v.Version)) + 1;
-                resource.Version = nextVersion.ToString();
-                existingContainer.Resource.Versions.Add(resource.Version, resource);
-                var result1 = await container.UpsertItemAsync<TV>(existingContainer.Resource, new PartitionKey(groupid));
-                if (eventGridClient != null)
+                var existingItem = await container.ReadItemAsync<TResource>(id, new PartitionKey(groupid));
+                var latest = existingItem.Resource.Versions.Max((x) => x.Key);
+                var latestVersion = (TResourceVersion)existingItem.Resource.Versions[latest];
+
+                if (req.Url.Query.Contains("meta"))
                 {
-                    var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resource);
-                    await this.eventGridClient.SendEventAsync(createdEvent);
+                    var res = req.CreateResponse(HttpStatusCode.OK);
+                    res.Headers.Add(ContentTypeHeader, ApplicationJsonMediaType);
+                    await res.WriteAsJsonAsync(latestVersion);
+                    return res;
                 }
-
-                var response = req.CreateResponse(HttpStatusCode.Created);
-                response.Headers.Add("Location", new Uri(req.Url, "versions/" + resource.Version).ToString());
-                await response.WriteAsJsonAsync(result1.Resource);
-
-                return response;
-
+                else if (redirectResolver != null && redirectResolver(latestVersion) != null)
+                {
+                    var res = req.CreateResponse(HttpStatusCode.TemporaryRedirect);
+                    res.Headers.Add(LocationHeader, redirectResolver(latestVersion).ToString());
+                    SetResourceHeaders(existingItem.Resource, latestVersion, res);
+                    return res;
+                }
+                else if (objectResolver != null && objectResolver(latestVersion) != null)
+                {
+                    var res = req.CreateResponse(HttpStatusCode.OK);
+                    res.Headers.Add(ContentTypeHeader, ApplicationJsonMediaType);
+                    await res.WriteAsJsonAsync(objectResolver(latestVersion));
+                    SetResourceHeaders(existingItem.Resource, latestVersion, res);
+                    return res;
+                }
+                else
+                {
+                    var path = $"{self}/versions/{latest}";
+                    var blobClient = blobContainerClient.GetBlobClient(path);
+                    var download = await blobClient.DownloadStreamingAsync();
+                    var res = req.CreateResponse(HttpStatusCode.OK);
+                    res.Body = download.Value.Content;
+                    res.Headers.Add(ContentTypeHeader, download.Value.Details.ContentType);
+                    SetResourceHeaders(existingItem.Resource, latestVersion, res);
+                    return res;
+                }
             }
             catch (CosmosException ce)
             {
-                if (ce.StatusCode != HttpStatusCode.NotFound)
+                if (ce.StatusCode == HttpStatusCode.NotFound)
                 {
-                    throw;
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        public async Task<HttpResponseData> PostResourceVersion<TResourceVersion, TResource>(
+                    HttpRequestData req,
+                    string groupid,
+                    string id,
+                    ILogger log,
+                    Container container,
+                    BlobContainerClient blobContainerClient,
+                    string self) where TResourceVersion : ResourceWithVersion, new()
+                                         where TResource : ResourceWithVersionedResources, new()
+        {
+            var contentType = req.Headers.GetValues(ContentTypeHeader).First();
+            if (contentType != ApplicationJsonMediaType || blobContainerClient == null)
+            {
+                TResourceVersion resourceVersion = new()
+                {
+                    Id = id,
+                    Description = req.Headers.Contains(ResourceDescriptionHeader) ? req.Headers.GetValues(ResourceDescriptionHeader).FirstOrDefault() : null,
+                    Name = req.Headers.Contains(ResourceNameHeader) ? req.Headers.GetValues(ResourceNameHeader).FirstOrDefault() : null,
+                    Docs = req.Headers.Contains(ResourceDocsHeader) ? new Uri(req.Headers.GetValues(ResourceDocsHeader).FirstOrDefault()) : null,
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
+                };
+
+                try
+                {
+                    var existingContainer = await container.ReadItemAsync<TResource>(id, new PartitionKey(self));
+                    long nextVersion = 1;
+                    if (existingContainer.Resource.Versions == null )
+                    {
+                        existingContainer.Resource.Versions = new Dictionary<string, ResourceWithVersion>();
+                    }
+                    else
+                    {
+                        nextVersion = existingContainer.Resource.Versions.Values.Max(v => int.Parse(v.Version)) + 1;
+                    }                    
+                    resourceVersion.Version = nextVersion.ToString();
+                    existingContainer.Resource.Versions.Add(resourceVersion.Version, resourceVersion);
+
+                    var path = $"{self}/versions/{resourceVersion.Version}";
+                    var blobClient = blobContainerClient.GetBlobClient(path);
+                    await blobClient.UploadAsync(req.Body, new BlobUploadOptions()
+                    {
+                        HttpHeaders = new BlobHttpHeaders { ContentType = contentType }
+                    }, CancellationToken.None);
+
+                    var result1 = await container.UpsertItemAsync<TResource>(existingContainer.Resource, new PartitionKey(self));
+                    if (eventGridClient != null)
+                    {
+                        var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resourceVersion);
+                        await this.eventGridClient.SendEventAsync(createdEvent);
+                    }
+
+                    var response = req.CreateResponse(HttpStatusCode.Created);
+                    response.Headers.Add(LocationHeader, new Uri(req.Url, "versions/" + resourceVersion.Version).ToString());
+                    await response.WriteAsJsonAsync(result1.Resource);
+                    response.StatusCode = HttpStatusCode.Created;
+                    return response;
+                }
+                catch (CosmosException ce)
+                {
+                    if (ce.StatusCode != HttpStatusCode.NotFound)
+                    {
+                        throw;
+                    }
+                }
+
+                try
+                {
+                    TResource resource = new TResource();
+                    resource.Id = id;
+                    resource.Self = new Uri(self, UriKind.Relative);
+                    resource.Versions = new Dictionary<string, ResourceWithVersion>();
+                    resource.Versions.Add("1", resourceVersion);
+                    resourceVersion.Version = "1";
+
+                    var path = $"{self}/versions/{resourceVersion.Version}";
+                    var blobClient = blobContainerClient.GetBlobClient(path);
+                    await blobClient.UploadAsync(req.Body, new BlobUploadOptions()
+                    {
+                        HttpHeaders = new BlobHttpHeaders
+                        {
+                            ContentType = contentType
+                        }
+                    }, CancellationToken.None);
+
+                    resource.GroupId = groupid;
+                    var result = await container.CreateItemAsync<TResource>(resource, new PartitionKey(self));
+
+                    if (eventGridClient != null)
+                    {
+                        var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resourceVersion);
+                        await this.eventGridClient.SendEventAsync(createdEvent);
+                    }
+
+                    var response = req.CreateResponse(HttpStatusCode.Created);
+                    response.Headers.Add(LocationHeader, new Uri(req.Url, "/" + path).ToString());
+                    await response.WriteAsJsonAsync(result.Resource);
+                    response.StatusCode = HttpStatusCode.Created;
+                    return response;
+                }
+                catch (CosmosException)
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                }
+                catch (Exception)
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
                 }
             }
-
-            try
+            else
             {
-                TV newContainer = new TV();
-                newContainer.Id = id;
-                newContainer.Versions.Add("1", resource);
-                var result = await container.CreateItemAsync<TV>(newContainer, new PartitionKey(groupid));
-
-                if (eventGridClient != null)
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                TResourceVersion resource = JsonConvert.DeserializeObject<TResourceVersion>(requestBody);
+                try
                 {
-                    var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resource);
-                    await this.eventGridClient.SendEventAsync(createdEvent);
+                    var existingContainer = await container.ReadItemAsync<TResource>(resource.Id, new PartitionKey(groupid));
+                    var nextVersion = existingContainer.Resource.Versions.Values.Max(v => int.Parse(v.Version)) + 1;
+                    resource.Version = nextVersion.ToString();
+                    existingContainer.Resource.Versions.Add(resource.Version, resource);
+                    var result1 = await container.UpsertItemAsync<TResource>(existingContainer.Resource, new PartitionKey(groupid));
+                    if (eventGridClient != null)
+                    {
+                        var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resource);
+                        await this.eventGridClient.SendEventAsync(createdEvent);
+                    }
+
+                    var response = req.CreateResponse(HttpStatusCode.Created);
+                    response.Headers.Add(LocationHeader, new Uri(req.Url, "versions/" + resource.Version).ToString());
+                    await response.WriteAsJsonAsync(result1.Resource);
+
+                    return response;
+
+                }
+                catch (CosmosException ce)
+                {
+                    if (ce.StatusCode != HttpStatusCode.NotFound)
+                    {
+                        throw;
+                    }
                 }
 
-                var response = req.CreateResponse(HttpStatusCode.Created);
-                response.Headers.Add("Location", new Uri(req.Url, "versions/" + resource.Version).ToString());
-                await response.WriteAsJsonAsync(result.Resource);
-                return response;
-            }
-            catch (CosmosException)
-            {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
-            }
+                try
+                {
+                    TResource newContainer = new TResource();
+                    newContainer.Id = id;
+                    newContainer.Versions.Add("1", resource);
+                    newContainer.GroupId = groupid;
+                    var result = await container.CreateItemAsync<TResource>(newContainer, new PartitionKey(groupid));
 
+                    if (eventGridClient != null)
+                    {
+                        var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resource);
+                        await this.eventGridClient.SendEventAsync(createdEvent);
+                    }
+
+                    var response = req.CreateResponse(HttpStatusCode.Created);
+                    response.Headers.Add(LocationHeader, new Uri(req.Url, "versions/" + resource.Version).ToString());
+                    await response.WriteAsJsonAsync(result.Resource);
+                    return response;
+                }
+                catch (CosmosException)
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                }
+            }
         }
 
         public async Task<HttpResponseData> DeleteResource<T>(
@@ -686,7 +1061,7 @@ namespace Azure.CloudEvents.Discovery
                                     Type = new MetadataPropertyString {
                                     Value = ChangedEventType,
                                     Required = true
-                                } 
+                                }
                             }
                         },
                         Description = "Discovery Endpoint Entry Changed"

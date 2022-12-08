@@ -1,14 +1,9 @@
-﻿using Microsoft.Azure.Functions.Worker.Http;
+﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
-using System.Net;
 
 namespace Azure.CloudEvents.Discovery
 {
@@ -30,7 +25,9 @@ namespace Azure.CloudEvents.Discovery
             HttpRequestData req,
             ILogger log)
         {
-            return await PostGroups<Endpoint, Endpoints>(req, log, this.cosmosClient.GetContainer("discovery", "endpoints"));
+            Container ctrEndpoints = this.cosmosClient.GetContainer("discovery", "endpoints");
+            Container ctrdefs = this.cosmosClient.GetContainer("discovery", "epdefinitions");
+            return await PostGroups<Endpoint, Endpoints, Definition, Definitions>(req, log, (e)=>e.Definitions, ctrEndpoints, ctrdefs);
         }
 
         [Function("deleteEndpoints")]
@@ -49,7 +46,9 @@ namespace Azure.CloudEvents.Discovery
             string id,
             ILogger log)
         {
-            return await GetGroup<Endpoint>(req, id, log, this.cosmosClient.GetContainer("discovery", "endpoints"));
+            Container ctrEndpoints = this.cosmosClient.GetContainer("discovery", "endpoints");
+            Container ctrdefs = this.cosmosClient.GetContainer("discovery", "epdefinitions");
+            return await GetGroup<Endpoint, Definition, Definitions>(req, id, log, (e)=>e.Definitions, ctrEndpoints, ctrdefs);
         }
 
         [Function("putEndpoint")]
@@ -59,7 +58,9 @@ namespace Azure.CloudEvents.Discovery
            string id,
            ILogger log)
         {
-            return await PutGroup<Endpoint>(req, id, log, this.cosmosClient.GetContainer("discovery", "endpoints"));
+            Container ctrEndpoints = this.cosmosClient.GetContainer("discovery", "endpoints");
+            Container ctrdefs = this.cosmosClient.GetContainer("discovery", "epdefinitions");
+            return await PutGroup<Endpoint, Definition, Definitions>(req, id, log, (e) => e.Definitions, ctrEndpoints, ctrdefs);
         }
 
         [Function("deleteEndpoint")]
@@ -69,7 +70,9 @@ namespace Azure.CloudEvents.Discovery
             string id,
             ILogger log)
         {
-            return await DeleteGroup<Endpoint>(req, id, log, this.cosmosClient.GetContainer("discovery", "endpoints"));
+            Container ctrEndpoints = this.cosmosClient.GetContainer("discovery", "endpoints");
+            Container ctrdefs = this.cosmosClient.GetContainer("discovery", "epdefinitions");
+            return await DeleteGroup<Endpoint, Definition, Definitions>(req, id, log, (e) => e.Definitions, ctrEndpoints, ctrdefs);
         }
 
         [Function("getEndpointDefinitions")]
@@ -79,22 +82,8 @@ namespace Azure.CloudEvents.Discovery
             string id,
             ILogger log)
         {
-            Microsoft.Azure.Cosmos.Container container  = this.cosmosClient.GetContainer("discovery", "endpoints");
-            try
-            {
-                var existingItem = await container.ReadItemAsync<Endpoint>(id, new PartitionKey(id));
-                var res = req.CreateResponse(HttpStatusCode.OK);
-                await res.WriteAsJsonAsync(existingItem.Resource.Definitions);
-                return res;
-            }
-            catch (CosmosException ce)
-            {
-                if (ce.StatusCode == HttpStatusCode.NotFound)
-                {
-                    return req.CreateResponse(HttpStatusCode.NotFound);
-                }
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
-            }
+            Microsoft.Azure.Cosmos.Container container  = this.cosmosClient.GetContainer("discovery", "epdefinitions");
+            return await GetResources<Definition, Definitions>(req, id, log, container);
         }
 
         [Function("getEndpointDefinition")]
@@ -105,30 +94,8 @@ namespace Azure.CloudEvents.Discovery
             string defid,
             ILogger log)
         {
-            Container container = this.cosmosClient.GetContainer("discovery", "endpoints");
-            try
-            {
-                var existingItem = await container.ReadItemAsync<Endpoint>(id, new PartitionKey(id));
-                if (existingItem.Resource.Definitions != null &&
-                     existingItem.Resource.Definitions.ContainsKey(defid))
-                {
-                    var res = req.CreateResponse(HttpStatusCode.OK);
-                    await res.WriteAsJsonAsync(existingItem.Resource.Definitions[defid]);
-                    return res;
-                }
-                else
-                {
-                    return req.CreateResponse(HttpStatusCode.NotFound);
-                }
-            }
-            catch (CosmosException ce)
-            {
-                if (ce.StatusCode == HttpStatusCode.NotFound)
-                {
-                    return req.CreateResponse(HttpStatusCode.NotFound);
-                }
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
-            }
+            Container ctrdefs = this.cosmosClient.GetContainer("discovery", "epdefinitions");
+            return await GetResource<Definition>(req, id, defid, log, ctrdefs);
         }
     }
 }

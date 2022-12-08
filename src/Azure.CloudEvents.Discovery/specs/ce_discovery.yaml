@@ -1268,14 +1268,9 @@ components:
         $ref: "#/components/schemas/definitionReference"
 
     definition:
-       
       type: object
       description: a message definition
       properties:
-        ownergroup:
-          type: string
-          description: A reference to the Group or Endpoint that defined this
-          format: uri-reference
         schemaurl:
           type: string
           description: A URL to the schema of the message's data.
@@ -1598,6 +1593,10 @@ components:
           type: string
           description: A unique identifier for this Endpoint. This value MUST be globally unique
           format: uri-reference
+        groupId:
+          type: string
+          description: Optional reference to a group that this resource is subordinate to
+          format: uri-reference
         version:
           type: integer
           description: A number representing the version number of the resource.
@@ -1643,7 +1642,6 @@ components:
           description: Time when this entity was last modified
           type: string
           format: date-time
-
     resourceWithVersion:
       type: object
       description: resource with version identifier
