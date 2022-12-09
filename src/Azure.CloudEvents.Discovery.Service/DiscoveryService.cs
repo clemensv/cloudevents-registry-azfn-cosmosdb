@@ -62,11 +62,16 @@ namespace Azure.CloudEvents.Discovery
                 return await UploadDoc(req, log);
             }
 
+            Uri baseUri = new UriBuilder(req.Url)
+            {
+                Path = req.Url.AbsolutePath.TrimEnd('/') + "/",
+                Query = null
+            }.Uri;
             Manifest manifest = new Manifest
             {
-                EndpointsUrl = new Uri(req.Url, "/endpoints"),
-                GroupsUrl = new Uri(req.Url, "/groups"),
-                SchemaGroupsUrl = new Uri(req.Url, "/schemagroups")
+                EndpointsUrl = new Uri(baseUri, "endpoints"),
+                GroupsUrl = new Uri(baseUri, "groups"),
+                SchemaGroupsUrl = new Uri(baseUri, "schemagroups")
             };
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(manifest);
