@@ -1,15 +1,16 @@
 {
     "$schema": "https://raw.githubusercontent.com/clemensv/cloudevents-discovery-interop/master/src/Azure.CloudEvents.Discovery/specs/ce_discovery_doc.json",
     "groups": {
-        "myorg.myapp": {
+        "myorg2.myapp": {
             "type" : "group",
-            "id": "myorg.myapp",
+            "id": "myorg2.myapp",
             "format": "CloudEvents/1.0",
             "definitions": {
                 "myorg.myapp.myevent1": {
                     "type" : "cloudevent",
                     "id": "myorg.myapp.myevent1",
-                    "description": "my thing",
+                    "description": "my again again changed thing",
+                    "version": 3,
                     "format" : "CloudEvents/1.0",
                     "metadata": {
                         "attributes": {

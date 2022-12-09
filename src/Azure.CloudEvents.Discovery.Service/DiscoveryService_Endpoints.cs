@@ -36,7 +36,9 @@ namespace Azure.CloudEvents.Discovery
             HttpRequestData req,
             ILogger log)
         {
-            return await DeleteGroups<Reference, Endpoint, Endpoints>(req, log, this.cosmosClient.GetContainer("discovery", "endpoints"));
+            Container ctrEndpoints = this.cosmosClient.GetContainer("discovery", "endpoints");
+            Container ctrdefs = this.cosmosClient.GetContainer("discovery", "epdefinitions");
+            return await DeleteGroups<EndpointReferences, Endpoint, Definition, Definitions>(req, log, (e) => e.Definitions, ctrEndpoints, ctrdefs);
         }
 
         [Function("getEndpoint")]

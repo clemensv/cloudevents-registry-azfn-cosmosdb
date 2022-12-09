@@ -19,6 +19,8 @@ using Microsoft.VisualBasic;
 using Azure.Storage.Blobs.Models;
 using System.Threading;
 using System.ComponentModel;
+using Microsoft.Azure.Management.ResourceManager.Models;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace Azure.CloudEvents.Discovery
 {
@@ -64,7 +66,7 @@ namespace Azure.CloudEvents.Discovery
                 // the dispatcher doesn't seem to work for POST at the root
                 return await UploadDoc(req, log);
             }
-            
+
             Manifest manifest = new Manifest
             {
                 EndpointsUrl = new Uri(req.Url, "/endpoints"),
@@ -89,7 +91,7 @@ namespace Azure.CloudEvents.Discovery
                 var ctrGroups = this.cosmosClient.GetContainer("discovery", "schemagroups");
                 var ctrSchemas = this.cosmosClient.GetContainer("discovery", "schemas");
                 var res = await PutGroupsHandler<SchemaGroup, SchemaGroups, Schema, Schemas>(
-                    req, (g)=>g.Schemas, ctrGroups, ctrSchemas, manifest.SchemaGroups);
+                    req, (g) => g.Schemas, ctrGroups, ctrSchemas, manifest.SchemaGroups);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
             }
@@ -188,10 +190,10 @@ namespace Azure.CloudEvents.Discovery
         }
 
         private async Task<HttpResponseData> PostGroupsHandler<TGroup, TGroupDict, TResource, TResourceDict>(
-            HttpRequestData req, 
-            Func<TGroup, TResourceDict> itemResolver, 
-            Container ctrGroups, 
-            Container ctrResource, 
+            HttpRequestData req,
+            Func<TGroup, TResourceDict> itemResolver,
+            Container ctrGroups,
+            Container ctrResource,
             TGroupDict groups)
             where TGroup : Resource, new()
             where TGroupDict : IDictionary<string, TGroup>, new()
@@ -201,78 +203,17 @@ namespace Azure.CloudEvents.Discovery
             TGroupDict responseGroups = new TGroupDict();
             if (groups == null)
             {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                errorResponse.WriteString("No groups provided");
+                return errorResponse;
             }
-
 
             foreach (var group in groups.Values)
             {
-
-                try
+                var result = await PutGroupHandler<TGroup, TResource, TResourceDict>(req, group.Id, itemResolver, ctrGroups, ctrResource, group);
+                if (result.StatusCode != HttpStatusCode.OK)
                 {
-                    var existingItem = await ctrGroups.ReadItemAsync<TGroup>(group.Id, new PartitionKey(group.Id));
-                    if (existingItem.StatusCode == HttpStatusCode.OK)
-                    {
-                        if (group.Version <= existingItem.Resource.Version)
-                        {
-                            // define code & response
-                            return req.CreateResponse(HttpStatusCode.Conflict);
-                        }
-
-                        var resourceDict = itemResolver(group);
-                        if (resourceDict != null)
-                        {
-                            foreach (var resource in resourceDict.Values)
-                            {
-                                try
-                                {
-                                    var existingResource1 = await ctrResource.ReadItemAsync<Schema>(resource.Id, new PartitionKey(group.Id));
-
-                                    await ctrGroups.UpsertItemAsync<TResource>(resource);
-                                }
-                                catch (CosmosException ce)
-                                {
-                                    if (ce.StatusCode != HttpStatusCode.NotFound)
-                                    {
-                                        throw;
-                                    }
-                                }
-                                try
-                                {
-                                    resource.GroupId = group.Id;
-                                    await ctrResource.CreateItemAsync<TResource>(resource, new PartitionKey(group.Id));
-                                }
-                                catch (CosmosException)
-                                {
-                                    return req.CreateResponse(HttpStatusCode.BadRequest);
-                                }
-                            }
-                        }
-                        var result = await ctrGroups.UpsertItemAsync<TGroup>(group);
-                        responseGroups.Add(result.Resource.Id, result.Resource);
-
-                        if (this.eventGridClient != null)
-                        {
-                            var changedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), ChangedEventType, group);
-                            await this.eventGridClient.SendEventAsync(changedEvent);
-                        }
-                    }
-                    else
-                    {
-                        var result = await ctrGroups.CreateItemAsync<TGroup>(group);
-                        responseGroups.Add(result.Resource.Id, result.Resource);
-
-                        if (this.eventGridClient != null)
-                        {
-                            var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, group);
-                            await this.eventGridClient.SendEventAsync(createdEvent);
-                        }
-                    }
-                }
-                catch (CosmosException)
-                {
-                    return req.CreateResponse(HttpStatusCode.BadRequest);
-
+                    return result;
                 }
             }
             var res = req.CreateResponse(HttpStatusCode.OK);
@@ -280,11 +221,15 @@ namespace Azure.CloudEvents.Discovery
             return res;
         }
 
-        public async Task<HttpResponseData> DeleteGroups<TRef, T, TDict>(
-            HttpRequestData req,
-            ILogger log,
-            Container container) where T : Resource, new()
-                                where TDict : IDictionary<string, T>, new()
+        public async Task<HttpResponseData> DeleteGroups<TDict, TGroup, TResource, TResourceDict>(
+           HttpRequestData req,
+           ILogger log,
+           Func<TGroup, TResourceDict> itemResolver,
+           Container ctrGroups,
+           Container ctrResource) where TGroup : Resource, new()
+                                  where TResource : Resource, new()
+                                  where TResourceDict : IDictionary<string, TResource>, new()
+                                  where TDict : System.Collections.ObjectModel.Collection<Reference>, new()
         {
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -292,32 +237,17 @@ namespace Azure.CloudEvents.Discovery
             TDict responseGroups = new TDict();
             if (references == null)
             {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                errorResponse.WriteString("No references provided");
+                return errorResponse;
             }
 
             foreach (var reference in references)
             {
-
-                try
+                var result = await DeleteGroup<TGroup, TResource, TResourceDict>(req, reference.Id, log, itemResolver, ctrGroups, ctrResource);
+                if (result.StatusCode != HttpStatusCode.OK)
                 {
-                    var existingItem = await container.ReadItemAsync<T>(reference.Id, new PartitionKey(reference.Id));
-                    if (existingItem.StatusCode == HttpStatusCode.OK)
-                    {
-                        var result = await container.DeleteItemAsync<T>(reference.Id, new PartitionKey(reference.Id));
-                        responseGroups.Add(existingItem.Resource.Id, existingItem.Resource);
-
-                        if (this.eventGridClient != null)
-                        {
-                            var deletedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, existingItem);
-                            await this.eventGridClient.SendEventAsync(deletedEvent);
-                        }
-                    }
-
-                }
-                catch (CosmosException)
-                {
-                    return req.CreateResponse(HttpStatusCode.BadRequest);
-
+                    return result;
                 }
             }
             var res = req.CreateResponse(HttpStatusCode.OK);
@@ -391,7 +321,8 @@ namespace Azure.CloudEvents.Discovery
             return await PutGroupHandler<TGroup, TResource, TResourceDict>(req, id, itemResolver, ctrGroups, ctrResource, resource);
         }
 
-        private async Task<HttpResponseData> PutGroupHandler<TGroup, TResource, TResourceDict>(HttpRequestData req, string id, Func<TGroup, TResourceDict> itemResolver, Container ctrGroups, Container ctrResource, TGroup resource)
+        private async Task<HttpResponseData> PutGroupHandler<TGroup, TResource, TResourceDict>(
+            HttpRequestData req, string id, Func<TGroup, TResourceDict> itemResolver, Container ctrGroups, Container ctrResource, TGroup resource)
             where TGroup : Resource, new()
             where TResource : Resource, new()
             where TResourceDict : IDictionary<string, TResource>, new()
@@ -399,43 +330,34 @@ namespace Azure.CloudEvents.Discovery
             try
             {
                 var existingResource = await ctrGroups.ReadItemAsync<TGroup>(resource.Id, new PartitionKey(id));
-                if (resource.Version <= existingResource.Resource.Version)
+                if (resource.Version < existingResource.Resource.Version)
                 {
                     // define code & response
-                    return req.CreateResponse(HttpStatusCode.Conflict);
+                    var errorResponse = req.CreateResponse(HttpStatusCode.Conflict);
+                    errorResponse.WriteString($"Resource version conflict on {resource.Id}, resource version {resource.Version} is lower than existing version {existingResource.Resource.Version}");
+                    return errorResponse;
                 }
-                var result1 = await ctrGroups.UpsertItemAsync<TGroup>(resource);
 
                 var itemCollection = itemResolver(resource);
                 if (itemCollection != null)
                 {
                     foreach (var item in itemCollection.Values)
                     {
-                        try
+                        var result = await PutResourceHandler(req, id, ctrResource, item);
+                        if (result.StatusCode != HttpStatusCode.OK)
                         {
-                            var existingResource1 = await ctrResource.ReadItemAsync<TResource>(item.Id, new PartitionKey(id));
-                            item.GroupId = id;
-                            await ctrResource.UpsertItemAsync<TResource>(item, new PartitionKey(id));
-                            continue;
-                        }
-                        catch (CosmosException ce)
-                        {
-                            if (ce.StatusCode != HttpStatusCode.NotFound)
-                            {
-                                throw;
-                            }
-                        }
-                        try
-                        {
-                            item.GroupId = id;
-                            var result = await ctrResource.CreateItemAsync<TResource>(item, new PartitionKey(id));
-                        }
-                        catch (CosmosException)
-                        {
-                            return req.CreateResponse(HttpStatusCode.BadRequest);
+                            return result;
                         }
                     }
                 }
+
+                if (resource.Version == existingResource.Resource.Version)
+                {
+                    var skipResponse = req.CreateResponse(HttpStatusCode.OK);
+                    await skipResponse.WriteAsJsonAsync(existingResource.Resource);
+                    return skipResponse;
+                }
+                var result1 = await ctrGroups.UpsertItemAsync<TGroup>(resource, new PartitionKey(id));
 
                 if (eventGridClient != null)
                 {
@@ -468,9 +390,11 @@ namespace Azure.CloudEvents.Discovery
                             item.GroupId = id;
                             await ctrResource.CreateItemAsync<TResource>(item, new PartitionKey(id));
                         }
-                        catch (CosmosException)
+                        catch (CosmosException ex)
                         {
-                            return req.CreateResponse(HttpStatusCode.BadRequest);
+                            var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                            errorResponse.WriteString(ex.Message);
+                            return errorResponse;
                         }
                     }
                 }
@@ -486,9 +410,11 @@ namespace Azure.CloudEvents.Discovery
                 await response.WriteAsJsonAsync(result.Resource);
                 return response;
             }
-            catch (CosmosException)
+            catch (CosmosException ex)
             {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                errorResponse.WriteString(ex.Message);
+                return errorResponse;
             }
         }
 
@@ -574,49 +500,18 @@ namespace Azure.CloudEvents.Discovery
             TDict responseItems = new TDict();
             if (items == null)
             {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                errorResponse.WriteString("No items provided");
+                return errorResponse;
             }
 
 
             foreach (var item in items.Values)
             {
-
-                try
+                var result = await PutResourceHandler(req, groupid, container, item);
+                if (result.StatusCode != HttpStatusCode.OK)
                 {
-                    var existingItem = await container.ReadItemAsync<T>(item.Id, new PartitionKey(groupid));
-                    if (existingItem.StatusCode == HttpStatusCode.OK)
-                    {
-                        if (item.Version <= existingItem.Resource.Version)
-                        {
-                            // define code & response
-                            return req.CreateResponse(HttpStatusCode.Conflict);
-                        }
-                        var result = await container.UpsertItemAsync<T>(item, new PartitionKey(groupid));
-                        responseItems.Add(result.Resource.Id, result.Resource);
-
-                        if (this.eventGridClient != null)
-                        {
-                            var changedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), ChangedEventType, item);
-                            await this.eventGridClient.SendEventAsync(changedEvent);
-                        }
-                    }
-                    else
-                    {
-                        item.GroupId = groupid;
-                        var result = await container.CreateItemAsync<T>(item, new PartitionKey(groupid));
-                        responseItems.Add(result.Resource.Id, result.Resource);
-
-                        if (this.eventGridClient != null)
-                        {
-                            var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, item);
-                            await this.eventGridClient.SendEventAsync(createdEvent);
-                        }
-                    }
-                }
-                catch (CosmosException)
-                {
-                    return req.CreateResponse(HttpStatusCode.BadRequest);
-
+                    return result;
                 }
             }
             var res = req.CreateResponse(HttpStatusCode.OK);
@@ -638,7 +533,9 @@ namespace Azure.CloudEvents.Discovery
             TResourceDict responseItems = new TResourceDict();
             if (references == null)
             {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                errorResponse.WriteString("No references provided");
+                return errorResponse;
             }
 
             foreach (var reference in references)
@@ -660,9 +557,11 @@ namespace Azure.CloudEvents.Discovery
                     }
 
                 }
-                catch (CosmosException)
+                catch (CosmosException ex)
                 {
-                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                    var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                    errorResponse.WriteString(ex.Message);
+                    return errorResponse;
 
                 }
             }
@@ -709,14 +608,28 @@ namespace Azure.CloudEvents.Discovery
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             TResource resource = JsonConvert.DeserializeObject<TResource>(requestBody);
+            return await PutResourceHandler(req, groupid, container, resource);
+        }
+
+        private async Task<HttpResponseData> PutResourceHandler<TResource>(HttpRequestData req, string groupid, Container container, TResource resource) where TResource : Resource, new()
+        {
             try
             {
-                var existingItem = await container.ReadItemAsync<TResource>(resource.Id, new PartitionKey(groupid));
-                if (resource.Version <= existingItem.Resource.Version)
+                var existingResource = await container.ReadItemAsync<TResource>(resource.Id, new PartitionKey(groupid));
+                if (resource.Version < existingResource.Resource.Version)
                 {
                     // define code & response
-                    return req.CreateResponse(HttpStatusCode.Conflict);
+                    var errorResponse = req.CreateResponse(HttpStatusCode.Conflict);
+                    errorResponse.WriteString($"Resource version conflict on {resource.Id}, resource version {resource.Version} is lower than existing version {existingResource.Resource.Version}");
+                    return errorResponse;
                 }
+                if (resource.Version == existingResource.Resource.Version)
+                {
+                    var skipResponse = req.CreateResponse(HttpStatusCode.OK);
+                    await skipResponse.WriteAsJsonAsync(existingResource.Resource);
+                    return skipResponse;
+                }
+                resource.GroupId = groupid;
                 var result1 = await container.UpsertItemAsync<TResource>(resource, new PartitionKey(groupid));
 
                 if (eventGridClient != null)
@@ -752,11 +665,12 @@ namespace Azure.CloudEvents.Discovery
                 await response.WriteAsJsonAsync(result.Resource);
                 return response;
             }
-            catch (CosmosException)
+            catch (CosmosException ex)
             {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                errorResponse.WriteString(ex.Message);
+                return errorResponse;
             }
-
         }
 
         private static void SetResourceHeaders<TResource, TResourceVersion>(TResource schema, TResourceVersion latestVersion, HttpResponseData res)
@@ -945,14 +859,14 @@ namespace Azure.CloudEvents.Discovery
                 {
                     var existingContainer = await container.ReadItemAsync<TResource>(id, new PartitionKey(self));
                     long nextVersion = 1;
-                    if (existingContainer.Resource.Versions == null )
+                    if (existingContainer.Resource.Versions == null)
                     {
                         existingContainer.Resource.Versions = new Dictionary<string, ResourceWithVersion>();
                     }
                     else
                     {
                         nextVersion = existingContainer.Resource.Versions.Values.Max(v => int.Parse(v.Version)) + 1;
-                    }                    
+                    }
                     resourceVersion.Version = nextVersion.ToString();
                     existingContainer.Resource.Versions.Add(resourceVersion.Version, resourceVersion);
 
@@ -1018,9 +932,12 @@ namespace Azure.CloudEvents.Discovery
                     response.StatusCode = HttpStatusCode.Created;
                     return response;
                 }
-                catch (CosmosException)
+                catch (CosmosException ex)
                 {
-                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                    var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                    errorResponse.WriteString(ex.Message);
+                    return errorResponse;
+
                 }
                 catch (Exception)
                 {
@@ -1036,6 +953,7 @@ namespace Azure.CloudEvents.Discovery
                     var existingContainer = await container.ReadItemAsync<TResource>(resource.Id, new PartitionKey(groupid));
                     var nextVersion = existingContainer.Resource.Versions.Values.Max(v => int.Parse(v.Version)) + 1;
                     resource.Version = nextVersion.ToString();
+
                     existingContainer.Resource.Versions.Add(resource.Version, resource);
                     var result1 = await container.UpsertItemAsync<TResource>(existingContainer.Resource, new PartitionKey(groupid));
                     if (eventGridClient != null)
@@ -1078,19 +996,22 @@ namespace Azure.CloudEvents.Discovery
                     await response.WriteAsJsonAsync(result.Resource);
                     return response;
                 }
-                catch (CosmosException)
+                catch (CosmosException ex)
                 {
-                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                    var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                    errorResponse.WriteString(ex.Message);
+                    return errorResponse;
+
                 }
             }
         }
 
         public async Task<HttpResponseData> DeleteResource<T>(
-        HttpRequestData req,
-        string groupid,
-        string id,
-        ILogger log,
-        Container container) where T : Resource
+            HttpRequestData req,
+            string groupid,
+            string id,
+            ILogger log,
+            Container container) where T : Resource
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             Reference reference = JsonConvert.DeserializeObject<Reference>(requestBody);

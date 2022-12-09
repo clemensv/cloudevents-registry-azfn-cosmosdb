@@ -37,7 +37,7 @@ namespace Azure.CloudEvents.Discovery
         {
             Container ctrGroups = this.cosmosClient.GetContainer("discovery", "groups");
             Container ctrDefs = this.cosmosClient.GetContainer("discovery", "definitions");
-            return await DeleteGroups<Reference, Group, Groups>(req, log, ctrGroups);
+            return await DeleteGroups<GroupReferences, Group, Definition, Definitions>(req, log, (g)=>g.Definitions, ctrGroups, ctrDefs);
         }
 
         [Function("getGroup")]

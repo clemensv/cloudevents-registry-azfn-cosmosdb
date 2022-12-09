@@ -13,15 +13,48 @@ namespace ceregistry
 
         public async Task OnExecute()
         {
-            using (var file = File.OpenRead(FileName))
+            try
             {
-                var sr = new StreamReader(file);
-                var obj = JsonConvert.DeserializeObject(sr.ReadToEnd());
-                HttpClient httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Add("x-functions-key", AccessKey);
-                var client = new DiscoveryClient(httpClient);
-                client.BaseUrl = Endpoint;
-                await client.UploadDocAsync(obj);
+                using (var file = File.OpenRead(FileName))
+                {
+                    var sr = new StreamReader(file);
+                    try
+                    {
+                        var obj = JsonConvert.DeserializeObject(sr.ReadToEnd());
+                        try
+                        {
+                            HttpClient httpClient = new HttpClient();
+                            httpClient.DefaultRequestHeaders.Add("x-functions-key", AccessKey);
+                            var client = new DiscoveryClient(httpClient);
+                            client.BaseUrl = Endpoint;
+                            await client.UploadDocAsync(obj);
+                        }
+                        catch (ApiException ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                        }
+                    }
+                    catch (JsonException ex)
+                    {
+                        Console.WriteLine($"Error parsing file: {ex.Message}");
+                    }
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"File not found: {FileName}");
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"Error {ex.Message} reading file: {FileName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
     }

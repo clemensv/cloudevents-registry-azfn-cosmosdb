@@ -35,7 +35,9 @@ namespace Azure.CloudEvents.Discovery
         HttpRequestData req,
             ILogger log)
         {
-            return await DeleteGroups<Reference, SchemaGroup, SchemaGroups>(req, log, this.cosmosClient.GetContainer("discovery", "schemagroups"));
+            var ctrGroups = this.cosmosClient.GetContainer("discovery", "schemagroups");
+            var ctrSchemas = this.cosmosClient.GetContainer("discovery", "schemas");
+            return await DeleteGroups<SchemaReferences, SchemaGroup, Schema, Schemas>(req, log, (s)=>s.Schemas, ctrGroups, ctrSchemas);
         }
 
         [Function("getSchemaGroup")]
