@@ -130,8 +130,9 @@ namespace Azure.CloudEvents.Discovery
            string id,
            ILogger log)
         {
+            var self = $"groups/{groupid}/definitions/{id}";
             var container = this.cosmosClient.GetContainer("discovery", "definitions");
-            return await PutResource<Definition>(req, groupid, id, log, container);
+            return await PutResource<Definition>(req, groupid, id, log, container, self);
         }
 
         [Function("deleteDefinition")]

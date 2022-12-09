@@ -2,6 +2,7 @@
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Azure.CloudEvents.Discovery
@@ -135,7 +136,8 @@ namespace Azure.CloudEvents.Discovery
            string id,
            ILogger log)
         {
-            return await PutResource<Schema>(req, schemaGroupid, id, log, this.cosmosClient.GetContainer("discovery", "schemas"));
+            var self = $"schemagroups/{schemaGroupid}/schemas/{id}";
+            return await PutResource<Schema>(req, schemaGroupid, id, log, this.cosmosClient.GetContainer("discovery", "schemas"), self);
         }
 
         [Function("postSchemaVersion")]
@@ -148,9 +150,7 @@ namespace Azure.CloudEvents.Discovery
         {
             var self = $"schemagroups/{schemaGroupid}/schemas/{id}";
             var container = this.cosmosClient.GetContainer("discovery", "schemas");
-
-            return await PostResourceVersion<SchemaVersion, Schema>(req, schemaGroupid, id, log,  container, this.schemasBlobClient, self);
-
+            return await PostResourceVersion<SchemaVersion, Schema>(req, schemaGroupid, id, log, (s) => { s.Versions ??= new Dictionary<string, SchemaVersion>(); return s.Versions; }, container, this.schemasBlobClient, self);
         }
 
         [Function("deleteSchema")]
@@ -175,7 +175,7 @@ namespace Azure.CloudEvents.Discovery
         {
 
             var container = this.cosmosClient.GetContainer("discovery", "schemas");
-            return await GetResourceVersion<SchemaVersion, Schema>(req, schemaGroupid, id, versionid, log, container, this.schemasBlobClient);
+            return await GetResourceVersion<SchemaVersion, Schema>(req, schemaGroupid, id, versionid, log, (s) => { s.Versions ??= new Dictionary<string, SchemaVersion>(); return s.Versions; }, container, this.schemasBlobClient);
         }
     }
 }

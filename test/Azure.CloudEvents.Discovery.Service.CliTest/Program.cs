@@ -15,8 +15,8 @@ namespace Azure.CloudEvents.Discovery
             HttpClient httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("x-functions-key", args[0]);
             DiscoveryClient client = new DiscoveryClient(httpClient);
-            //client.BaseUrl = "https://cediscoveryinterop.azurewebsites.net/";
-            client.BaseUrl = "http://localhost:11000/";
+            client.BaseUrl = "https://cediscoveryinterop.azurewebsites.net/registry";
+            //client.BaseUrl = "http://localhost:11000/";
 
             Console.WriteLine($"----- Existing endpoints -----");
             try
@@ -102,24 +102,6 @@ namespace Azure.CloudEvents.Discovery
             {
                 var existingEndpoint = await client.GetEndpointAsync(i.ToString());
                 existingEndpoint.Description = $"This is service {i} Update";
-
-                bool correct = false;
-                try
-                {
-                    await client.PutEndpointAsync(existingEndpoint, existingEndpoint.Id);
-                    throw new InvalidOperationException("Must not get here because we did not update the Eppch");
-                }
-                catch (ApiException apiException)
-                {
-                    if (apiException.StatusCode == 409)
-                    {
-                        correct = true;
-                    }
-                }
-                if (!correct)
-                {
-                    throw new Exception("Version validation failed");
-                }
                 existingEndpoint.Version += 1;
                 await client.PutEndpointAsync(existingEndpoint, existingEndpoint.Id);
                 Console.WriteLine($"Updated: Id {existingEndpoint.Id}, Version {existingEndpoint.Version}");
@@ -210,23 +192,6 @@ namespace Azure.CloudEvents.Discovery
                 var existingGroup = await client.GetGroupAsync(i.ToString());
                 existingGroup.Description = $"This is service {i} Update";
 
-                bool correct = false;
-                try
-                {
-                    await client.PutGroupAsync(existingGroup, existingGroup.Id);
-                    throw new InvalidOperationException("Must not get here because we did not update the Eppch");
-                }
-                catch (ApiException apiException)
-                {
-                    if (apiException.StatusCode == 409)
-                    {
-                        correct = true;
-                    }
-                }
-                if (!correct)
-                {
-                    throw new Exception("Version validation failed");
-                }
                 existingGroup.Version += 1;
                 await client.PutGroupAsync(existingGroup, existingGroup.Id);
                 Console.WriteLine($"Updated: Id {existingGroup.Id}, Version {existingGroup.Version}");
@@ -305,24 +270,6 @@ namespace Azure.CloudEvents.Discovery
             {
                 var existingGroup = await client.GetSchemaGroupAsync(i.ToString());
                 existingGroup.Description = $"This is service {i} Update";
-
-                bool correct = false;
-                try
-                {
-                    await client.PutSchemaGroupAsync(existingGroup, existingGroup.Id);
-                    throw new InvalidOperationException("Must not get here because we did not update the Eppch");
-                }
-                catch (ApiException apiException)
-                {
-                    if (apiException.StatusCode == 409)
-                    {
-                        correct = true;
-                    }
-                }
-                if (!correct)
-                {
-                    throw new Exception("Version validation failed");
-                }
                 existingGroup.Version += 1;
                 await client.PutSchemaGroupAsync(existingGroup, existingGroup.Id);
                 Console.WriteLine($"Updated: Id {existingGroup.Id}, Version {existingGroup.Version}");

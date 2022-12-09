@@ -2532,38 +2532,6 @@
           }
         }
       },
-      "resourceWithVersion": {
-        "type": "object",
-        "description": "resource with version identifier",
-        "properties": {
-          "version": {
-            "type": "string",
-            "description": "Server assigned version identifier."
-          }
-        },
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/resource"
-          }
-        ]
-      },
-      "resourceWithVersionedResources": {
-        "type": "object",
-        "description": "collection of versioned resources",
-        "properties": {
-          "versions": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/resourceWithVersion"
-            }
-          }
-        },
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/resource"
-          }
-        ]
-      },
       "endpointReference": {
         "$ref": "#/components/schemas/reference"
       },
@@ -2858,7 +2826,7 @@
         },
         "allOf": [
           {
-            "$ref": "#/components/schemas/resourceWithVersionedResources"
+            "$ref": "#/components/schemas/resource"
           }
         ]
       },
@@ -2878,7 +2846,7 @@
         },
         "allOf": [
           {
-            "$ref": "#/components/schemas/resourceWithVersion"
+            "$ref": "#/components/schemas/resource"
           }
         ]
       }
