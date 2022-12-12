@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ceregistry": {
+      "commandName": "Project",
+      "commandLineArgs": "upload --file-name E:\\code\\CE-Disco-Prototype\\test\\docs\\myspec.json --endpoint http://cediscoveryinterop.azurewebsites.net --access-key Ojw5RfuXwu3NNvHRKvcOiS2/W8/c4hAIUwAV/UQHjyUwxgz5lzafSA=="
+    }
+  }
+}

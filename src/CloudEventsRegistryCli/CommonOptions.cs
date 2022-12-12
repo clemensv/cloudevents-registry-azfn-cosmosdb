@@ -1,7 +1,7 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using System.ComponentModel.DataAnnotations;
 
-namespace ceregistry
+namespace CloudEventsRegistryCli
 {
     class CommonOptions
     {

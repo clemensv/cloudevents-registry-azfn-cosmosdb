@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ce-disco": {
+      "commandName": "Project",
+      "commandLineArgs": "-c \"Endpoint=sb://cvrelay.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=P0CQgKxRl8S0ABAlmbitHDEWfwWUQzKB34J0w48SA/w=\" -r \"app\" -d \"https://cediscoveryinterop.azurewebsites.net/\""
+    }
+  }
+}

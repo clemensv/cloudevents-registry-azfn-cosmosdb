@@ -1,9 +1,9 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 
-namespace ceregistry
+namespace CloudEventsRegistryCli
 {
     [Command("ceregistry")]
-    [Subcommand(typeof(EndpointsCommand), typeof(DefinitionGroupsCommand), typeof(SchemasCommand),typeof(UploadCommand))]
+    [Subcommand(typeof(UploadCommand))]
     class CeRegistry : CommonOptions
     {
         public static int Main(string[] args)

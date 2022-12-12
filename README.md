@@ -21,15 +21,26 @@ Main Projects:
   once the project it built. That file is not checked in. The data objects
   (Groups, Schema, Definition, etc) generated into that file are used throughout
   the other projects.
+* [Azure.CloudEvents.Subscriptions](src/Azure.CloudEvents.Subscriptions/): This
+  project automatically generates a client from the CloudEvents Subscription API
+  OpenAPI spec, which you can find in the "generated" subdirectory as
+  "SubscriptionsClient.cs" once the project it built. That file is not checked in. 
 * [Azure.CloudEvents.Discovery.Service](src/Azure.CloudEvents.Discovery.Service/):
   This project is an Azure Functions based implementation of the OpenAPI spec. I
   chose not to auto-generate that side of the interface, but to build that
   separately to retain flexibility to change things around. This might
   eventually morph into an ASP.NET MVC app.
-* [ceregistry](src/azcedisco/): This is a CLI tool that can upload full metadata
+* [CloudEventsRegistryCli](src/CloudEventsRegistryCli/): This is a CLI tool that can upload full metadata
   documents into the registry and also edit aspects of the registry. The upload
   works, the rest is being worked on.
-* [ce-disco](src/azcedisco/): This is a CLI tool that can read all resources
+* [AzureEventSubscriber](src/AzureEventSubscriber/): This is a CLI tool that
+  uses the Azure Relay to create a subscriber endpoint on the local machine (!)
+  and then subscribes that endpoint via the discovery service endpoint's
+  Subscription API to the subscriber endpoints available in the registry. The
+  tool uses the local user's identity to obtain an Azure Management token and
+  passes that token through the endpoint. Subscriptions on Azure Event Grid that
+  are proxies through the Subscriptions API are created using this token.
+* [AzureResourceImporter](src/AzureResourceImporter/): This is a CLI tool that can read all resources
   from an Azure subscription, find those with Event Grid system topics and then
   export those endpoints into a given registry. 
 
@@ -37,9 +48,3 @@ Utilities:
 * [Azure.CloudEvents.Discovery.SystemTopicLoader](src/Azure.CloudEvents.Discovery.SystemTopicLoader):
   This project hosts a utility class that can extract Azure Event Grid system
   topic metadata from the Azure Resource Manager API.
-* [Azure.CloudEvents.EventGridBridge](src/Azure.CloudEvents.EventGridBridge):
-  This is another Azure Function project that implements the Subscription API as
-  a proxy to Azure Event Grid's subscription API. 
-* [Azure.CloudEvents.SchemaRegistry](src/Azure.CloudEvents.SchemaRegistry/):
-  This project automatically generates a client for the old draft of the Schema
-  Registry.

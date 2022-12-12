@@ -1,10 +1,10 @@
-﻿
+﻿using McMaster.Extensions.CommandLineUtils;
+using Microsoft.VisualBasic.FileIO;
 using System;
 using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-
 
 namespace Azure.CloudEvents.Discovery
 {
@@ -12,11 +12,24 @@ namespace Azure.CloudEvents.Discovery
     {
         static async Task Main(string[] args)
         {
+            var app = new CommandLineApplication();
+            var keyOption = app.Option("--key <KEY>", "The API key for the Azure Functions instance", CommandOptionType.SingleValue);
+            var baseUrlOption = app.Option("--baseUrl <URL>", "The base URL for the Azure Functions instance", CommandOptionType.SingleValue);
+            app.OnExecuteAsync(async cancellationToken =>
+            {
+                await Run(keyOption, baseUrlOption);
+            });
+            app.Execute(args);
+
+        }
+
+        private static async Task Run(CommandOption keyOption, CommandOption baseUrlOption)
+        {
             HttpClient httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("x-functions-key", args[0]);
+            httpClient.DefaultRequestHeaders.Add("x-functions-key", keyOption.Value());
             DiscoveryClient client = new DiscoveryClient(httpClient);
-            client.BaseUrl = "https://cediscoveryinterop.azurewebsites.net/registry";
-            //client.BaseUrl = "http://localhost:11000/";
+            client.BaseUrl = baseUrlOption.Value();
+
 
             Console.WriteLine($"----- Existing endpoints -----");
             try
@@ -42,7 +55,7 @@ namespace Azure.CloudEvents.Discovery
                     Description = $"This is service {i}",
                     Definitions = new Definitions
                     {
-                        { 
+                        {
                             $"Endpoint{i} Event1", new CloudEventDefinition
                             {
                                 Id = $"Endpoint{i} Event1",
@@ -52,30 +65,30 @@ namespace Azure.CloudEvents.Discovery
                                         Type = new MetadataPropertyString { Value = $"Endpoint{i}.Event1" }
                                     }
                                 }
-                            } 
+                            }
                         },
-                        { 
-                            $"Endpoint{i} Event2",new CloudEventDefinition
+                        {
+                            $"Endpoint{i} Event2", new CloudEventDefinition
                             {
                                 Id = $"Endpoint{i} Event2",
                                 Description = $"This is event type Endpoint{i} Event2",
                                 Metadata = new CloudEventMetadata
                                 {
-                                    Attributes = new Attributes{
+                                    Attributes = new Attributes {
                                         Type = new MetadataPropertyString
                                         {
                                             Value = $"Endpoint{i}.Event2"
                                         }
                                     }
                                 }
-                        } }
+                            } }
                     },
                     Usage = EndpointUsage.Subscriber,
                     Config = new EndpointConfigSubscriber
                     {
                         Protocol = "http",
-                        Endpoints = new[] { 
-                            new Uri("https://example.com/foo") 
+                        Endpoints = new[] {
+                            new Uri("https://example.com/foo")
                         },
                     }
                 };
@@ -147,18 +160,18 @@ namespace Azure.CloudEvents.Discovery
                         {
                             Id = $"Group{i} Event1",
                             Metadata = new CloudEventMetadata {
-                                Attributes = new Attributes{
+                                Attributes = new Attributes {
                                     Type = new MetadataPropertyString {
-                                    Value = $"Group{i}.Event1",
-                                } }
+                                        Value = $"Group{i}.Event1",
+                                    } }
                             }
                         } },
-                        { $"Group{i} Event2",new CloudEventDefinition
+                        { $"Group{i} Event2", new CloudEventDefinition
                         {
                             Id = $"Group{i} Event2",
                             Metadata = new CloudEventMetadata
                             {
-                                Attributes= new Attributes {
+                                Attributes = new Attributes {
                                     Type = new MetadataPropertyString
                                     {
                                         Value = $"Group{i}.Event2"
@@ -283,9 +296,6 @@ namespace Azure.CloudEvents.Discovery
 
                 Console.WriteLine($"Deleted: Id {existingGroup.Id}, Version {existingGroup.Version}");
             }
-
         }
-
-
     }
 }

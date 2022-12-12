@@ -1,0 +1,137 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "cosmosDbName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the CosmosDB instance to create"
+      }
+    },
+    "cosmosDbThroughput": {
+      "type": "int",
+      "metadata": {
+        "description": "The throughput of the CosmosDB instance in Request Units per second"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "name": "[parameters('cosmosDbName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "databaseAccountOfferType": "Standard"
+      },
+      "resources": [
+        {
+          "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases",
+          "name": "[concat(parameters('cosmosDbName'), '/discovery')]",
+          "properties": {
+            "resource": {
+              "id": "discovery"
+            }
+          }
+        },
+        {
+          "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
+          "name": "[concat(parameters('cosmosDbName'), '/discovery/schemagroups')]",
+          "properties": {
+            "resource": {
+              "id": "schemagroups",
+              "partitionKey": {
+                "paths": [
+                  "/id"
+                ],
+                "kind": "Hash"
+              }
+            }
+          }
+        },
+        {
+          "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
+          "name": "[concat(parameters('cosmosDbName'), '/discovery/schemas')]",
+          "properties": {
+            "resource": {
+              "id": "schemas",
+              "partitionKey": {
+                "paths": [
+                  "/self"
+                ],
+                "kind": "Hash"
+              }
+            }
+          }
+        },
+        {
+          "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
+          "name": "[concat(parameters('cosmosDbName'), '/discovery/groups')]",
+          "properties": {
+            "resource": {
+              "id": "groups",
+              "partitionKey": {
+                "paths": [
+                  "/id"
+                ],
+                "kind": "Hash"
+              }
+            }
+          }
+        },
+        {
+          "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
+          "name": "[concat(parameters('cosmosDbName'), '/discovery/definitions')]",
+          "properties": {
+            "resource": {
+              "id": "definitions",
+              "partitionKey": {
+                "paths": [
+                  "/groupid"
+                ],
+                "kind": "Hash"
+              }
+            }
+          }
+        },
+        {
+          "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
+          "name": "[concat(parameters('cosmosDbName'), '/discovery/endpoints')]",
+          "properties": {
+            "resource": {
+              "id": "endpoints",
+              "partitionKey": {
+                "paths": [
+                  "/id"
+                ],
+                "kind": "Hash"
+              }
+            }
+          }
+        },
+        {
+          "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
+          "name": "[concat(parameters('cosmosDbName'), '/discovery/epdefinitions')]",
+          "properties": {
+            "resource": {
+              "id": "epdefinitions",
+              "partitionKey": {
+                "paths": [
+                  "/groupid"
+                ],
+                "kind": "Hash"
+              }
+            }
+          }
+        }
+      ],
+      "dependsOn": []
+    }
+  ],
+  "outputs": {
+    "cosmosDbConnectionString": {
+      "type": "string",
+      "value": "[listkeys(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbName')), '2015-04-08').primaryMasterKey]"
+    }
+  }
+}

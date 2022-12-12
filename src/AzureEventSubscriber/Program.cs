@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ce_disco
+namespace AzureEventSubscriber
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;

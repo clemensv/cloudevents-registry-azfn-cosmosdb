@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography.X509Certificates;
 
-namespace ceregistry
+namespace CloudEventsRegistryCli
 {
     internal class UploadCommand : CommonOptions
     {
