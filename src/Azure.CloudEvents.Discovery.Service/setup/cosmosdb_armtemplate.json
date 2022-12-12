@@ -57,7 +57,7 @@
               "id": "schemas",
               "partitionKey": {
                 "paths": [
-                  "/self"
+                  "/groupId"
                 ],
                 "kind": "Hash"
               }
@@ -87,7 +87,7 @@
               "id": "definitions",
               "partitionKey": {
                 "paths": [
-                  "/groupid"
+                  "/groupId"
                 ],
                 "kind": "Hash"
               }
@@ -117,7 +117,7 @@
               "id": "epdefinitions",
               "partitionKey": {
                 "paths": [
-                  "/groupid"
+                  "/groupId"
                 ],
                 "kind": "Hash"
               }

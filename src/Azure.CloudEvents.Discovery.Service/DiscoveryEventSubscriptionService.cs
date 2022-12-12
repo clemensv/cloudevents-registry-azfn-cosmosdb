@@ -20,7 +20,7 @@ namespace Azure.CloudEvents.EventGridBridge
         private readonly string provider;
         private readonly string resourceType;
         private readonly string resourceName;
-        const string collectionRoute = "registry/subscriptions";
+        const string collectionRoute = "/subscriptions";
         const string subscriptionRoute = collectionRoute + "/{eventSubscriptionId}";
 
         public DiscoveryEventSubscriptionService(SubscriptionProxy proxy)

@@ -71,11 +71,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                         string sourcePattern = typeInfo.Item1.SourceResourceFormat;
                         sourcePattern = sourcePattern?.Replace('<', '{')?.Replace('>', '}');
 
-                        Uri schemaUrl;
-                        if (!Uri.TryCreate(eventType.SchemaUrl, new UriCreationOptions(), out schemaUrl))
-                        {
-                            schemaUrl = null;
-                        }
+                        Uri schemaUrl = new Uri(baseUri, $"schemagroups/{info.Key}/schemas/{eventType.Name}");
                         group.Definitions.Add(eventType.Name, new CloudEventDefinition()
                         {
                             Metadata = new CloudEventMetadata
@@ -112,11 +108,67 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                                     }
                                 }
                             },
+                            Version = DateTime.UtcNow.ToFileTimeUtc(),
                             Schemaurl = schemaUrl,
                             Description = eventType.Description,
                             Self = new Uri(authority, "./" + info.Key + "/definitions/" + eventType.Name),
                             Origin = "https://" + authority.Host,
                             Id = eventType.Name,
+                        });
+                    }
+                }
+                yield return group;
+            }
+        }
+
+        public async IAsyncEnumerable<SchemaGroup> EnumerateSystemDefinitionSchemaGroups(Uri baseUri)
+        {
+            var authority = new Uri(baseUri, "schemagroups/");
+
+            await InitializeAsync();
+            foreach (var info in this.topicTypes)
+            {
+                SchemaGroup group = new SchemaGroup()
+                {
+                    Id = info.Key,
+                    Version = DateTime.UtcNow.ToFileTimeUtc(),
+                    Schemas = new Schemas(),
+                    Self = new Uri(authority, "./" + info.Key),
+                    Origin = "https://" + authority.Host
+                };
+
+                foreach (var typeInfo in info.Value)
+                {
+                    foreach (var eventType in typeInfo.Item2)
+                    {
+                        if (group.Schemas.ContainsKey(eventType.Name))
+                            continue;
+
+                        Uri schemaUrl;
+                        if (!Uri.TryCreate(eventType.SchemaUrl, new UriCreationOptions(), out schemaUrl))
+                        {
+                            continue;
+                        }
+                        var version = DateTime.UtcNow.ToFileTimeUtc();
+                        var versionString = version.ToString();
+                        group.Schemas.Add(eventType.Name, new Schema()
+                        {
+                            Id = eventType.Name,
+                            Version = version,
+                            Versions = new Dictionary<string, SchemaVersion>()
+                            {
+                                { versionString, new SchemaVersion()
+                                    {
+                                        Id = versionString,
+                                        Version = version,
+                                        Schemaurl = schemaUrl,
+                                        Self = new Uri(authority, "./" + info.Key + "/schemas/" + eventType.Name + "/versions/1.0"),
+                                        Origin = "https://" + authority.Host,
+                                    }
+                                }
+                            },
+                            Self = new Uri(authority, "./" + info.Key + "/schemas/" + eventType.Name),
+                            Origin = "https://" + authority.Host,
                         });
                     }
                 }
@@ -135,12 +187,12 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                 Name = resource.Name,
                 Description = $"{resource.Name} {resource.Kind}",
                 Docs = GetDocsUrl(resource.Type),
-                Version = (resource.ChangedTime.HasValue ? resource.ChangedTime?.Ticks : resource.CreatedTime?.Ticks) ?? 0,
+                Version = DateTime.UtcNow.ToFileTimeUtc(),
                 Usage = EndpointUsage.Subscriber,
                 Config = new EndpointConfigSubscriber
                 {
                     Protocol = "HTTP",
-                    Endpoints = new[] { new Uri(self, "subscriptions") },
+                    Endpoints = new[] { new Uri(baseUri, "subscriptions") },
                 },
                 Self = self,
                 Authscope = baseUri.AbsoluteUri,

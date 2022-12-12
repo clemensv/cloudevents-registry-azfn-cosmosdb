@@ -69,9 +69,9 @@ namespace Azure.CloudEvents.Discovery
             }.Uri;
             Manifest manifest = new Manifest
             {
-                EndpointsUrl = new Uri(baseUri, "endpoints"),
-                GroupsUrl = new Uri(baseUri, "groups"),
-                SchemaGroupsUrl = new Uri(baseUri, "schemagroups")
+                EndpointsUrl = ComposeUri(baseUri, "endpoints"),
+                GroupsUrl = ComposeUri(baseUri, "groups"),
+                SchemaGroupsUrl = ComposeUri(baseUri, "schemagroups")
             };
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(manifest);
@@ -144,7 +144,7 @@ namespace Azure.CloudEvents.Discovery
                 {
                     foreach (var group in await resultSet.ReadNextAsync())
                     {
-                        group.Self = new Uri(req.Url, group.Id);
+                        group.Self = ComposeUri(req.Url, group.Id);
                         groupDict.Add(group.Id, group);
                     }
                 }
@@ -267,6 +267,15 @@ namespace Azure.CloudEvents.Discovery
 
         }
 
+        Uri ComposeUri(Uri baseUri, string path)
+        {
+
+            return new UriBuilder(baseUri)
+            {
+                Path = baseUri.AbsolutePath + (baseUri.AbsolutePath.EndsWith("/") ? path : "/" + path)
+            }.Uri;
+        }
+
         public async Task<HttpResponseData> GetGroup<TGroup, TResource, TResourceDict>(
             HttpRequestData req,
             string id,
@@ -281,7 +290,7 @@ namespace Azure.CloudEvents.Discovery
             {
 
                 var existingItem = await ctrGroups.ReadItemAsync<TGroup>(id, new PartitionKey(id));
-                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
+                existingItem.Resource.Self = ComposeUri(req.Url, existingItem.Resource.Id);
                 var itemCollection = itemResolver(existingItem.Resource);
                 if (itemCollection != null)
                 {
@@ -297,7 +306,7 @@ namespace Azure.CloudEvents.Discovery
                     {
                         foreach (var group in await resultSet.ReadNextAsync())
                         {
-                            group.Self = new Uri(req.Url, group.Id);
+                            group.Self = ComposeUri(req.Url, group.Id);
                             itemCollection.Add(group.Id, group);
                         }
                     }
@@ -495,7 +504,7 @@ namespace Azure.CloudEvents.Discovery
                 {
                     foreach (var group in await resultSet.ReadNextAsync())
                     {
-                        group.Self = new Uri(req.Url, group.Id);
+                        group.Self = ComposeUri(req.Url, group.Id);
                         groupDict.Add(group.Id, group);
                     }
                 }
@@ -599,7 +608,7 @@ namespace Azure.CloudEvents.Discovery
             {
 
                 var existingItem = await container.ReadItemAsync<TResource>(id, new PartitionKey(groupid));
-                existingItem.Resource.Self = new Uri(req.Url, existingItem.Resource.Id);
+                existingItem.Resource.Self = ComposeUri(req.Url, existingItem.Resource.Id);
                 var res = req.CreateResponse(HttpStatusCode.OK);
                 await res.WriteAsJsonAsync(existingItem.Resource);
                 return res;
@@ -626,7 +635,7 @@ namespace Azure.CloudEvents.Discovery
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             TResource resource = JsonConvert.DeserializeObject<TResource>(requestBody);
-            resource.Self = new Uri(self, UriKind.Relative);
+            resource.Self = new Uri( self);
             return await PutResourceHandler(req, groupid, container, resource);
         }
 
@@ -880,7 +889,7 @@ namespace Azure.CloudEvents.Discovery
 
                 try
                 {
-                    var existingContainer = await container.ReadItemAsync<TResource>(id, new PartitionKey(self));
+                    var existingContainer = await container.ReadItemAsync<TResource>(id, new PartitionKey(groupid));
                     long nextVersion = 1;
                     var dictionary = versionsResolver(existingContainer.Resource);
                     nextVersion = dictionary.Keys.Max(v => int.Parse(v)) + 1;
@@ -898,7 +907,7 @@ namespace Azure.CloudEvents.Discovery
                     }, CancellationToken.None);
 
                     existingContainer.Resource.ModifiedOn = DateTime.UtcNow;
-                    var result1 = await container.UpsertItemAsync<TResource>(existingContainer.Resource, new PartitionKey(self));
+                    var result1 = await container.UpsertItemAsync<TResource>(existingContainer.Resource, new PartitionKey(groupid));
                     if (eventGridClient != null)
                     {
                         var createdEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), CreatedEventType, resourceVersion);
@@ -906,7 +915,7 @@ namespace Azure.CloudEvents.Discovery
                     }
 
                     var response = req.CreateResponse(HttpStatusCode.Created);
-                    response.Headers.Add(LocationHeader, new Uri(req.Url, "versions/" + resourceVersion.Version).ToString());
+                    response.Headers.Add(LocationHeader, ComposeUri(req.Url, "versions/" + resourceVersion.Version).ToString());
                     await response.WriteAsJsonAsync(result1.Resource);
                     response.StatusCode = HttpStatusCode.Created;
                     return response;
@@ -927,7 +936,7 @@ namespace Azure.CloudEvents.Discovery
                     resource.Name = req.Headers.Contains(ResourceNameHeader) ? req.Headers.GetValues(ResourceNameHeader).FirstOrDefault() : null;
                     resource.Docs = req.Headers.Contains(ResourceDocsHeader) ? new Uri(req.Headers.GetValues(ResourceDocsHeader).FirstOrDefault()) : null;
                     resource.Id = id;
-                    resource.Self = new Uri(self, UriKind.Relative);
+                    resource.Self = new Uri(self);
                     resourceVersion.Version = 0;
                     versionsResolver(resource).Add(resource.Version.ToString(), resourceVersion);                    
 
@@ -943,7 +952,7 @@ namespace Azure.CloudEvents.Discovery
                     }, CancellationToken.None);
 
                     resource.GroupId = groupid;
-                    var result = await container.CreateItemAsync<TResource>(resource, new PartitionKey(self));
+                    var result = await container.CreateItemAsync<TResource>(resource, new PartitionKey(groupid));
 
                     if (eventGridClient != null)
                     {
@@ -952,7 +961,7 @@ namespace Azure.CloudEvents.Discovery
                     }
 
                     var response = req.CreateResponse(HttpStatusCode.Created);
-                    response.Headers.Add(LocationHeader, new Uri(req.Url, "/" + path).ToString());
+                    response.Headers.Add(LocationHeader, ComposeUri(req.Url, "/" + path).ToString());
                     await response.WriteAsJsonAsync(result.Resource);
                     response.StatusCode = HttpStatusCode.Created;
                     return response;
@@ -989,7 +998,7 @@ namespace Azure.CloudEvents.Discovery
                     }
 
                     var response = req.CreateResponse(HttpStatusCode.Created);
-                    response.Headers.Add(LocationHeader, new Uri(req.Url, "versions/" + resourceVersion.Version).ToString());
+                    response.Headers.Add(LocationHeader, ComposeUri(req.Url, "versions/" + resourceVersion.Version).ToString());
                     await response.WriteAsJsonAsync(result1.Resource);
 
                     return response;
@@ -1024,7 +1033,7 @@ namespace Azure.CloudEvents.Discovery
                     }
 
                     var response = req.CreateResponse(HttpStatusCode.Created);
-                    response.Headers.Add(LocationHeader, new Uri(req.Url, "versions/" + resourceVersion.Version).ToString());
+                    response.Headers.Add(LocationHeader, ComposeUri(req.Url, "versions/" + resourceVersion.Version).ToString());
                     await response.WriteAsJsonAsync(result.Resource);
                     return response;
                 }
@@ -1085,7 +1094,7 @@ namespace Azure.CloudEvents.Discovery
                 Config = new EndpointConfigSubscriber
                 {
                     Protocol = "HTTP",
-                    Endpoints = new[] { new Uri(baseUri, "subscriptions") },
+                    Endpoints = new[] { ComposeUri(baseUri, "subscriptions") },
                 },
                 Description = "Discovery Endpoint",
                 Version = 0,

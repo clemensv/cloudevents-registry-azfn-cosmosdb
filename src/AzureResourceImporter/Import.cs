@@ -16,6 +16,10 @@ namespace azcedisco
         {
             var cred = new AzureIdentityCredentialAdapter();
             var rte = new ResourceTopicEnumerator(this.SubscriptionId, cred);
+            if (!this.DiscoveryEndpoint.EndsWith("/"))
+            {
+                this.DiscoveryEndpoint += "/";
+            }
 
             var httpClient = new HttpClient();
             if (!string.IsNullOrEmpty(this.FunctionsKey))
@@ -32,6 +36,25 @@ namespace azcedisco
                 try
                 {
                     createdGroup = await client.PutGroupAsync(group, group.Id);
+                }
+                catch (ApiException apiException)
+                {
+                    if (apiException.StatusCode != 409)
+                    {
+                        Console.WriteLine(apiException.Message);
+                    }
+                }
+
+                Console.WriteLine(JsonConvert.SerializeObject(group, Formatting.Indented));
+            }
+
+            await foreach (var group in rte.EnumerateSystemDefinitionSchemaGroups(new Uri(this.DiscoveryEndpoint)))
+            {
+                group.Version = DateTime.UtcNow.ToFileTimeUtc();
+                SchemaGroup createdGroup = null;
+                try
+                {
+                    createdGroup = await client.PutSchemaGroupAsync(group, group.Id);
                 }
                 catch (ApiException apiException)
                 {
