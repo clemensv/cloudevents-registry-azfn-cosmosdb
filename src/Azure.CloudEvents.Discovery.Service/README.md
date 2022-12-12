@@ -8,6 +8,9 @@ The service depends on an Azure CosmosDB instance. The
 ["cosmosdb_armtemplate.json"](setup/cosmosdb_armtemplate.json) ARM template
 allows setting up the required containers and partition keys.
 
+You also need an Azure blob account with a container named "schemas" and an
+Azure Event Grid custom topic.
+
 In addition to the common configuration parameters, the following app settings
 of the Azure Function deployment need to be configured:
 
