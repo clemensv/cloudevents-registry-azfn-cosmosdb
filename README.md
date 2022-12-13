@@ -15,6 +15,11 @@ reflecting the evolution here and need a cleanup.
 
 Main Projects:
 
+* [Azure.CloudEvents.Discovery.Service](src/Azure.CloudEvents.Discovery.Service/):
+  This project is an Azure Functions based implementation of the OpenAPI spec. I
+  chose not to auto-generate that side of the interface, but to build that
+  separately to retain flexibility to change things around. This might
+  eventually morph into an ASP.NET MVC app.
 * [Azure.CloudEvents.Discovery](src/Azure.CloudEvents.Discovery/): This project
   hosts the OpenAPI spec document and automatically generates a client from it,
   which you can find in the "generated" subdirectory as "DiscoveryClient.cs"
@@ -25,11 +30,6 @@ Main Projects:
   project automatically generates a client from the CloudEvents Subscription API
   OpenAPI spec, which you can find in the "generated" subdirectory as
   "SubscriptionsClient.cs" once the project it built. That file is not checked in. 
-* [Azure.CloudEvents.Discovery.Service](src/Azure.CloudEvents.Discovery.Service/):
-  This project is an Azure Functions based implementation of the OpenAPI spec. I
-  chose not to auto-generate that side of the interface, but to build that
-  separately to retain flexibility to change things around. This might
-  eventually morph into an ASP.NET MVC app.
 * [CloudEventsRegistryCli](src/CloudEventsRegistryCli/): This is a CLI tool that can upload full metadata
   documents into the registry and also edit aspects of the registry. The upload
   works, the rest is being worked on.
@@ -48,3 +48,9 @@ Utilities:
 * [Azure.CloudEvents.Discovery.SystemTopicLoader](src/Azure.CloudEvents.Discovery.SystemTopicLoader):
   This project hosts a utility class that can extract Azure Event Grid system
   topic metadata from the Azure Resource Manager API.
+
+The repo is set up with an automated deployment flow to a set of Azure resources.
+
+The endpoint is https://cediscoveryinterop.azurewebsites.net/registry and requires an access key.
+
+The access key is only available for participants in the CNCF CloudEvents project.
