@@ -10,6 +10,9 @@
       "url": "https://cediscoveryinterop.azurewebsites.net/registry/"
     }
   ],
+  "security": {
+    "api_key": []
+  },
   "securityDefinitions": {
     "api_key": {
       "type": "apiKey",
