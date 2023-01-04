@@ -7,9 +7,16 @@
   },
   "servers": [
     {
-      "url": "https://api.cloudevents.io/test/v0.1"
+      "url": "https://cediscoveryinterop.azurewebsites.net/registry/"
     }
   ],
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "code",
+      "in": "query"
+    }
+  },
   "paths": {
     "/": {
       "get": {
