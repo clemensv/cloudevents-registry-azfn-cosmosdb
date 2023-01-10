@@ -123,7 +123,7 @@ namespace Azure.CloudEvents.Discovery
             var self = $"schemagroups/{schemaGroupid}/schemas/{id}";
 
             return await GetLatestResourceVersion<SchemaVersion, Schema>(req, schemaGroupid, id, log, container, this.schemasBlobClient, self,
-                (v) => v.Schemaurl, (q) => q.Schemaobject);
+                (v) => v.Schemaurl, (q) => q.Schemaobject, (v) => v.Versions);
         }
 
         

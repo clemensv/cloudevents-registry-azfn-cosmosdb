@@ -6,7 +6,10 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
     using System.Net;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.CloudEvents.Discovery;
@@ -16,6 +19,8 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
     using Microsoft.Azure.Management.ResourceManager.Models;
     using Microsoft.Rest;
     using Microsoft.Rest.Azure;
+    using static System.Net.Mime.MediaTypeNames;
+    using Group = Group;
 
     public class ResourceTopicEnumerator
     {
@@ -52,13 +57,16 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
             await InitializeAsync();
             foreach (var info in this.topicTypes)
             {
+                DateTime utcNow = DateTime.UtcNow;
                 Group group = new Group()
                 {
                     Id = info.Key,
-                    Version = DateTime.UtcNow.ToFileTimeUtc(),
+                    Version = utcNow.ToFileTimeUtc(),
                     Definitions = new Definitions(),
                     Self = new Uri(authority, "./" + info.Key),
-                    Origin = "https://" + authority.Host
+                    Origin = "https://" + authority.Host,
+                    CreatedOn = utcNow,
+                    ModifiedOn = utcNow
                 };
 
                 foreach (var typeInfo in info.Value)
@@ -71,8 +79,8 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                         string sourcePattern = typeInfo.Item1.SourceResourceFormat;
                         sourcePattern = sourcePattern?.Replace('<', '{')?.Replace('>', '}');
 
-                        Uri schemaUrl = new Uri(baseUri, $"schemagroups/{info.Key}/schemas/{eventType.Name}");
-                        group.Definitions.Add(eventType.Name, new CloudEventDefinition()
+
+                        CloudEventDefinition ceDef = new CloudEventDefinition()
                         {
                             Metadata = new CloudEventMetadata
                             {
@@ -97,30 +105,59 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                                         Value = "application/json",
                                         Required = true
                                     },
-                                    Dataschema = new MetadataPropertyUriTemplate
-                                    {
-                                        Value = schemaUrl?.ToString(),
-                                        Required = true,
-                                    },
                                     Source = new MetadataPropertyUriTemplate
                                     {
                                         Value = sourcePattern
                                     }
                                 }
                             },
-                            Version = DateTime.UtcNow.ToFileTimeUtc(),
-                            Schemaurl = schemaUrl,
+                            Version = utcNow.ToFileTimeUtc(),
                             Description = eventType.Description,
                             Self = new Uri(authority, "./" + info.Key + "/definitions/" + eventType.Name),
                             Origin = "https://" + authority.Host,
                             Id = eventType.Name,
-                        });
+                            CreatedOn = utcNow,
+                            ModifiedOn = utcNow
+                        };
+                        if (!string.IsNullOrEmpty(eventType.SchemaUrl) && Uri.IsWellFormedUriString(eventType.SchemaUrl, UriKind.Absolute))
+                        {
+                            string pattern = "https://github\\.com/(.*?)/blob/(.*?)/(.*)";
+                            string replacement = "https://raw.githubusercontent.com/$1/$2/$3";
+                            eventType.SchemaUrl = System.Text.RegularExpressions.Regex.Replace(eventType.SchemaUrl, pattern, replacement);
+
+                            var evsu = new Uri(eventType.SchemaUrl);
+                            if (!downloaded.TryGetValue(evsu, out var schemaText))
+                            {
+                                WebClient client = new WebClient();
+                                schemaText = client.DownloadString(evsu);
+                                downloaded.Add(evsu, schemaText);
+                            }
+                            Uri schemaUrl = null;
+                            Match match = Regex.Match(schemaText, $"([A-Za-z0-9_]*{(eventType.Name+"EventData").Split(".").Last()})");
+                            if (match.Success)
+                            {
+                                schemaUrl = new Uri(baseUri, $"schemagroups/{info.Key}/schemas/{eventType.Name}EventData#/definitions/{match.Groups[0].Value}");
+                            }
+                            else 
+                            {
+                                schemaUrl = new Uri(baseUri, $"schemagroups/{info.Key}/schemas/{eventType.Name}EventData");
+                            }
+                            
+                            ceDef.Schemaurl = schemaUrl;
+                            ceDef.Metadata.Attributes.Dataschema = new MetadataPropertyUriTemplate
+                            {
+                                Value = schemaUrl.ToString(),
+                                Required = true,
+                            };
+                        }
+                        group.Definitions.Add(eventType.Name, ceDef);
                     }
                 }
                 yield return group;
             }
         }
 
+        Dictionary<Uri, string> downloaded = new Dictionary<Uri, string>();
         public async IAsyncEnumerable<SchemaGroup> EnumerateSystemDefinitionSchemaGroups(Uri baseUri)
         {
             var authority = new Uri(baseUri, "schemagroups/");
@@ -128,20 +165,24 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
             await InitializeAsync();
             foreach (var info in this.topicTypes)
             {
+                DateTime utcNow = DateTime.UtcNow;
                 SchemaGroup group = new SchemaGroup()
                 {
                     Id = info.Key,
-                    Version = DateTime.UtcNow.ToFileTimeUtc(),
+                    Version = utcNow.ToFileTimeUtc(),
                     Schemas = new Schemas(),
                     Self = new Uri(authority, "./" + info.Key),
-                    Origin = "https://" + authority.Host
+                    Origin = "https://" + authority.Host,
+                    CreatedOn = utcNow,
+                    ModifiedOn = utcNow
                 };
 
                 foreach (var typeInfo in info.Value)
                 {
                     foreach (var eventType in typeInfo.Item2)
                     {
-                        if (group.Schemas.ContainsKey(eventType.Name))
+                        string eventDataName = eventType.Name + "EventData";
+                        if (group.Schemas.ContainsKey(eventDataName))
                             continue;
 
                         Uri schemaUrl;
@@ -149,11 +190,28 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                         {
                             continue;
                         }
-                        var version = DateTime.UtcNow.ToFileTimeUtc();
-                        var versionString = version.ToString();
-                        group.Schemas.Add(eventType.Name, new Schema()
+
+                        if (string.IsNullOrEmpty(schemaUrl.Fragment))
                         {
-                            Id = eventType.Name,
+                            if ( !downloaded.TryGetValue(schemaUrl, out var schemaText))
+                            {
+                                WebClient client = new WebClient();
+                                schemaText = client.DownloadString(schemaUrl);
+                                downloaded.Add(schemaUrl, schemaText);                                
+                            }
+                            Match match = Regex.Match(schemaText, $"([A-Za-z0-9_]*{eventDataName.Split(".").Last()})");
+                            if (match.Success)
+                            {
+                                schemaUrl = new UriBuilder(schemaUrl) { Fragment = $"/definitions/{match.Groups[0].Value}" }.Uri;
+                            }
+                        }
+
+                        var version = utcNow.ToFileTimeUtc();
+                        var versionString = version.ToString();
+                        
+                        group.Schemas.Add(eventDataName, new Schema()
+                        {
+                            Id = eventDataName,
                             Version = version,
                             Versions = new Dictionary<string, SchemaVersion>()
                             {
@@ -162,13 +220,17 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                                         Id = versionString,
                                         Version = version,
                                         Schemaurl = schemaUrl,
-                                        Self = new Uri(authority, "./" + info.Key + "/schemas/" + eventType.Name + "/versions/1.0"),
+                                        Self = new Uri(authority, "./" + info.Key + "/schemas/" + eventType.Name + "EventData/versions/1.0"),
                                         Origin = "https://" + authority.Host,
+                                        CreatedOn = utcNow,
+                                        ModifiedOn = utcNow
                                     }
                                 }
                             },
-                            Self = new Uri(authority, "./" + info.Key + "/schemas/" + eventType.Name),
+                            Self = new Uri(authority, "./" + info.Key + "/schemas/" + eventType.Name + "EventData"),
                             Origin = "https://" + authority.Host,
+                            CreatedOn = utcNow,
+                            ModifiedOn = utcNow
                         });
                     }
                 }
@@ -181,13 +243,14 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
             string normalizedId = NormalizeId(resource.Id);
             var authority = new Uri(baseUri, "endpoints/");
             var self = new Uri(authority, "./" + normalizedId);
+            DateTime utcNow = DateTime.UtcNow;
             var endpoint = new Endpoint()
             {
                 Id = normalizedId,
                 Name = resource.Name,
                 Description = $"{resource.Name} {resource.Kind}",
                 Docs = GetDocsUrl(resource.Type),
-                Version = DateTime.UtcNow.ToFileTimeUtc(),
+                Version = utcNow.ToFileTimeUtc(),
                 Usage = EndpointUsage.Subscriber,
                 Config = new EndpointConfigSubscriber
                 {
@@ -196,7 +259,10 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                 },
                 Self = self,
                 Authscope = baseUri.AbsoluteUri,
-                Origin = "https://" + authority.Host
+                Origin = "https://" + authority.Host,
+                CreatedBy = "CloudEvents Generator",
+                ModifiedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow                
             };
 
             if (resource.ChangedTime.HasValue)

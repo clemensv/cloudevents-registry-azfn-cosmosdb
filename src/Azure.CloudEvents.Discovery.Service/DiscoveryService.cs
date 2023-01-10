@@ -816,6 +816,11 @@ namespace Azure.CloudEvents.Discovery
             try
             {
                 var existingItem = await container.ReadItemAsync<TResource>(id, new PartitionKey(groupid));
+                if ( existingItem == null || existingItem.Resource == null)
+                {
+                    var res = req.CreateResponse(HttpStatusCode.NotFound);
+                    return res;
+                }
                 var latest = versionsResolver(existingItem.Resource).Max((x) => x.Key);
                 var latestVersion = (TResourceVersion)versionsResolver(existingItem.Resource)[latest];
 

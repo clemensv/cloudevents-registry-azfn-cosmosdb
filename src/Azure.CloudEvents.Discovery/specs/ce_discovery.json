@@ -2338,12 +2338,11 @@
         ]
       },
       "metadataPropertyDateTime": {
-        "description": "This is a date-time property, holding RFC3339 string expressions. Since it ought to be rare for the value of date-time attributes to be set in a definition, this is not using the \"date-time\" format which might be turned intro a non-nullable type with some code generators.",
+        "description": "This is a date-time property, holding RFC3339 string expressions.",
         "type": "object",
         "properties": {
           "value": {
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           }
         },
         "allOf": [
