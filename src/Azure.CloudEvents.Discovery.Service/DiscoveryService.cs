@@ -71,7 +71,7 @@ namespace Azure.CloudEvents.Discovery
             {
                 EndpointsUrl = ComposeUri(baseUri, "endpoints"),
                 GroupsUrl = ComposeUri(baseUri, "groups"),
-                SchemaGroupsUrl = ComposeUri(baseUri, "schemagroups")
+                SchemagroupsUrl = ComposeUri(baseUri, "schemagroups")
             };
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(manifest);
@@ -86,12 +86,12 @@ namespace Azure.CloudEvents.Discovery
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             Manifest manifest = JsonConvert.DeserializeObject<Manifest>(requestBody);
-            if (manifest.SchemaGroups != null)
+            if (manifest.Schemagroups != null)
             {
                 var ctrGroups = this.cosmosClient.GetContainer("discovery", "schemagroups");
                 var ctrSchemas = this.cosmosClient.GetContainer("discovery", "schemas");
                 var res = await PutGroupsHandler<SchemaGroup, SchemaGroups, Schema, Schemas>(
-                    req, (g) => g.Schemas, ctrGroups, ctrSchemas, manifest.SchemaGroups);
+                    req, (g) => g.Schemas, ctrGroups, ctrSchemas, manifest.Schemagroups);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
             }

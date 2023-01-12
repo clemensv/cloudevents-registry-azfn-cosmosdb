@@ -133,7 +133,7 @@ namespace Azure.CloudEvents.Discovery.SystemTopicLoader
                                 downloaded.Add(evsu, schemaText);
                             }
                             Uri schemaUrl = null;
-                            Match match = Regex.Match(schemaText, $"([A-Za-z0-9_]*{(eventType.Name+"EventData").Split(".").Last()})");
+                            Match match = Regex.Match(schemaText, $"([A-Za-z0-9_]*{(eventType.Name+"EventData").Split(".").Last()})", RegexOptions.IgnoreCase);
                             if (match.Success)
                             {
                                 schemaUrl = new Uri(baseUri, $"schemagroups/{info.Key}/schemas/{eventType.Name}EventData#/definitions/{match.Groups[0].Value}");
