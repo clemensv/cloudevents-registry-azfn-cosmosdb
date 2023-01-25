@@ -1,39 +1,10 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema",
+  "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://cloudevents.io/2022-12/discovery",
   "title": "JSON Schema for CloudEvents Registry Docs",
-  "type": "object",
-  "properties": {
-    "$schema": {
-      "type": "string",
-      "default": "https://cloudevents.io/schemas/discovery"
-    },
-    "specversion": {
-      "type": "string",
-      "default": "0.5-wip"
-    },
-    "endpoints": {
-      "$ref": "#/components/schemas/endpoints"
-    },
-    "endpointsUrl": {
-      "type": "string",
-      "format": "uri"
-    },
-    "groups": {
-      "$ref": "#/components/schemas/groups"
-    },
-    "groupsUrl": {
-      "type": "string",
-      "format": "uri"
-    },
-    "schemaGroups": {
-      "$ref": "#/components/schemas/schemaGroups"
-    },
-    "schemaGroupsUrl": {
-      "type": "string",
-      "format": "uri"
-    }
-  },
+  "allOf": [
+    { "$ref": "#/components/schemas/manifest" }
+  ],
   "components": {
     "schemas": {
       "manifest": {
@@ -61,10 +32,10 @@
             "type": "string",
             "format": "uri"
           },
-          "schemaGroups": {
+          "schemagroups": {
             "$ref": "#/components/schemas/schemaGroups"
           },
-          "schemaGroupsUrl": {
+          "schemagroupsUrl": {
             "type": "string",
             "format": "uri"
           }
@@ -506,12 +477,11 @@
         ]
       },
       "metadataPropertyDateTime": {
-        "description": "This is a date-time property, holding RFC3339 string expressions. Since it ought to be rare for the value of date-time attributes to be set in a definition, this is not using the \"date-time\" format which might be turned intro a non-nullable type with some code generators.",
+        "description": "This is a date-time property, holding RFC3339 string expressions.",
         "type": "object",
         "properties": {
           "value": {
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           }
         },
         "allOf": [
@@ -711,38 +681,6 @@
             "format": "date-time"
           }
         }
-      },
-      "resourceWithVersion": {
-        "type": "object",
-        "description": "resource with version identifier",
-        "properties": {
-          "version": {
-            "type": "string",
-            "description": "Server assigned version identifier."
-          }
-        },
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/resource"
-          }
-        ]
-      },
-      "resourceWithVersionedResources": {
-        "type": "object",
-        "description": "collection of versioned resources",
-        "properties": {
-          "versions": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/resourceWithVersion"
-            }
-          }
-        },
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/resource"
-          }
-        ]
       },
       "endpointReference": {
         "$ref": "#/components/schemas/reference"
@@ -1038,7 +976,7 @@
         },
         "allOf": [
           {
-            "$ref": "#/components/schemas/resourceWithVersionedResources"
+            "$ref": "#/components/schemas/resource"
           }
         ]
       },
@@ -1058,7 +996,7 @@
         },
         "allOf": [
           {
-            "$ref": "#/components/schemas/resourceWithVersion"
+            "$ref": "#/components/schemas/resource"
           }
         ]
       }
