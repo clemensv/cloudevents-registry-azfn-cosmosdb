@@ -9,7 +9,7 @@ namespace AzureEventSubscriber
     using System.Net.Http.Headers;
     using System.Net.Mime;
     using System.Threading.Tasks;
-    using Azure.CloudEvents.Discovery;
+    using Azure.CloudEvents.Registry;
     using Azure.CloudEvents.Subscriptions;
     using Azure.Identity;
     using CloudNative.CloudEvents;
@@ -26,8 +26,8 @@ namespace AzureEventSubscriber
         public static async Task<int> Main(string[] args)
             => await CommandLineApplication.ExecuteAsync<Program>(args);
 
-        [Option(ShortName = "d", Description = "CloudEvents discovery endpoint."), Required]
-        public string DiscoveryEndpoint { get; }
+        [Option(ShortName = "d", Description = "CloudEvents Registry endpoint."), Required]
+        public string RegistryEndpoint { get; }
 
         [Option(ShortName = "c", Description = "Azure Relay namespace connection string."), Required]
         public string ConnectionString { get; } = null;
@@ -43,7 +43,7 @@ namespace AzureEventSubscriber
             await StartEventListener(ConnectionString, RelayName);
 
             var httpClient = new HttpClient();
-            var discoveryClient = new DiscoveryClient(httpClient) { BaseUrl = DiscoveryEndpoint };
+            var RegistryClient = new RegistryClient(RegistryEndpoint, httpClient);
             var subscriptions = new Dictionary<string, Subscription>();
 
             var azureCredential = new DefaultAzureCredential();
@@ -51,7 +51,7 @@ namespace AzureEventSubscriber
             var subscriptionsHttpClient = new HttpClient();
             subscriptionsHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
 
-            var endpoints = await discoveryClient.GetEndpointsAsync(string.Empty);
+            var endpoints = await RegistryClient.GetEndpointsAsync(string.Empty);
             foreach (var service in endpoints.Values)
             {
                 try

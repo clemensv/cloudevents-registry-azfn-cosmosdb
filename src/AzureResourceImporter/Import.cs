@@ -1,5 +1,5 @@
-﻿using Azure.CloudEvents.Discovery;
-using Azure.CloudEvents.Discovery.SystemTopicLoader;
+﻿using Azure.CloudEvents.Registry;
+using Azure.CloudEvents.Registry.SystemTopicLoader;
 using McMaster.Extensions.CommandLineUtils;
 using Newtonsoft.Json;
 using System;
@@ -16,9 +16,9 @@ namespace azcedisco
         {
             var cred = new AzureIdentityCredentialAdapter();
             var rte = new ResourceTopicEnumerator(this.SubscriptionId, cred);
-            if (!this.DiscoveryEndpoint.EndsWith("/"))
+            if (!this.RegistryEndpoint.EndsWith("/"))
             {
-                this.DiscoveryEndpoint += "/";
+                this.RegistryEndpoint += "/";
             }
 
             var httpClient = new HttpClient();
@@ -26,13 +26,11 @@ namespace azcedisco
             {
                 httpClient.DefaultRequestHeaders.Add("x-functions-key", this.FunctionsKey);
             }
-            DiscoveryClient client = new DiscoveryClient(httpClient);
-            client.BaseUrl = this.DiscoveryEndpoint;
-
-            await foreach (var group in rte.EnumerateSystemDefinitionGroups(new Uri(this.DiscoveryEndpoint)))
+            RegistryClient client = new RegistryClient(RegistryEndpoint, httpClient);
+            await foreach (var group in rte.EnumerateSystemDefinitionGroups(new Uri(this.RegistryEndpoint)))
             {
                 group.Version = DateTime.UtcNow.ToFileTimeUtc();
-                Group createdGroup = null;
+                Definitiongroup createdGroup = null;
                 try
                 {
                     createdGroup = await client.PutGroupAsync(group, group.Id);
@@ -48,7 +46,7 @@ namespace azcedisco
                 Console.WriteLine(JsonConvert.SerializeObject(group, Formatting.Indented));
             }
 
-            await foreach (var group in rte.EnumerateSystemDefinitionSchemaGroups(new Uri(this.DiscoveryEndpoint)))
+            await foreach (var group in rte.EnumerateSystemDefinitionSchemaGroups(new Uri(this.RegistryEndpoint)))
             {
                 group.Version = DateTime.UtcNow.ToFileTimeUtc();
                 SchemaGroup createdGroup = null;
@@ -67,7 +65,7 @@ namespace azcedisco
                 Console.WriteLine(JsonConvert.SerializeObject(group, Formatting.Indented));
             }
 
-            await foreach (var endpoint in rte.EnumerateDiscoveryServicesAsync(new Uri(this.DiscoveryEndpoint), this.ResourceGroupName))
+            await foreach (var endpoint in rte.EnumerateRegistryServicesAsync(new Uri(this.RegistryEndpoint), this.ResourceGroupName))
             {
                 endpoint.Version = DateTime.UtcNow.ToFileTimeUtc();
                 Endpoint createdService = null;

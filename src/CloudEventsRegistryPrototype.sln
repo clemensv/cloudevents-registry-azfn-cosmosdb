@@ -5,17 +5,17 @@ VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureEventSubscriber", "AzureEventSubscriber\AzureEventSubscriber.csproj", "{60E0FD83-4BFA-46A4-9B05-68E04E4323FF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery.Service", "Azure.CloudEvents.Discovery.Service\Azure.CloudEvents.Discovery.Service.csproj", "{8BC01CEB-4618-470B-839C-CDDBD4BB58B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Registry.Service", "Azure.CloudEvents.Registry.Service\Azure.CloudEvents.Registry.Service.csproj", "{8BC01CEB-4618-470B-839C-CDDBD4BB58B2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery", "Azure.CloudEvents.Discovery\Azure.CloudEvents.Discovery.csproj", "{DF1BAC41-9C22-4A81-9007-9D2428D341CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Registry", "Azure.CloudEvents.Registry\Azure.CloudEvents.Registry.csproj", "{DF1BAC41-9C22-4A81-9007-9D2428D341CC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery.Service.Test", "..\test\Azure.CloudEvents.Discovery.Service.Test\Azure.CloudEvents.Discovery.Service.Test.csproj", "{BD3CF726-B8EC-4158-98DF-D76C0246307D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Registry.Service.Test", "..\test\Azure.CloudEvents.Registry.Service.Test\Azure.CloudEvents.Registry.Service.Test.csproj", "{BD3CF726-B8EC-4158-98DF-D76C0246307D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery.Service.CliTest", "..\test\Azure.CloudEvents.Discovery.Service.CliTest\Azure.CloudEvents.Discovery.Service.CliTest.csproj", "{D4FED6E9-331F-4BEF-9EE1-60AF5D0A5C66}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Registry.Service.CliTest", "..\test\Azure.CloudEvents.Registry.Service.CliTest\Azure.CloudEvents.Registry.Service.CliTest.csproj", "{D4FED6E9-331F-4BEF-9EE1-60AF5D0A5C66}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Subscriptions", "Azure.CloudEvents.Subscriptions\Azure.CloudEvents.Subscriptions.csproj", "{DF6087E0-0732-4755-8BF9-469BE545D061}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Discovery.SystemTopicLoader", "Azure.CloudEvents.Discovery.SystemTopicLoader\Azure.CloudEvents.Discovery.SystemTopicLoader.csproj", "{A33D9774-7907-4177-8791-818D710CC115}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.CloudEvents.Registry.SystemTopicLoader", "Azure.CloudEvents.Registry.SystemTopicLoader\Azure.CloudEvents.Registry.SystemTopicLoader.csproj", "{A33D9774-7907-4177-8791-818D710CC115}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureResourceImporter", "AzureResourceImporter\AzureResourceImporter.csproj", "{EA897094-711C-45A2-9534-A79D1B6E2A65}"
 EndProject

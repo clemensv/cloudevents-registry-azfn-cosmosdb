@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Azure.CloudEvents.Discovery.Service": {
-      "commandName": "Project",
-      "commandLineArgs": "host start --port 11000"
-    }
-  }
-}

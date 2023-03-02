@@ -18,9 +18,9 @@ To use the tool, you need to specify the following options:
 
 -r|--resource-group-name <RESOURCE_GROUP_NAME>: This is the name of the Azure resource group that you want to access.
 
--e|--discovery-endpoint <DISCOVERY_ENDPOINT>: This is the discovery endpoint that the tool will use to post the discovered metadata.
+-e|--Registry-endpoint <Registry_ENDPOINT>: This is the Registry endpoint that the tool will use to post the discovered metadata.
 
--f|--functions-key <FUNCTIONS_KEY>: This is the FunctionsKey that the tool will use to access the discovery endpoint.
+-f|--functions-key <FUNCTIONS_KEY>: This is the FunctionsKey that the tool will use to access the Registry endpoint.
 
 The -?|-h|--help option can be used to show help information for the tool.
 

@@ -1,4 +1,4 @@
-﻿using Azure.CloudEvents.Discovery;
+﻿using Azure.CloudEvents.Registry;
 using McMaster.Extensions.CommandLineUtils;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
@@ -25,8 +25,7 @@ namespace CloudEventsRegistryCli
                         {
                             HttpClient httpClient = new HttpClient();
                             httpClient.DefaultRequestHeaders.Add("x-functions-key", AccessKey);
-                            var client = new DiscoveryClient(httpClient);
-                            client.BaseUrl = Endpoint;
+                            var client = new RegistryClient(Endpoint, httpClient);
                             await client.UploadDocAsync(obj);
                         }
                         catch (ApiException ex)

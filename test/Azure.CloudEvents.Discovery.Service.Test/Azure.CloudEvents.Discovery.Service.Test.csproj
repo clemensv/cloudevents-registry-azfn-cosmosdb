@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Azure.CloudEvents.Discovery.Service\Azure.CloudEvents.Discovery.Service.csproj" />
-    <ProjectReference Include="..\..\src\Azure.CloudEvents.Discovery\Azure.CloudEvents.Discovery.csproj" />
+    <ProjectReference Include="..\..\src\Azure.CloudEvents.Registry.Service\Azure.CloudEvents.Registry.Service.csproj" />
+    <ProjectReference Include="..\..\src\Azure.CloudEvents.Registry\Azure.CloudEvents.Registry.csproj" />
   </ItemGroup>
 
 </Project>

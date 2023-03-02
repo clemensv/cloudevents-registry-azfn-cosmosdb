@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Azure.CloudEvents.Discovery
+namespace Azure.CloudEvents.Registry
 {
     class Program
     {
@@ -27,7 +27,7 @@ namespace Azure.CloudEvents.Discovery
         {
             HttpClient httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("x-functions-key", keyOption.Value());
-            DiscoveryClient client = new DiscoveryClient(httpClient);
+            RegistryClient client = new RegistryClient(httpClient);
             client.BaseUrl = baseUrlOption.Value();
 
 

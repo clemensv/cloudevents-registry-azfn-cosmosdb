@@ -12,7 +12,7 @@ namespace Azure.CloudEvents.EventGridBridge
     using Newtonsoft.Json;
     using Microsoft.Rest;
 
-    public class DiscoveryEventSubscriptionService
+    public class RegistryEventSubscriptionService
     {
         readonly SubscriptionProxy _proxy;
         private readonly string subscriptionId;
@@ -23,14 +23,14 @@ namespace Azure.CloudEvents.EventGridBridge
         const string collectionRoute = "/subscriptions";
         const string subscriptionRoute = collectionRoute + "/{eventSubscriptionId}";
 
-        public DiscoveryEventSubscriptionService(SubscriptionProxy proxy)
+        public RegistryEventSubscriptionService(SubscriptionProxy proxy)
         {
             this._proxy = proxy;
             this.subscriptionId = proxy.DefaultSubscriptionId;
             this.resourceGroup = proxy.DefaultResourceGroup;
             this.provider = "Microsoft.EventGrid";
             this.resourceType = "topics";
-            this.resourceName = "cloudevents-discovery";
+            this.resourceName = "cloudevents-registry";
         }
 
         [Function("CreateSubscription")]

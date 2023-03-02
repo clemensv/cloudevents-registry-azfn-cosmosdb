@@ -14,7 +14,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Threading.Tasks;
 
-namespace Azure.CloudEvents.Discovery
+namespace Azure.CloudEvents.Registry
 {
     public class Program
     {

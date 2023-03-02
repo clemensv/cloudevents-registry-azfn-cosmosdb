@@ -3,7 +3,7 @@
   "defaultVariables": null,
   "documentGenerator": {
     "fromDocument": {
-      "url": "specs/ce_discovery.json",
+      "url": "specs/ce_Registry.json",
       "output": null,
       "newLineBehavior": "Auto"
     }
@@ -40,7 +40,7 @@
       "useRequestAndResponseSerializationSettings": false,
       "serializeTypeInformation": false,
       "queryNullValue": "",
-      "className": "DiscoveryClient",
+      "className": "RegistryClient",
       "operationGenerationMode": "MultipleClientsFromOperationId",
       "additionalNamespaceUsages": [],
       "additionalContractNamespaceUsages": [],
@@ -55,7 +55,7 @@
       "wrapResponseMethods": [],
       "generateResponseClasses": true,
       "responseClass": "SwaggerResponse",
-      "namespace": "Azure.CloudEvents.Discovery",
+      "namespace": "Azure.CloudEvents.Registry",
       "requiredPropertiesMustBeDefined": true,
       "dateType": "System.DateTimeOffset",
       "jsonConverters": null,
@@ -91,7 +91,7 @@
       "enumNameGeneratorType": null,
       "serviceHost": null,
       "serviceSchemes": null,
-      "output": "generated/DiscoveryClient.cs",
+      "output": "generated/RegistryClient.cs",
       "newLineBehavior": "Auto"
     }
   }

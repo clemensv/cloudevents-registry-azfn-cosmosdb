@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Azure.CloudEvents.Discovery.SystemTopicLoader\Azure.CloudEvents.Discovery.SystemTopicLoader.csproj" />
+    <ProjectReference Include="..\Azure.CloudEvents.Registry.SystemTopicLoader\Azure.CloudEvents.Registry.SystemTopicLoader.csproj" />
   </ItemGroup>
 
 </Project>

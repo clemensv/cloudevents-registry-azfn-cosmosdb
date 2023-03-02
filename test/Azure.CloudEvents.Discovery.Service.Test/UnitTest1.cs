@@ -5,12 +5,12 @@ using Moq;
 using System;
 using Xunit;
 
-namespace Azure.CloudEvents.Discovery.Endpoint.Test
+namespace Azure.CloudEvents.Registry.Endpoint.Test
 {
     public class UnitTest1
     {
         CosmosClient cosmosClient;
-        DiscoveryService svc;
+        RegistryService svc;
 
         public UnitTest1()
         {

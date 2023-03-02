@@ -27,16 +27,16 @@
       "resources": [
         {
           "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases",
-          "name": "[concat(parameters('cosmosDbName'), '/discovery')]",
+          "name": "[concat(parameters('cosmosDbName'), '/registry')]",
           "properties": {
             "resource": {
-              "id": "discovery"
+              "id": "registry"
             }
           }
         },
         {
           "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
-          "name": "[concat(parameters('cosmosDbName'), '/discovery/schemagroups')]",
+          "name": "[concat(parameters('cosmosDbName'), '/registry/schemagroups')]",
           "properties": {
             "resource": {
               "id": "schemagroups",
@@ -51,7 +51,7 @@
         },
         {
           "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
-          "name": "[concat(parameters('cosmosDbName'), '/discovery/schemas')]",
+          "name": "[concat(parameters('cosmosDbName'), '/registry/schemas')]",
           "properties": {
             "resource": {
               "id": "schemas",
@@ -66,10 +66,10 @@
         },
         {
           "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
-          "name": "[concat(parameters('cosmosDbName'), '/discovery/groups')]",
+          "name": "[concat(parameters('cosmosDbName'), '/registry/definitiongroups')]",
           "properties": {
             "resource": {
-              "id": "groups",
+              "id": "definitiongroups",
               "partitionKey": {
                 "paths": [
                   "/id"
@@ -81,7 +81,7 @@
         },
         {
           "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
-          "name": "[concat(parameters('cosmosDbName'), '/discovery/definitions')]",
+          "name": "[concat(parameters('cosmosDbName'), '/registry/definitions')]",
           "properties": {
             "resource": {
               "id": "definitions",
@@ -96,7 +96,7 @@
         },
         {
           "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
-          "name": "[concat(parameters('cosmosDbName'), '/discovery/endpoints')]",
+          "name": "[concat(parameters('cosmosDbName'), '/registry/endpoints')]",
           "properties": {
             "resource": {
               "id": "endpoints",
@@ -111,7 +111,7 @@
         },
         {
           "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases/containers",
-          "name": "[concat(parameters('cosmosDbName'), '/discovery/epdefinitions')]",
+          "name": "[concat(parameters('cosmosDbName'), '/registry/epdefinitions')]",
           "properties": {
             "resource": {
               "id": "epdefinitions",

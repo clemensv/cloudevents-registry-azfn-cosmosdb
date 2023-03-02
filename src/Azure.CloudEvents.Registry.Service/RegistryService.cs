@@ -17,10 +17,10 @@ using System.Threading.Tasks;
 using Container = Microsoft.Azure.Cosmos.Container;
 using PartitionKey = Microsoft.Azure.Cosmos.PartitionKey;
 
-namespace Azure.CloudEvents.Discovery
+namespace Azure.CloudEvents.Registry
 {
 
-    public partial class DiscoveryService
+    public partial class RegistryService
     {
         private const string DeletedEventType = "io.cloudevents.resource.deleted";
         private const string ChangedEventType = "io.cloudevents.resource.changed";
@@ -38,21 +38,29 @@ namespace Azure.CloudEvents.Discovery
         private const string ResourceModifiedByHeader = "resource-modifiedby";
         private const string ApplicationJsonMediaType = "application/json";
         private const string LocationHeader = "Location";
+        private const string DatabaseId = "discovery";
+        private const string RoutePrefix = "registry/";
+        private const string EndpointsName = "endpoints";
+        private const string DefinitiongroupsName = "definitiongroups";
+        private const string SchemagroupsName = "schemagroups";
+        private const string SchemasName = "schemas";
+        private const string DefinitionsName = "definitions";
+        private const string EndpointDefinitionsCollection = "epdefinitions";
         private CosmosClient cosmosClient;
         private readonly EventGridPublisherClient eventGridClient;
         private BlobContainerClient schemasBlobClient;
 
-        public DiscoveryService(CosmosClient cosmosClient, EventGridPublisherClient eventGridClient, BlobServiceClient blobClient)
+        public RegistryService(CosmosClient cosmosClient, EventGridPublisherClient eventGridClient, BlobServiceClient blobClient)
         {
             this.cosmosClient = cosmosClient;
             this.eventGridClient = eventGridClient;
-            this.schemasBlobClient = blobClient.GetBlobContainerClient("schemas");
+            this.schemasBlobClient = blobClient.GetBlobContainerClient(SchemasName);
         }
 
 
-        [Function("getManifest")]
-        public async Task<HttpResponseData> GetManifest(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "registry/")]
+        [Function("getDocument")]
+        public async Task<HttpResponseData> GetDocument(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = RoutePrefix)]
             HttpRequestData req,
             ILogger log)
         {
@@ -67,64 +75,64 @@ namespace Azure.CloudEvents.Discovery
                 Path = req.Url.AbsolutePath.TrimEnd('/') + "/",
                 Query = null
             }.Uri;
-            Manifest manifest = new Manifest
+            Document document = new Document
             {
-                EndpointsUrl = ComposeUri(baseUri, "endpoints"),
-                GroupsUrl = ComposeUri(baseUri, "groups"),
-                SchemagroupsUrl = ComposeUri(baseUri, "schemagroups")
+                EndpointsUrl = ComposeUriReference(baseUri, EndpointsName),
+                DefinitiongroupsUrl = ComposeUriReference(baseUri, DefinitiongroupsName),
+                SchemagroupsUrl = ComposeUriReference(baseUri, SchemagroupsName)
             };
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(manifest);
+            await response.WriteAsJsonAsync(document);
             return response;
         }
 
         [Function("uploadDoc")]
         public async Task<HttpResponseData> UploadDoc(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "registry/")]
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = RoutePrefix)]
             HttpRequestData req,
             ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            Manifest manifest = JsonConvert.DeserializeObject<Manifest>(requestBody);
-            if (manifest.Schemagroups != null)
+            Document document = JsonConvert.DeserializeObject<Document>(requestBody);
+            if (document.Schemagroups != null)
             {
-                var ctrGroups = this.cosmosClient.GetContainer("discovery", "schemagroups");
-                var ctrSchemas = this.cosmosClient.GetContainer("discovery", "schemas");
+                var ctrGroups = this.cosmosClient.GetContainer(DatabaseId, SchemagroupsName);
+                var ctrSchemas = this.cosmosClient.GetContainer(DatabaseId, SchemasName);
                 var res = await PutGroupsHandler<SchemaGroup, SchemaGroups, Schema, Schemas>(
-                    req, (g) => g.Schemas, ctrGroups, ctrSchemas, manifest.Schemagroups);
+                    req, (g) => g.Schemas, ctrGroups, ctrSchemas, document.Schemagroups);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
             }
-            if (manifest.Groups != null)
+            if (document.Definitiongroups != null)
             {
-                Container ctrGroups = this.cosmosClient.GetContainer("discovery", "groups");
-                Container ctrDefs = this.cosmosClient.GetContainer("discovery", "definitions");
-                var res = await PutGroupsHandler<Group, Groups, Definition, Definitions>(
-                    req, (g) => g.Definitions, ctrGroups, ctrDefs, manifest.Groups);
+                Container ctrGroups = this.cosmosClient.GetContainer(DatabaseId, "groups");
+                Container ctrDefs = this.cosmosClient.GetContainer(DatabaseId, DefinitionsName);
+                var res = await PutGroupsHandler<Definitiongroup, Definitiongroups, Definition, Definitions>(
+                    req, (g) => g.Definitions, ctrGroups, ctrDefs, document.Definitiongroups);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
             }
-            if (manifest.Endpoints != null)
+            if (document.Endpoints != null)
             {
-                Container ctrEndpoints = this.cosmosClient.GetContainer("discovery", "endpoints");
-                Container ctrdefs = this.cosmosClient.GetContainer("discovery", "epdefinitions");
-                var res = await PutGroupsHandler<Endpoint, Endpoints, Definition, Definitions>(req, (e) => e.Definitions, ctrEndpoints, ctrdefs, manifest.Endpoints);
+                Container ctrEndpoints = this.cosmosClient.GetContainer(DatabaseId, EndpointsName);
+                Container ctrdefs = this.cosmosClient.GetContainer(DatabaseId, EndpointDefinitionsCollection);
+                var res = await PutGroupsHandler<Endpoint, Endpoints, Definition, Definitions>(req, (e) => e.Definitions, ctrEndpoints, ctrdefs, document.Endpoints);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
             }
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(manifest);
+            await response.WriteAsJsonAsync(document);
             return response;
         }
 
-        private void StripCosmosProperties(Resource manifest)
+        private void StripCosmosProperties(Resource document)
         {
-            var keys = manifest.AdditionalProperties.Keys.ToArray();
+            var keys = document.AdditionalProperties.Keys.ToArray();
             for (int i = 0; i < keys.Length; i++)
             {
                 if (keys[i].StartsWith("_"))
                 {
-                    manifest.AdditionalProperties.Remove(keys[i]);
+                    document.AdditionalProperties.Remove(keys[i]);
                 }
             }
         }
@@ -144,7 +152,7 @@ namespace Azure.CloudEvents.Discovery
                 {
                     foreach (var group in await resultSet.ReadNextAsync())
                     {
-                        group.Self = ComposeUri(req.Url, group.Id);
+                        group.Self = ComposeUriReference(req.Url, group.Id);
                         groupDict.Add(group.Id, group);
                     }
                 }
@@ -267,13 +275,13 @@ namespace Azure.CloudEvents.Discovery
 
         }
 
-        Uri ComposeUri(Uri baseUri, string path)
+        string ComposeUriReference(Uri baseUri, string path)
         {
 
             return new UriBuilder(baseUri)
             {
                 Path = baseUri.AbsolutePath + (baseUri.AbsolutePath.EndsWith("/") ? path : "/" + path)
-            }.Uri;
+            }.Uri.ToString();
         }
 
         public async Task<HttpResponseData> GetGroup<TGroup, TResource, TResourceDict>(
@@ -290,7 +298,7 @@ namespace Azure.CloudEvents.Discovery
             {
 
                 var existingItem = await ctrGroups.ReadItemAsync<TGroup>(id, new PartitionKey(id));
-                existingItem.Resource.Self = ComposeUri(req.Url, existingItem.Resource.Id);
+                existingItem.Resource.Self = ComposeUriReference(req.Url, existingItem.Resource.Id);
                 var itemCollection = itemResolver(existingItem.Resource);
                 if (itemCollection != null)
                 {
@@ -306,7 +314,7 @@ namespace Azure.CloudEvents.Discovery
                     {
                         foreach (var group in await resultSet.ReadNextAsync())
                         {
-                            group.Self = ComposeUri(req.Url, group.Id);
+                            group.Self = ComposeUriReference(req.Url, group.Id);
                             itemCollection.Add(group.Id, group);
                         }
                     }
@@ -504,7 +512,7 @@ namespace Azure.CloudEvents.Discovery
                 {
                     foreach (var group in await resultSet.ReadNextAsync())
                     {
-                        group.Self = ComposeUri(req.Url, group.Id);
+                        group.Self = ComposeUriReference(req.Url, group.Id);
                         groupDict.Add(group.Id, group);
                     }
                 }
@@ -608,7 +616,7 @@ namespace Azure.CloudEvents.Discovery
             {
 
                 var existingItem = await container.ReadItemAsync<TResource>(id, new PartitionKey(groupid));
-                existingItem.Resource.Self = ComposeUri(req.Url, existingItem.Resource.Id);
+                existingItem.Resource.Self = ComposeUriReference(req.Url, existingItem.Resource.Id);
                 var res = req.CreateResponse(HttpStatusCode.OK);
                 await res.WriteAsJsonAsync(existingItem.Resource);
                 return res;
@@ -635,7 +643,7 @@ namespace Azure.CloudEvents.Discovery
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             TResource resource = JsonConvert.DeserializeObject<TResource>(requestBody);
-            resource.Self = new Uri( self);
+            resource.Self = new Uri( self).ToString();
             return await PutResourceHandler(req, groupid, container, resource);
         }
 
@@ -920,7 +928,7 @@ namespace Azure.CloudEvents.Discovery
                     }
 
                     var response = req.CreateResponse(HttpStatusCode.Created);
-                    response.Headers.Add(LocationHeader, ComposeUri(req.Url, "versions/" + resourceVersion.Version).ToString());
+                    response.Headers.Add(LocationHeader, ComposeUriReference(req.Url, "versions/" + resourceVersion.Version).ToString());
                     await response.WriteAsJsonAsync(result1.Resource);
                     response.StatusCode = HttpStatusCode.Created;
                     return response;
@@ -941,7 +949,7 @@ namespace Azure.CloudEvents.Discovery
                     resource.Name = req.Headers.Contains(ResourceNameHeader) ? req.Headers.GetValues(ResourceNameHeader).FirstOrDefault() : null;
                     resource.Docs = req.Headers.Contains(ResourceDocsHeader) ? new Uri(req.Headers.GetValues(ResourceDocsHeader).FirstOrDefault()) : null;
                     resource.Id = id;
-                    resource.Self = new Uri(self);
+                    resource.Self = self;
                     resourceVersion.Version = 0;
                     versionsResolver(resource).Add(resource.Version.ToString(), resourceVersion);                    
 
@@ -966,7 +974,7 @@ namespace Azure.CloudEvents.Discovery
                     }
 
                     var response = req.CreateResponse(HttpStatusCode.Created);
-                    response.Headers.Add(LocationHeader, ComposeUri(req.Url, "/" + path).ToString());
+                    response.Headers.Add(LocationHeader, ComposeUriReference(req.Url, "/" + path).ToString());
                     await response.WriteAsJsonAsync(result.Resource);
                     response.StatusCode = HttpStatusCode.Created;
                     return response;
@@ -1003,7 +1011,7 @@ namespace Azure.CloudEvents.Discovery
                     }
 
                     var response = req.CreateResponse(HttpStatusCode.Created);
-                    response.Headers.Add(LocationHeader, ComposeUri(req.Url, "versions/" + resourceVersion.Version).ToString());
+                    response.Headers.Add(LocationHeader, ComposeUriReference(req.Url, "versions/" + resourceVersion.Version).ToString());
                     await response.WriteAsJsonAsync(result1.Resource);
 
                     return response;
@@ -1038,7 +1046,7 @@ namespace Azure.CloudEvents.Discovery
                     }
 
                     var response = req.CreateResponse(HttpStatusCode.Created);
-                    response.Headers.Add(LocationHeader, ComposeUri(req.Url, "versions/" + resourceVersion.Version).ToString());
+                    response.Headers.Add(LocationHeader, ComposeUriReference(req.Url, "versions/" + resourceVersion.Version).ToString());
                     await response.WriteAsJsonAsync(result.Resource);
                     return response;
                 }
@@ -1099,9 +1107,9 @@ namespace Azure.CloudEvents.Discovery
                 Config = new EndpointConfigSubscriber
                 {
                     Protocol = "HTTP",
-                    Endpoints = new[] { ComposeUri(baseUri, "subscriptions") },
+                    Endpoints = new[] { new Uri(baseUri, "subscriptions") },
                 },
-                Description = "Discovery Endpoint",
+                Description = "Registry Endpoint",
                 Version = 0,
                 Id = "self",
                 Definitions = new Definitions
@@ -1115,7 +1123,7 @@ namespace Azure.CloudEvents.Discovery
                                 Required = true
                             } }
                         },
-                        Description = "Discovery Endpoint Entry Created",
+                        Description = "Registry Endpoint Entry Created",
                     } },
                     { ChangedEventType, new CloudEventDefinition()
                     {
@@ -1128,7 +1136,7 @@ namespace Azure.CloudEvents.Discovery
                                 }
                             }
                         },
-                        Description = "Discovery Endpoint Entry Changed"
+                        Description = "Registry Endpoint Entry Changed"
                     } },
                     { DeletedEventType, new CloudEventDefinition()
                     {
@@ -1137,7 +1145,7 @@ namespace Azure.CloudEvents.Discovery
                                 Type = new MetadataPropertyString { Value = DeletedEventType, Required = true }
                             }
                         },
-                        Description = "Discovery Endpoint Entry Deleted"
+                        Description = "Registry Endpoint Entry Deleted"
                     } }
                 }
             };

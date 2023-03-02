@@ -1,6 +1,6 @@
 {
-    "$schema": "https://raw.githubusercontent.com/clemensv/cloudevents-discovery-interop/master/src/Azure.CloudEvents.Discovery/specs/ce_discovery_doc.json",
-    "groups": {
+    "$schema": "https://raw.githubusercontent.com/clemensv/cloudevents-registry-interop/master/src/Azure.CloudEvents.Registry/specs/ce_registry_doc.json",
+    "definitiongroups": {
         "myorg2.myapp": {
             "type" : "group",
             "id": "myorg2.myapp",
