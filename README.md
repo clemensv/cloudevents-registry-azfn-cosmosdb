@@ -45,12 +45,13 @@ Main Projects:
   export those endpoints into a given registry. 
 
 Utilities:
+
 * [Azure.CloudEvents.Registry.SystemTopicLoader](src/Azure.CloudEvents.Registry.SystemTopicLoader):
   This project hosts a utility class that can extract Azure Event Grid system
   topic metadata from the Azure Resource Manager API.
 
 The repo is set up with an automated deployment flow to a set of Azure resources.
 
-The endpoint is https://ceregistryinterop.azurewebsites.net/registry and requires an access key.
+The endpoint is https://cediscoveryinterop.azurewebsites.net/registry and requires an access key.
 
 The access key is only available for participants in the CNCF CloudEvents project.

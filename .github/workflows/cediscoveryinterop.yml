@@ -9,8 +9,8 @@ env:
   AZURE_FUNCTIONAPP_PUBLISH_PROFILE: ${{ secrets.CEDISCOVERYINTEROP_FFFF }}
   CONFIGURATION: Release
   DOTNET_VERSION: 6.0.x
-  WORKING_DIRECTORY: src\Azure.CloudEvents.Discovery.Service
-  DISCOVERY_DIRECTORY: src\Azure.CloudEvents.Discovery
+  WORKING_DIRECTORY: src\Azure.CloudEvents.Registry.Service
+  DISCOVERY_DIRECTORY: src\Azure.CloudEvents.Registry
   SCHEMA_DIRECTORY: src\Azure.CloudEvents.SchemaRegistry
   SUBSCRIPTIONS_DIRECTORY: src\Azure.CloudEvents.Subscriptions
 jobs:
@@ -24,13 +24,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     - name: Restore Service
       run: dotnet restore "${{ env.WORKING_DIRECTORY }}"
-    - name: Restore Discovery
+    - name: Restore Registry
       run: dotnet restore "${{ env.DISCOVERY_DIRECTORY }}"
     - name: Restore Schema
       run: dotnet restore "${{ env.SCHEMA_DIRECTORY }}"
     - name: Restore Subscriptions
       run: dotnet restore "${{ env.SUBSCRIPTIONS_DIRECTORY }}"
-    - name: Codegen NSwag Discovery
+    - name: Codegen NSwag Registry
       run: dotnet build "${{ env.DISCOVERY_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
     - name: Codegen NSwag Schema
       run: dotnet build "${{ env.SCHEMA_DIRECTORY }}" -target:NSwag --configuration ${{ env.CONFIGURATION }} --no-restore
