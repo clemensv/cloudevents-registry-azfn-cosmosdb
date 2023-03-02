@@ -1960,11 +1960,19 @@
             "format": "uri-reference"
           },
           "schema": {
-            "type": "object",
-            "description": "An in-line definition of the schema of the message's data."
+            "oneOf": [
+              {
+                "type": "object",
+                "description": "An in-line definition of the schema of the message's data."
+              },
+              {
+                "type": "string",
+                "description": "An in-line definition of the schema of the message's data."
+              }
+            ]
           },
           "schemaformat": {
-            "type": "object",
+            "type": "string",
             "description": "Declares the schema format"
           },
           "format": {
@@ -3192,8 +3200,16 @@
             "format": "uri"
           },
           "schema": {
-            "type": "object",
-            "description": "An in-line definition of the schema document (JSON)."
+            "oneOf": [
+              {
+                "type": "object",
+                "description": "An in-line definition of the schema of the message's data."
+              },
+              {
+                "type": "string",
+                "description": "An in-line definition of the schema of the message's data."
+              }
+            ]
           }
         },
         "allOf": [
