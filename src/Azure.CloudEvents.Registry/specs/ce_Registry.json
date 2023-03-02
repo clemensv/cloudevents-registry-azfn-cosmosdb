@@ -1991,9 +1991,7 @@
           "format": {
             "type": "string",
             "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "enum": [
-              "CloudEvents/1.0"
-            ]
+            "default": "CloudEvents/1.0"
           },
           "metadata": {
             "$ref": "#/components/schemas/cloudEventMetadata"
@@ -2019,9 +2017,7 @@
           "format": {
             "type": "string",
             "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "enum": [
-              "AMQP/1.0"
-            ]
+            "default": "AMQP/1.0"
           },
           "metadata": {
             "$ref": "#/components/schemas/amqpMetadata"
@@ -2055,10 +2051,7 @@
           "format": {
             "type": "string",
             "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "enum": [
-              "MQTT/5.0",
-              "MQTT/3.1.1"
-            ]
+            "default": "MQTT/5.0"
           },
           "metadata": {
             "$ref": "#/components/schemas/mqttMetadata"
@@ -2100,11 +2093,7 @@
           "format": {
             "type": "string",
             "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "enum": [
-              "HTTP/1.1",
-              "HTTP/2",
-              "HTTP/3"
-            ]
+            "default": "HTTP/1.1"
           },
           "metadata": {
             "$ref": "#/components/schemas/httpMetadata"
@@ -2130,10 +2119,7 @@
           "format": {
             "type": "string",
             "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "enum": [
-              "KAFKA/0.11",
-              "KAFKA"
-            ]
+            "default": "KAFKA/0.11"
           },
           "metadata": {
             "$ref": "#/components/schemas/kafkaMetadata"
