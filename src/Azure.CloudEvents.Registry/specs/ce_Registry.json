@@ -1988,11 +1988,6 @@
       "cloudEventDefinition": {
         "type": "object",
         "properties": {
-          "format": {
-            "type": "string",
-            "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "default": "CloudEvents/1.0"
-          },
           "metadata": {
             "$ref": "#/components/schemas/cloudEventMetadata"
           }
@@ -2014,11 +2009,6 @@
       "amqpDefinition": {
         "type": "object",
         "properties": {
-          "format": {
-            "type": "string",
-            "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "default": "AMQP/1.0"
-          },
           "metadata": {
             "$ref": "#/components/schemas/amqpMetadata"
           }
@@ -2048,11 +2038,7 @@
       "mqttDefinition": {
         "type": "object",
         "properties": {
-          "format": {
-            "type": "string",
-            "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "default": "MQTT/5.0"
-          },
+          
           "metadata": {
             "$ref": "#/components/schemas/mqttMetadata"
           }
@@ -2090,11 +2076,6 @@
       "httpDefinition": {
         "type": "object",
         "properties": {
-          "format": {
-            "type": "string",
-            "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "default": "HTTP/1.1"
-          },
           "metadata": {
             "$ref": "#/components/schemas/httpMetadata"
           }
@@ -2116,11 +2097,6 @@
       "kafkaDefinition": {
         "type": "object",
         "properties": {
-          "format": {
-            "type": "string",
-            "description": "Specifies the `format` value of the Definitions associated with this Endpoint.",
-            "default": "KAFKA/0.11"
-          },
           "metadata": {
             "$ref": "#/components/schemas/kafkaMetadata"
           }
@@ -2134,10 +2110,6 @@
       "genericDefinition": {
         "type": "object",
         "properties": {
-          "format": {
-            "type": "string",
-            "description": "Specifies the `format` value of the Definitions associated with this Endpoint."
-          },
           "metadata": {
             "type": "object"
           }
