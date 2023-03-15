@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Container = Microsoft.Azure.Cosmos.Container;
@@ -41,8 +42,9 @@ namespace Azure.CloudEvents.Registry
         private const string DatabaseId = "discovery";
         private const string RoutePrefix = "registry/";
         private const string EndpointsName = "endpoints";
-        private const string DefinitiongroupsName = "definitiongroups";
-        private const string SchemagroupsName = "schemagroups";
+        private const string DefinitionGroupsName = "definitiongroups";
+        private const string DefinitionGroupsCollection = "groups";
+        private const string SchemaGroupsName = "schemagroups";
         private const string SchemasName = "schemas";
         private const string DefinitionsName = "definitions";
         private const string EndpointDefinitionsCollection = "epdefinitions";
@@ -56,7 +58,6 @@ namespace Azure.CloudEvents.Registry
             this.eventGridClient = eventGridClient;
             this.schemasBlobClient = blobClient.GetBlobContainerClient(SchemasName);
         }
-
 
         [Function("getDocument")]
         public async Task<HttpResponseData> GetDocument(
@@ -75,11 +76,11 @@ namespace Azure.CloudEvents.Registry
                 Path = req.Url.AbsolutePath.TrimEnd('/') + "/",
                 Query = null
             }.Uri;
-            Document document = new Document
+            Document document = new Catalog()
             {
-                EndpointsUrl = ComposeUriReference(baseUri, EndpointsName),
-                DefinitiongroupsUrl = ComposeUriReference(baseUri, DefinitiongroupsName),
-                SchemagroupsUrl = ComposeUriReference(baseUri, SchemagroupsName)
+                EndpointsUrl = new Uri(ComposeUriReference(baseUri, EndpointsName)),
+                DefinitionGroupsUrl = new Uri(ComposeUriReference(baseUri, DefinitionGroupsName)),
+                SchemaGroupsUrl = new Uri(ComposeUriReference(baseUri, SchemaGroupsName))
             };
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(document);
@@ -93,22 +94,22 @@ namespace Azure.CloudEvents.Registry
             ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            Document document = JsonConvert.DeserializeObject<Document>(requestBody);
-            if (document.Schemagroups != null)
+            Catalog document = JsonConvert.DeserializeObject<Catalog>(requestBody);
+            if (document.SchemaGroups != null)
             {
-                var ctrGroups = this.cosmosClient.GetContainer(DatabaseId, SchemagroupsName);
+                var ctrGroups = this.cosmosClient.GetContainer(DatabaseId, SchemaGroupsName);
                 var ctrSchemas = this.cosmosClient.GetContainer(DatabaseId, SchemasName);
-                var res = await PutGroupsHandler<SchemaGroup, SchemaGroups, Schema, Schemas>(
-                    req, (g) => g.Schemas, ctrGroups, ctrSchemas, document.Schemagroups);
+                var res = await PutGroupsHandler<SchemaRegistry.SchemaGroup, SchemaRegistry.Schema>(
+                    req, (g) => g.Schemas, ctrGroups, ctrSchemas, document.SchemaGroups);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
             }
-            if (document.Definitiongroups != null)
+            if (document.DefinitionGroups != null)
             {
                 Container ctrGroups = this.cosmosClient.GetContainer(DatabaseId, "groups");
                 Container ctrDefs = this.cosmosClient.GetContainer(DatabaseId, DefinitionsName);
-                var res = await PutGroupsHandler<Definitiongroup, Definitiongroups, Definition, Definitions>(
-                    req, (g) => g.Definitions, ctrGroups, ctrDefs, document.Definitiongroups);
+                var res = await PutGroupsHandler<MessageDefinitionsRegistry.DefinitionGroup, MessageDefinitionsRegistry.Definition>(
+                    req, (g) => g.Definitions, ctrGroups, ctrDefs, document.DefinitionGroups);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
             }
@@ -116,7 +117,7 @@ namespace Azure.CloudEvents.Registry
             {
                 Container ctrEndpoints = this.cosmosClient.GetContainer(DatabaseId, EndpointsName);
                 Container ctrdefs = this.cosmosClient.GetContainer(DatabaseId, EndpointDefinitionsCollection);
-                var res = await PutGroupsHandler<Endpoint, Endpoints, Definition, Definitions>(req, (e) => e.Definitions, ctrEndpoints, ctrdefs, document.Endpoints);
+                var res = await PutGroupsHandler<EndpointRegistry.Endpoint, EndpointRegistry.Definition>(req, (e) => e.Definitions, ctrEndpoints, ctrdefs, document.Endpoints);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
             }
@@ -125,7 +126,7 @@ namespace Azure.CloudEvents.Registry
             return response;
         }
 
-        private void StripCosmosProperties(Resource document)
+        private void StripCosmosProperties(IResource document)
         {
             var keys = document.AdditionalProperties.Keys.ToArray();
             for (int i = 0; i < keys.Length; i++)
@@ -137,23 +138,29 @@ namespace Azure.CloudEvents.Registry
             }
         }
 
-        public async Task<HttpResponseData> GetGroups<T, TDict>(
+        public async Task<HttpResponseData> GetGroups<T>(
             HttpRequestData req,
             ILogger log,
             Container container)
-                where T : Resource, new()
-                where TDict : IDictionary<string, T>, new()
+                where T : IResource, new()
         {
-            TDict groupDict = new TDict();
+            Dictionary<string, T> groupDict = new();
 
             using (FeedIterator<T> resultSet = container.GetItemQueryIterator<T>())
             {
                 while (resultSet.HasMoreResults)
                 {
-                    foreach (var group in await resultSet.ReadNextAsync())
+                    try
                     {
-                        group.Self = ComposeUriReference(req.Url, group.Id);
-                        groupDict.Add(group.Id, group);
+                        foreach (var group in await resultSet.ReadNextAsync())
+                        {
+                            group.Self = ComposeUriReference(req.Url, group.Id);
+                            groupDict.Add(group.Id, group);
+                        }
+                    }
+                    catch (CosmosException ex)
+                    {
+                        log.LogError(ex, "Error reading groups");
                     }
                 }
             }
@@ -162,64 +169,56 @@ namespace Azure.CloudEvents.Registry
             return res;
         }
 
-        public async Task<HttpResponseData> PutGroups<TGroup, TGroupDict, TResource, TResourceDict>(
+        public async Task<HttpResponseData> PutGroups<TGroup, TResource>(
             HttpRequestData req,
             ILogger log,
-            Func<TGroup, TResourceDict> itemResolver,
+            Func<TGroup, IDictionary<string, TResource>> itemResolver,
             Container ctrGroups,
-            Container ctrResource) where TGroup : Resource, new()
-                                   where TGroupDict : IDictionary<string, TGroup>, new()
-                                   where TResource : Resource, new()
-                                   where TResourceDict : IDictionary<string, TResource>, new()
+            Container ctrResource) where TGroup : IResource, new()
+                                   where TResource : IResource, new()                                   
         {
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            TGroupDict groups = JsonConvert.DeserializeObject<TGroupDict>(requestBody);
-            return await PutGroupsHandler<TGroup, TGroupDict, TResource, TResourceDict>(req, itemResolver, ctrGroups, ctrResource, groups);
+            Dictionary<string, TGroup> groups = JsonConvert.DeserializeObject<Dictionary<string,TGroup>>(requestBody);
+            return await PutGroupsHandler<TGroup, TResource>(req, itemResolver, ctrGroups, ctrResource, groups);
         }
 
-        private async Task<HttpResponseData> PutGroupsHandler<TGroup, TGroupDict, TResource, TResourceDict>(HttpRequestData req, Func<TGroup, TResourceDict> itemResolver, Container ctrGroups, Container ctrResource, TGroupDict groups)
-            where TGroup : Resource, new()
-            where TGroupDict : IDictionary<string, TGroup>, new()
-            where TResource : Resource, new()
-            where TResourceDict : IDictionary<string, TResource>, new()
+        private async Task<HttpResponseData> PutGroupsHandler<TGroup, TResource>(HttpRequestData req, Func<TGroup, IDictionary<string, TResource>> itemResolver, Container ctrGroups, Container ctrResource, IDictionary<string, TGroup> groups)
+            where TGroup : IResource, new()
+            where TResource : IResource, new()
         {
             foreach (var group in groups.Values)
             {
-                return await PutGroupHandler<TGroup, TResource, TResourceDict>(req, group.Id, itemResolver, ctrGroups, ctrResource, group);
+                return await PutGroupHandler<TGroup, TResource>(req, group.Id, itemResolver, ctrGroups, ctrResource, group);
             }
             var res = req.CreateResponse(HttpStatusCode.OK);
             return res;
         }
 
-        public async Task<HttpResponseData> PostGroups<TGroup, TGroupDict, TResource, TResourceDict>(
+        public async Task<HttpResponseData> PostGroups<TGroup, TResource>(
             HttpRequestData req,
             ILogger log,
-            Func<TGroup, TResourceDict> itemResolver,
+            Func<TGroup, IDictionary<string, TResource>> itemResolver,
             Container ctrGroups,
-            Container ctrResource) where TGroup : Resource, new()
-                                   where TGroupDict : IDictionary<string, TGroup>, new()
-                                   where TResource : Resource, new()
-                                   where TResourceDict : IDictionary<string, TResource>, new()
+            Container ctrResource) where TGroup : IResource, new()
+                                   where TResource : IResource, new()
         {
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            TGroupDict groups = JsonConvert.DeserializeObject<TGroupDict>(requestBody);
-            return await PostGroupsHandler<TGroup, TGroupDict, TResource, TResourceDict>(req, itemResolver, ctrGroups, ctrResource, groups);
+            Dictionary<string, TGroup> groups = JsonConvert.DeserializeObject<Dictionary<string, TGroup>>(requestBody);
+            return await PostGroupsHandler<TGroup, TResource>(req, itemResolver, ctrGroups, ctrResource, groups);
         }
 
-        private async Task<HttpResponseData> PostGroupsHandler<TGroup, TGroupDict, TResource, TResourceDict>(
+        private async Task<HttpResponseData> PostGroupsHandler<TGroup, TResource>(
             HttpRequestData req,
-            Func<TGroup, TResourceDict> itemResolver,
+            Func<TGroup, IDictionary<string, TResource>> itemResolver,
             Container ctrGroups,
             Container ctrResource,
-            TGroupDict groups)
-            where TGroup : Resource, new()
-            where TGroupDict : IDictionary<string, TGroup>, new()
-            where TResource : Resource, new()
-            where TResourceDict : IDictionary<string, TResource>, new()
+            IDictionary<string, TGroup> groups)
+            where TGroup : IResource, new()
+            where TResource : IResource, new()
         {
-            TGroupDict responseGroups = new TGroupDict();
+            Dictionary<string, TGroup> responseGroups = new();
             if (groups == null)
             {
                 var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
@@ -229,7 +228,7 @@ namespace Azure.CloudEvents.Registry
 
             foreach (var group in groups.Values)
             {
-                var result = await PutGroupHandler<TGroup, TResource, TResourceDict>(req, group.Id, itemResolver, ctrGroups, ctrResource, group);
+                var result = await PutGroupHandler<TGroup, TResource>(req, group.Id, itemResolver, ctrGroups, ctrResource, group);
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
                     return result;
@@ -239,41 +238,7 @@ namespace Azure.CloudEvents.Registry
             await res.WriteAsJsonAsync(responseGroups);
             return res;
         }
-
-        public async Task<HttpResponseData> DeleteGroups<TDict, TGroup, TResource, TResourceDict>(
-           HttpRequestData req,
-           ILogger log,
-           Func<TGroup, TResourceDict> itemResolver,
-           Container ctrGroups,
-           Container ctrResource) where TGroup : Resource, new()
-                                  where TResource : Resource, new()
-                                  where TResourceDict : IDictionary<string, TResource>, new()
-                                  where TDict : System.Collections.ObjectModel.Collection<Reference>, new()
-        {
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            List<Reference> references = JsonConvert.DeserializeObject<List<Reference>>(requestBody);
-            TDict responseGroups = new TDict();
-            if (references == null)
-            {
-                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-                errorResponse.WriteString("No references provided");
-                return errorResponse;
-            }
-
-            foreach (var reference in references)
-            {
-                var result = await DeleteGroup<TGroup, TResource, TResourceDict>(req, reference.Id, log, itemResolver, ctrGroups, ctrResource);
-                if (result.StatusCode != HttpStatusCode.OK)
-                {
-                    return result;
-                }
-            }
-            var res = req.CreateResponse(HttpStatusCode.OK);
-            await res.WriteAsJsonAsync(responseGroups);
-            return res;
-
-        }
+        
 
         string ComposeUriReference(Uri baseUri, string path)
         {
@@ -284,15 +249,14 @@ namespace Azure.CloudEvents.Registry
             }.Uri.ToString();
         }
 
-        public async Task<HttpResponseData> GetGroup<TGroup, TResource, TResourceDict>(
+        public async Task<HttpResponseData> GetGroup<TGroup, TResource>(
             HttpRequestData req,
             string id,
             ILogger log,
-            Func<TGroup, TResourceDict> itemResolver,
+            Func<TGroup, IDictionary<string, TResource>> itemResolver,
             Container ctrGroups,
-            Container ctrResource) where TGroup : Resource, new()
-                                   where TResource : Resource, new()
-                                   where TResourceDict : IDictionary<string, TResource>, new()
+            Container ctrResource) where TGroup : IResource, new()
+                                 where TResource : IResource, new()
         {
             try
             {
@@ -306,7 +270,7 @@ namespace Azure.CloudEvents.Registry
                 }
                 else
                 {
-                    itemCollection = new TResourceDict();
+                    itemCollection = new Dictionary<string, TResource>();
                 }
                 using (FeedIterator<TResource> resultSet = ctrResource.GetItemQueryIterator<TResource>(default(string), null, new QueryRequestOptions { PartitionKey = new PartitionKey(id) }))
                 {
@@ -335,26 +299,24 @@ namespace Azure.CloudEvents.Registry
         }
 
 
-        public async Task<HttpResponseData> PutGroup<TGroup, TResource, TResourceDict>(
+        public async Task<HttpResponseData> PutGroup<TGroup, TResource>(
             HttpRequestData req,
             string id,
             ILogger log,
-            Func<TGroup, TResourceDict> itemResolver,
+            Func<TGroup, IDictionary<string, TResource>> itemResolver,
             Container ctrGroups,
-            Container ctrResource) where TGroup : Resource, new()
-                                   where TResource : Resource, new()
-                                   where TResourceDict : IDictionary<string, TResource>, new()
+            Container ctrResource) where TGroup : IResource, new()
+                                   where TResource : IResource, new()
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             TGroup resource = JsonConvert.DeserializeObject<TGroup>(requestBody);
-            return await PutGroupHandler<TGroup, TResource, TResourceDict>(req, id, itemResolver, ctrGroups, ctrResource, resource);
+            return await PutGroupHandler<TGroup, TResource>(req, id, itemResolver, ctrGroups, ctrResource, resource);
         }
 
-        private async Task<HttpResponseData> PutGroupHandler<TGroup, TResource, TResourceDict>(
-            HttpRequestData req, string id, Func<TGroup, TResourceDict> itemResolver, Container ctrGroups, Container ctrResource, TGroup resource)
-            where TGroup : Resource, new()
-            where TResource : Resource, new()
-            where TResourceDict : IDictionary<string, TResource>, new()
+        private async Task<HttpResponseData> PutGroupHandler<TGroup, TResource>(
+            HttpRequestData req, string id, Func<TGroup, IDictionary<string, TResource>> itemResolver, Container ctrGroups, Container ctrResource, TGroup resource)
+            where TGroup : IResource, new()
+            where TResource : IResource, new()
         {
             try
             {
@@ -451,15 +413,14 @@ namespace Azure.CloudEvents.Registry
             }
         }
 
-        public async Task<HttpResponseData> DeleteGroup<TGroup, TResource, TResourceDict>(
+        public async Task<HttpResponseData> DeleteGroup<TGroup, TResource>(
             HttpRequestData req,
             string id,
             ILogger log,
-            Func<TGroup, TResourceDict> itemResolver,
+            Func<TGroup, IDictionary<string, TResource>> itemResolver,
             Container ctrGroups,
-            Container ctrResource) where TGroup : Resource, new()
-                                   where TResource : Resource, new()
-                                   where TResourceDict : IDictionary<string, TResource>, new()
+            Container ctrResource) where TGroup : IResource, new()
+                                   where TResource : IResource, new()
         {
             try
             {
@@ -498,13 +459,13 @@ namespace Azure.CloudEvents.Registry
             }
         }
 
-        public async Task<HttpResponseData> GetResources<T, TDict>(
+        public async Task<HttpResponseData> GetResources<T>(
             HttpRequestData req,
             string groupid,
             ILogger log,
-            Container container) where T : Resource, new() where TDict : IDictionary<string, T>, new()
+            Container container) where T : IResource, new() 
         {
-            TDict groupDict = new TDict();
+            Dictionary<string, T> groupDict = new Dictionary<string, T>();
 
             using (FeedIterator<T> resultSet = container.GetItemQueryIterator<T>(default(string), null, new QueryRequestOptions { PartitionKey = new PartitionKey(groupid) }))
             {
@@ -522,16 +483,15 @@ namespace Azure.CloudEvents.Registry
             return res;
         }
 
-        public async Task<HttpResponseData> PostResources<T, TDict>(
+        public async Task<HttpResponseData> PostResources<T>(
             HttpRequestData req,
             string groupid,
             ILogger log,
-            Container container) where T : Resource, new()
-                                where TDict : IDictionary<string, T>, new()
+            Container container) where T : IResource, new()
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            TDict items = JsonConvert.DeserializeObject<TDict>(requestBody);
-            TDict responseItems = new TDict();
+            Dictionary<string, T> items = JsonConvert.DeserializeObject<Dictionary<string,T>>(requestBody);
+            Dictionary<string, T> responseItems = new Dictionary<string, T>();
             if (items == null)
             {
                 var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
@@ -553,64 +513,12 @@ namespace Azure.CloudEvents.Registry
             return res;
 
         }
-
-        public async Task<HttpResponseData> DeleteResources<TRef, TResource, TResourceDict>(
-            HttpRequestData req,
-            string groupid,
-            ILogger log,
-            Container container) where TResource : Resource, new()
-                                where TResourceDict : IDictionary<string, TResource>, new()
-        {
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            List<Reference> references = JsonConvert.DeserializeObject<List<Reference>>(requestBody);
-            TResourceDict responseItems = new TResourceDict();
-            if (references == null)
-            {
-                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-                errorResponse.WriteString("No references provided");
-                return errorResponse;
-            }
-
-            foreach (var reference in references)
-            {
-
-                try
-                {
-                    var existingItem = await container.ReadItemAsync<TResource>(reference.Id, new PartitionKey(groupid));
-                    if (existingItem.StatusCode == HttpStatusCode.OK)
-                    {
-                        var result = await container.DeleteItemAsync<TResource>(reference.Id, new PartitionKey(groupid));
-                        responseItems.Add(existingItem.Resource.Id, existingItem.Resource);
-
-                        if (this.eventGridClient != null)
-                        {
-                            var deletedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, existingItem);
-                            await this.eventGridClient.SendEventAsync(deletedEvent);
-                        }
-                    }
-
-                }
-                catch (CosmosException ex)
-                {
-                    var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-                    errorResponse.WriteString(ex.Message);
-                    return errorResponse;
-
-                }
-            }
-            var res = req.CreateResponse(HttpStatusCode.OK);
-            await res.WriteAsJsonAsync(responseItems);
-            return res;
-
-        }
-
         public async Task<HttpResponseData> GetResource<TResource>(
             HttpRequestData req,
             string groupid,
             string id,
             ILogger log,
-            Container container) where TResource : Resource, new()
+            Container container) where TResource : IResource, new()
         {
             try
             {
@@ -639,7 +547,7 @@ namespace Azure.CloudEvents.Registry
             string id,
             ILogger log,
             Container container,
-            string self) where TResource : Resource, new()
+            string self) where TResource : IResource, new()
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             TResource resource = JsonConvert.DeserializeObject<TResource>(requestBody);
@@ -647,7 +555,7 @@ namespace Azure.CloudEvents.Registry
             return await PutResourceHandler(req, groupid, container, resource);
         }
 
-        private async Task<HttpResponseData> PutResourceHandler<TResource>(HttpRequestData req, string groupid, Container container, TResource resource) where TResource : Resource, new()
+        private async Task<HttpResponseData> PutResourceHandler<TResource>(HttpRequestData req, string groupid, Container container, TResource resource) where TResource : IResource, new()
         {
             try
             {
@@ -711,8 +619,8 @@ namespace Azure.CloudEvents.Registry
         }
 
         private static void SetResourceHeaders<TResource, TResourceVersion>(TResource schema, TResourceVersion latestVersion, HttpResponseData res)
-            where TResourceVersion : Resource
-            where TResource : Resource, new()
+            where TResourceVersion : IResource
+            where TResource : IResource, new()
         {
             res.Headers.Add(ResourceIdHeader, latestVersion.Id);
             if (!string.IsNullOrEmpty(latestVersion.Description))
@@ -768,8 +676,8 @@ namespace Azure.CloudEvents.Registry
             ILogger log,
             Func<TResource, IDictionary<string, TResourceVersion>> versionsResolver,
             Container container,
-            BlobContainerClient blobContainerClient) where TResourceVersion : Resource
-                                 where TResource : Resource, new()
+            BlobContainerClient blobContainerClient) where TResourceVersion : IResource
+                                 where TResource : IResource, new()
         {
             var queryDictionary = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(req.Url.Query);
             if (queryDictionary.ContainsKey("meta") || blobContainerClient == null)
@@ -818,8 +726,8 @@ namespace Azure.CloudEvents.Registry
             string self,
             Func<TResourceVersion, Uri> redirectResolver = null,
             Func<TResourceVersion, object> objectResolver = null,
-            Func<TResource, IDictionary<string, TResourceVersion>> versionsResolver = null) where TResourceVersion : Resource
-                                 where TResource : Resource, new()
+            Func<TResource, IDictionary<string, TResourceVersion>> versionsResolver = null) where TResourceVersion : IResource
+                                 where TResource : IResource, new()
         {
             try
             {
@@ -884,8 +792,8 @@ namespace Azure.CloudEvents.Registry
                     Func<TResource, IDictionary<string, TResourceVersion>> versionsResolver,
                     Container container,
                     BlobContainerClient blobContainerClient,
-                    string self) where TResourceVersion : Resource, new()
-                                 where TResource : Resource, new()
+                    string self) where TResourceVersion : IResource, new()
+                                 where TResource : IResource, new()
         {
             var contentType = req.Headers.GetValues(ContentTypeHeader).First();
             if (contentType != ApplicationJsonMediaType || blobContainerClient == null)
@@ -915,8 +823,7 @@ namespace Azure.CloudEvents.Registry
                     {
                         HttpHeaders = new BlobHttpHeaders { 
                             ContentType = contentType 
-                        },
-                        Tags = resourceVersion.Tags?.ToDictionary((x) => x.Name, (x) => x.Value)
+                        }
                     }, CancellationToken.None);
 
                     existingContainer.Resource.ModifiedOn = DateTime.UtcNow;
@@ -960,8 +867,7 @@ namespace Azure.CloudEvents.Registry
                         HttpHeaders = new BlobHttpHeaders
                         {
                             ContentType = contentType
-                        },
-                        Tags = resourceVersion.Tags?.ToDictionary((x) => x.Name, (x) => x.Value)
+                        }
                     }, CancellationToken.None);
 
                     resource.GroupId = groupid;
@@ -1065,18 +971,16 @@ namespace Azure.CloudEvents.Registry
             string groupid,
             string id,
             ILogger log,
-            Container container) where T : Resource
+            Container container) where T : IResource
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            Reference reference = JsonConvert.DeserializeObject<Reference>(requestBody);
             try
             {
-                var existingItem = await container.ReadItemAsync<Reference>(reference.Id, new PartitionKey(groupid));
-                var result = await container.DeleteItemAsync<T>(reference.Id, new PartitionKey(groupid));
+                var existingItem = await container.ReadItemAsync<Resource>(id, new PartitionKey(groupid));
+                var result = await container.DeleteItemAsync<T>(id, new PartitionKey(groupid));
 
                 if (this.eventGridClient != null)
                 {
-                    var deletedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, reference);
+                    var deletedEvent = new CloudEvent(req.Url.GetLeftPart(UriPartial.Path), DeletedEventType, id);
                     await this.eventGridClient.SendEventAsync(deletedEvent);
                 }
 
@@ -1097,59 +1001,5 @@ namespace Azure.CloudEvents.Registry
 
 
 
-        Endpoint GetSelfReference(Uri baseUri)
-        {
-            var svc = new Endpoint()
-            {
-                Origin = baseUri.AbsoluteUri,
-                Authscope = baseUri.AbsoluteUri,
-                Usage = EndpointUsage.Subscriber,
-                Config = new EndpointConfigSubscriber
-                {
-                    Protocol = "HTTP",
-                    Endpoints = new[] { new Uri(baseUri, "subscriptions") },
-                },
-                Description = "Registry Endpoint",
-                Version = 0,
-                Id = "self",
-                Definitions = new Definitions
-                {
-                    { CreatedEventType,  new CloudEventDefinition()
-                    {
-                        Metadata = new CloudEventMetadata {
-                            Attributes = new Attributes{
-                                    Type = new MetadataPropertyString {
-                                Value = CreatedEventType,
-                                Required = true
-                            } }
-                        },
-                        Description = "Registry Endpoint Entry Created",
-                    } },
-                    { ChangedEventType, new CloudEventDefinition()
-                    {
-                        Metadata = new CloudEventMetadata {
-                            Attributes = new Attributes
-                                {
-                                    Type = new MetadataPropertyString {
-                                    Value = ChangedEventType,
-                                    Required = true
-                                }
-                            }
-                        },
-                        Description = "Registry Endpoint Entry Changed"
-                    } },
-                    { DeletedEventType, new CloudEventDefinition()
-                    {
-                        Metadata = new CloudEventMetadata {
-                            Attributes = new Attributes {
-                                Type = new MetadataPropertyString { Value = DeletedEventType, Required = true }
-                            }
-                        },
-                        Description = "Registry Endpoint Entry Deleted"
-                    } }
-                }
-            };
-            return svc;
-        }
     }
 }

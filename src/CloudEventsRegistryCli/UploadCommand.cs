@@ -20,7 +20,7 @@ namespace CloudEventsRegistryCli
                     var sr = new StreamReader(file);
                     try
                     {
-                        var obj = JsonConvert.DeserializeObject(sr.ReadToEnd());
+                        var obj = JsonConvert.DeserializeObject<Document>(sr.ReadToEnd());
                         try
                         {
                             HttpClient httpClient = new HttpClient();

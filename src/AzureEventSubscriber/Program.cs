@@ -9,6 +9,7 @@ namespace AzureEventSubscriber
     using System.Net.Http.Headers;
     using System.Net.Mime;
     using System.Threading.Tasks;
+    using Azure.CloudEvents.EndpointRegistry;
     using Azure.CloudEvents.Registry;
     using Azure.CloudEvents.Subscriptions;
     using Azure.Identity;
@@ -43,7 +44,7 @@ namespace AzureEventSubscriber
             await StartEventListener(ConnectionString, RelayName);
 
             var httpClient = new HttpClient();
-            var RegistryClient = new RegistryClient(RegistryEndpoint, httpClient);
+            var endpointRegistryClient = new EndpointRegistryClient(RegistryEndpoint, httpClient);
             var subscriptions = new Dictionary<string, Subscription>();
 
             var azureCredential = new DefaultAzureCredential();
@@ -51,7 +52,7 @@ namespace AzureEventSubscriber
             var subscriptionsHttpClient = new HttpClient();
             subscriptionsHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
 
-            var endpoints = await RegistryClient.GetEndpointsAsync(string.Empty);
+            var endpoints = await endpointRegistryClient.GetResourceGroupAllAsync(string.Empty);
             foreach (var service in endpoints.Values)
             {
                 try
@@ -71,7 +72,7 @@ namespace AzureEventSubscriber
 
                     SubscriptionRequest subscriptionRequest = new SubscriptionRequest()
                     {
-                        Protocol = Protocol.HTTP,
+                        Protocol = Azure.CloudEvents.Subscriptions.Protocol.HTTP,
                         Sink = $"https://{rsb.Endpoint.Host}/{RelayName}",
                         Types = types
                     };

@@ -3,7 +3,7 @@
   "defaultVariables": null,
   "documentGenerator": {
     "fromDocument": {
-      "url": "specs/ce_Registry.json",
+      "url": "specs/xregistry_openapi_endpoint.json",
       "output": null,
       "newLineBehavior": "Auto"
     }
@@ -40,7 +40,7 @@
       "useRequestAndResponseSerializationSettings": false,
       "serializeTypeInformation": false,
       "queryNullValue": "",
-      "className": "RegistryClient",
+      "className": "EndpointRegistryClient",
       "operationGenerationMode": "MultipleClientsFromOperationId",
       "additionalNamespaceUsages": [],
       "additionalContractNamespaceUsages": [],
@@ -55,7 +55,7 @@
       "wrapResponseMethods": [],
       "generateResponseClasses": true,
       "responseClass": "SwaggerResponse",
-      "namespace": "Azure.CloudEvents.Registry",
+      "namespace": "Azure.CloudEvents.EndpointRegistry",
       "requiredPropertiesMustBeDefined": true,
       "dateType": "System.DateTimeOffset",
       "jsonConverters": null,
@@ -79,8 +79,8 @@
       "generateImmutableDictionaryProperties": false,
       "jsonSerializerSettingsTransformationMethod": null,
       "inlineNamedArrays": false,
-      "inlineNamedDictionaries": false,
-      "inlineNamedTuples": true,
+      "inlineNamedDictionaries": true,
+      "inlineNamedTuples": false,
       "inlineNamedAny": false,
       "generateDtoTypes": true,
       "generateOptionalPropertiesAsNullable": false,
@@ -91,7 +91,7 @@
       "enumNameGeneratorType": null,
       "serviceHost": null,
       "serviceSchemes": null,
-      "output": "generated/RegistryClient.cs",
+      "output": "generated/EndpointRegistryClient.cs",
       "newLineBehavior": "Auto"
     }
   }

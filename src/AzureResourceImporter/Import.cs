@@ -1,5 +1,8 @@
-﻿using Azure.CloudEvents.Registry;
+﻿using Azure.CloudEvents.EndpointRegistry;
+using Azure.CloudEvents.MessageDefinitionsRegistry;
+using Azure.CloudEvents.Registry;
 using Azure.CloudEvents.Registry.SystemTopicLoader;
+using Azure.CloudEvents.SchemaRegistry;
 using McMaster.Extensions.CommandLineUtils;
 using Newtonsoft.Json;
 using System;
@@ -26,16 +29,16 @@ namespace azcedisco
             {
                 httpClient.DefaultRequestHeaders.Add("x-functions-key", this.FunctionsKey);
             }
-            RegistryClient client = new RegistryClient(RegistryEndpoint, httpClient);
+            MessageDefinitionsRegistryClient client = new MessageDefinitionsRegistryClient(RegistryEndpoint, httpClient);
             await foreach (var group in rte.EnumerateSystemDefinitionGroups(new Uri(this.RegistryEndpoint)))
             {
                 group.Version = DateTime.UtcNow.ToFileTimeUtc();
-                Definitiongroup createdGroup = null;
+                IResource createdGroup = null;
                 try
                 {
-                    createdGroup = await client.PutGroupAsync(group, group.Id);
+                    createdGroup = await client.PutResourceGroupAsync(group, group.Id);
                 }
-                catch (ApiException apiException)
+                catch (Azure.CloudEvents.MessageDefinitionsRegistry.ApiException apiException)
                 {
                     if (apiException.StatusCode != 409)
                     {
@@ -45,16 +48,16 @@ namespace azcedisco
 
                 Console.WriteLine(JsonConvert.SerializeObject(group, Formatting.Indented));
             }
-
+            SchemaRegistryClient client2 = new SchemaRegistryClient(RegistryEndpoint, httpClient);
             await foreach (var group in rte.EnumerateSystemDefinitionSchemaGroups(new Uri(this.RegistryEndpoint)))
             {
                 group.Version = DateTime.UtcNow.ToFileTimeUtc();
-                SchemaGroup createdGroup = null;
+                IResource createdGroup = null;
                 try
                 {
-                    createdGroup = await client.PutSchemaGroupAsync(group, group.Id);
+                    createdGroup = await client2.PutResourceGroupAsync(group, group.Id);
                 }
-                catch (ApiException apiException)
+                catch (Azure.CloudEvents.SchemaRegistry.ApiException apiException)
                 {
                     if (apiException.StatusCode != 409)
                     {
@@ -64,16 +67,16 @@ namespace azcedisco
 
                 Console.WriteLine(JsonConvert.SerializeObject(group, Formatting.Indented));
             }
-
+            EndpointRegistryClient client3 = new EndpointRegistryClient(RegistryEndpoint, httpClient);
             await foreach (var endpoint in rte.EnumerateRegistryServicesAsync(new Uri(this.RegistryEndpoint), this.ResourceGroupName))
             {
                 endpoint.Version = DateTime.UtcNow.ToFileTimeUtc();
-                Endpoint createdService = null;
+                IResource createdService = null;
                 try
                 {
-                    createdService = await client.PutEndpointAsync(endpoint, endpoint.Id);
+                    createdService = await client3.PutResourceGroupAsync(endpoint, endpoint.Id);
                 }
-                catch (ApiException apiException)
+                catch (Azure.CloudEvents.EndpointRegistry.ApiException apiException)
                 {
                     if (apiException.StatusCode != 409)
                     {

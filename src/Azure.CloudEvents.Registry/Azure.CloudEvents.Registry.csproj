@@ -12,6 +12,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="generated\" />
+  </ItemGroup>
   <Target Name="NSwag" AfterTargets="BeforeBuild">
     <Exec Command="$(NSwagExe_Net60) run /variables:Configuration=$(Configuration),OutDir=$(OutDir)" />
   </Target>

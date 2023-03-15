@@ -12,7 +12,9 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using Azure.CloudEvents.MessageDefinitionsRegistry;
     using Azure.CloudEvents.Registry;
+    using Azure.CloudEvents.SchemaRegistry;
     using Microsoft.Azure.Management.EventGrid;
     using Microsoft.Azure.Management.EventGrid.Models;
     using Microsoft.Azure.Management.ResourceManager;
@@ -20,8 +22,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
     using Microsoft.Rest;
     using Microsoft.Rest.Azure;
     using static System.Net.Mime.MediaTypeNames;
-    using Definitiongroup = Definitiongroup;
-
+    
     public class ResourceTopicEnumerator
     {
         private readonly string azureSubscriptionId;
@@ -38,7 +39,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
             this.tokenCredentials = tokenCredentials;
         }
 
-        public async IAsyncEnumerable<Endpoint> EnumerateRegistryServicesAsync(Uri referencesBaseUri, string azureResourceGroupName)
+        public async IAsyncEnumerable<EndpointRegistry.Endpoint> EnumerateRegistryServicesAsync(Uri referencesBaseUri, string azureResourceGroupName)
         {
             await InitializeAsync();
             await foreach (var resource in EnumerateResourceGroupResourcesWithEventsAsync(azureSubscriptionId, azureResourceGroupName))
@@ -50,7 +51,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
             }
         }
 
-        public async IAsyncEnumerable<Definitiongroup> EnumerateSystemDefinitionGroups(Uri baseUri)
+        public async IAsyncEnumerable<DefinitionGroup> EnumerateSystemDefinitionGroups(Uri baseUri)
         {
             var authority = new Uri(baseUri, "groups/");
 
@@ -58,11 +59,12 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
             foreach (var info in this.topicTypes)
             {
                 DateTime utcNow = DateTime.UtcNow;
-                Definitiongroup group = new Definitiongroup()
+                DefinitionGroup group = new DefinitionGroup()
                 {
                     Id = info.Key,
                     Version = utcNow.ToFileTimeUtc(),
-                    Definitions = new Definitions(),
+                    Format = DefinitionGroupBaseFormat.CloudEvents_1_0,
+                    Definitions = new Dictionary<string, Definition>(),
                     Self = new Uri(authority, "./" + info.Key).ToString(),
                     Origin = "https://" + authority.Host,
                     CreatedOn = utcNow,
@@ -82,6 +84,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
 
                         CloudEventDefinition ceDef = new CloudEventDefinition()
                         {
+                            Format = CloudEventDefinitionFormat.CloudEvents_1_0,
                             Metadata = new CloudEventMetadata
                             {
                                 Attributes = new Attributes
@@ -143,7 +146,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
                                 schemaUrl = new Uri(baseUri, $"schemagroups/{info.Key}/schemas/{eventType.Name}EventData");
                             }
                             
-                            ceDef.Schemaurl = schemaUrl.ToString();
+                            ceDef.SchemaUrl = schemaUrl.ToString();
                             ceDef.Metadata.Attributes.Dataschema = new MetadataPropertyUriTemplate
                             {
                                 Value = schemaUrl.ToString(),
@@ -158,7 +161,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
         }
 
         Dictionary<Uri, string> downloaded = new Dictionary<Uri, string>();
-        public async IAsyncEnumerable<SchemaGroup> EnumerateSystemDefinitionSchemaGroups(Uri baseUri)
+        public async IAsyncEnumerable<SchemaRegistry.SchemaGroup> EnumerateSystemDefinitionSchemaGroups(Uri baseUri)
         {
             var authority = new Uri(baseUri, "schemagroups/");
 
@@ -170,7 +173,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
                 {
                     Id = info.Key,
                     Version = utcNow.ToFileTimeUtc(),
-                    Schemas = new Schemas(),
+                    Schemas = new Dictionary<string, Schema>(),
                     Self = new Uri(authority, "./" + info.Key).ToString(),
                     Origin = "https://" + authority.Host,
                     CreatedOn = utcNow,
@@ -219,7 +222,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
                                     {
                                         Id = versionString,
                                         Version = version,
-                                        Schemaurl = schemaUrl,
+                                        SchemaUrl = schemaUrl,
                                         Self = new Uri(authority, "./" + info.Key + "/schemas/" + eventType.Name + "EventData/versions/1.0").ToString(),
                                         Origin = "https://" + authority.Host,
                                         CreatedOn = utcNow,
@@ -238,23 +241,23 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
             }
         }
 
-        Endpoint MapGridTopicToRegistryServiceObject(Uri baseUri, GenericResourceExpanded resource)
+        EndpointRegistry.Endpoint MapGridTopicToRegistryServiceObject(Uri baseUri, GenericResourceExpanded resource)
         {
             string normalizedId = NormalizeId(resource.Id);
             var authority = new Uri(baseUri, "endpoints/");
             var self = new Uri(authority, "./" + normalizedId);
             DateTime utcNow = DateTime.UtcNow;
-            var endpoint = new Endpoint()
+            var endpoint = new EndpointRegistry.Endpoint()
             {
                 Id = normalizedId,
                 Name = resource.Name,
                 Description = $"{resource.Name} {resource.Kind}",
                 Docs = GetDocsUrl(resource.Type),
                 Version = utcNow.ToFileTimeUtc(),
-                Usage = EndpointUsage.Subscriber,
-                Config = new EndpointConfigSubscriber
+                Usage = EndpointRegistry.EndpointUsage.Subscriber,
+                Config = new EndpointRegistry.EndpointConfigSubscriber
                 {
-                    Protocol = "HTTP",
+                    Protocol = EndpointRegistry.EndpointConfigBaseProtocol.HTTP,
                     Endpoints = new[] { new Uri(baseUri, "subscriptions") },
                 },
                 Self = self?.ToString(),
@@ -299,8 +302,8 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
             {
                 endpoint.AdditionalProperties.Add("azrestype", resource.Type);
                 var resType = resource.Type.Split('/')[0].ToLowerInvariant();
-                endpoint.Definitiongroups = new DefinitiongroupUriReferences();
-                endpoint.Definitiongroups.Add(new Uri(baseUri, "./groups/"+ resType).ToString());
+                endpoint.DefinitionGroups = new List<string>();
+                endpoint.DefinitionGroups.Add(new Uri(baseUri, "./groups/"+ resType).ToString());
             }
             return endpoint;
         }

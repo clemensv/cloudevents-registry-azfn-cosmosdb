@@ -2,7 +2,7 @@
   "profiles": {
     "azcedisco": {
       "commandName": "Project",
-      "commandLineArgs": "import --subscription-id 041abda7-3870-4275-ae24-6bf4c5300523 --resource-group-name clemensvams --Registry-endpoint https://cediscoveryinterop.azurewebsites.net/registry --functions-key VyRba-8O1MYZ6EPVoV34u3RSpZXqnlaefnVTsxT7p0BLAzFuCziSzw=="
+      "commandLineArgs": "import --subscription-id 041abda7-3870-4275-ae24-6bf4c5300523 --resource-group-name clemensvams --registry-endpoint https://cediscoveryinterop.azurewebsites.net/registry --functions-key VyRba-8O1MYZ6EPVoV34u3RSpZXqnlaefnVTsxT7p0BLAzFuCziSzw=="
     }
   }
 }
