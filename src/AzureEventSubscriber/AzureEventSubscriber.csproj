@@ -15,7 +15,7 @@
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Azure.CloudEvents.Registry\Azure.CloudEvents.Registry.csproj" />
-    <ProjectReference Include="..\Azure.CloudEvents.Subscriptions\Azure.CloudEvents.Subscriptions.csproj" />
+    <ProjectReference Include="..\Azure.CloudEvents.Registry\xRegistry.Types.Client.csproj" />
+    <ProjectReference Include="..\Azure.CloudEvents.Subscriptions\CloudEvents.Subscriptions.csproj" />
   </ItemGroup>
 </Project>

@@ -6,6 +6,8 @@
     <None Remove="specs\openapitools.json" />
   </ItemGroup>
   <ItemGroup>
+    
+    
     <PackageReference Include="Microsoft.Azure.Core.NewtonsoftJson" Version="1.0.0" />
     <PackageReference Include="NSwag.MSBuild" Version="13.18.2">
       <PrivateAssets>all</PrivateAssets>
@@ -18,4 +20,7 @@
   <Target Name="NSwag" AfterTargets="BeforeBuild">
     <Exec Command="$(NSwagExe_Net60) run /variables:Configuration=$(Configuration),OutDir=$(OutDir)" />
   </Target>
+	
+	
+
 </Project>

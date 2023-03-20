@@ -1,4 +1,4 @@
-﻿using Azure.CloudEvents.EndpointRegistry;
+﻿
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using xRegistry.Types.EndpointRegistry;
 
 namespace Azure.CloudEvents.Registry
 {

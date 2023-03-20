@@ -9,8 +9,8 @@ namespace AzureEventSubscriber
     using System.Net.Http.Headers;
     using System.Net.Mime;
     using System.Threading.Tasks;
-    using Azure.CloudEvents.EndpointRegistry;
-    using Azure.CloudEvents.Registry;
+    using xRegistry.Types.EndpointRegistry;
+    using xRegistry.Types.Registry;
     using Azure.CloudEvents.Subscriptions;
     using Azure.Identity;
     using CloudNative.CloudEvents;

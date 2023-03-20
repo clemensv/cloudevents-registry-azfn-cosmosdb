@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Azure.CloudEvents.Registry.Service.CliTest": {
+      "commandName": "Project",
+      "commandLineArgs": "--key \"VyRba-8O1MYZ6EPVoV34u3RSpZXqnlaefnVTsxT7p0BLAzFuCziSzw==\" --baseUrl http://localhost:11000"
+    }
+  }
+}

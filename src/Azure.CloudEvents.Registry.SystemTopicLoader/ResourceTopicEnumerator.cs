@@ -9,18 +9,18 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Net.Http;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
-    using Azure.CloudEvents.MessageDefinitionsRegistry;
-    using Azure.CloudEvents.Registry;
-    using Azure.CloudEvents.SchemaRegistry;
     using Microsoft.Azure.Management.EventGrid;
     using Microsoft.Azure.Management.EventGrid.Models;
     using Microsoft.Azure.Management.ResourceManager;
     using Microsoft.Azure.Management.ResourceManager.Models;
     using Microsoft.Rest;
     using Microsoft.Rest.Azure;
+    using xRegistry.Types.MessageDefinitionsRegistry;
+    using xRegistry.Types.SchemaRegistry;
     using static System.Net.Mime.MediaTypeNames;
     
     public class ResourceTopicEnumerator
@@ -39,7 +39,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
             this.tokenCredentials = tokenCredentials;
         }
 
-        public async IAsyncEnumerable<EndpointRegistry.Endpoint> EnumerateRegistryServicesAsync(Uri referencesBaseUri, string azureResourceGroupName)
+        public async IAsyncEnumerable<xRegistry.Types.EndpointRegistry.Endpoint> EnumerateRegistryServicesAsync(Uri referencesBaseUri, string azureResourceGroupName)
         {
             await InitializeAsync();
             await foreach (var resource in EnumerateResourceGroupResourcesWithEventsAsync(azureSubscriptionId, azureResourceGroupName))
@@ -131,9 +131,12 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
                             var evsu = new Uri(eventType.SchemaUrl);
                             if (!downloaded.TryGetValue(evsu, out var schemaText))
                             {
-                                WebClient client = new WebClient();
-                                schemaText = client.DownloadString(evsu);
-                                downloaded.Add(evsu, schemaText);
+                                using (var client = new HttpClient())
+                                {
+                                    var response = await client.GetAsync(evsu);
+                                    schemaText = await response.Content.ReadAsStringAsync();
+                                    downloaded.Add(evsu, schemaText);
+                                }
                             }
                             Uri schemaUrl = null;
                             Match match = Regex.Match(schemaText, $"([A-Za-z0-9_]*{(eventType.Name+"EventData").Split(".").Last()})", RegexOptions.IgnoreCase);
@@ -161,7 +164,7 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
         }
 
         Dictionary<Uri, string> downloaded = new Dictionary<Uri, string>();
-        public async IAsyncEnumerable<SchemaRegistry.SchemaGroup> EnumerateSystemDefinitionSchemaGroups(Uri baseUri)
+        public async IAsyncEnumerable<xRegistry.Types.SchemaRegistry.SchemaGroup> EnumerateSystemDefinitionSchemaGroups(Uri baseUri)
         {
             var authority = new Uri(baseUri, "schemagroups/");
 
@@ -198,9 +201,12 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
                         {
                             if ( !downloaded.TryGetValue(schemaUrl, out var schemaText))
                             {
-                                WebClient client = new WebClient();
-                                schemaText = client.DownloadString(schemaUrl);
-                                downloaded.Add(schemaUrl, schemaText);                                
+                                using (var client = new HttpClient())
+                                {
+                                    var response = await client.GetAsync(schemaUrl);
+                                    schemaText = await response.Content.ReadAsStringAsync();
+                                    downloaded.Add(schemaUrl, schemaText);
+                                }
                             }
                             Match match = Regex.Match(schemaText, $"([A-Za-z0-9_]*{eventDataName.Split(".").Last()})");
                             if (match.Success)
@@ -241,23 +247,23 @@ namespace Azure.CloudEvents.Registry.SystemTopicLoader
             }
         }
 
-        EndpointRegistry.Endpoint MapGridTopicToRegistryServiceObject(Uri baseUri, GenericResourceExpanded resource)
+        xRegistry.Types.EndpointRegistry.Endpoint MapGridTopicToRegistryServiceObject(Uri baseUri, GenericResourceExpanded resource)
         {
             string normalizedId = NormalizeId(resource.Id);
             var authority = new Uri(baseUri, "endpoints/");
             var self = new Uri(authority, "./" + normalizedId);
             DateTime utcNow = DateTime.UtcNow;
-            var endpoint = new EndpointRegistry.Endpoint()
+            var endpoint = new xRegistry.Types.EndpointRegistry.Endpoint()
             {
                 Id = normalizedId,
                 Name = resource.Name,
                 Description = $"{resource.Name} {resource.Kind}",
                 Docs = GetDocsUrl(resource.Type),
                 Version = utcNow.ToFileTimeUtc(),
-                Usage = EndpointRegistry.EndpointUsage.Subscriber,
-                Config = new EndpointRegistry.EndpointConfigSubscriber
+                Usage = xRegistry.Types.EndpointRegistry.EndpointUsage.Subscriber,
+                Config = new xRegistry.Types.EndpointRegistry.EndpointConfigSubscriber
                 {
-                    Protocol = EndpointRegistry.EndpointConfigBaseProtocol.HTTP,
+                    Protocol = xRegistry.Types.EndpointRegistry.EndpointConfigBaseProtocol.HTTP,
                     Endpoints = new[] { new Uri(baseUri, "subscriptions") },
                 },
                 Self = self?.ToString(),

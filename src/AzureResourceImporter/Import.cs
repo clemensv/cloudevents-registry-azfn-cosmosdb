@@ -1,14 +1,15 @@
-﻿using Azure.CloudEvents.EndpointRegistry;
-using Azure.CloudEvents.MessageDefinitionsRegistry;
+﻿using xRegistry.Types.EndpointRegistry;
+using xRegistry.Types.MessageDefinitionsRegistry;
 using Azure.CloudEvents.Registry;
 using Azure.CloudEvents.Registry.SystemTopicLoader;
-using Azure.CloudEvents.SchemaRegistry;
+using xRegistry.Types.SchemaRegistry;
 using McMaster.Extensions.CommandLineUtils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using xRegistry.Types.Registry;
 
 namespace azcedisco
 {
@@ -38,7 +39,7 @@ namespace azcedisco
                 {
                     createdGroup = await client.PutResourceGroupAsync(group, group.Id);
                 }
-                catch (Azure.CloudEvents.MessageDefinitionsRegistry.ApiException apiException)
+                catch (xRegistry.Types.MessageDefinitionsRegistry.ApiException apiException)
                 {
                     if (apiException.StatusCode != 409)
                     {
@@ -57,7 +58,7 @@ namespace azcedisco
                 {
                     createdGroup = await client2.PutResourceGroupAsync(group, group.Id);
                 }
-                catch (Azure.CloudEvents.SchemaRegistry.ApiException apiException)
+                catch (xRegistry.Types.SchemaRegistry.ApiException apiException)
                 {
                     if (apiException.StatusCode != 409)
                     {
@@ -76,7 +77,7 @@ namespace azcedisco
                 {
                     createdService = await client3.PutResourceGroupAsync(endpoint, endpoint.Id);
                 }
-                catch (Azure.CloudEvents.EndpointRegistry.ApiException apiException)
+                catch (xRegistry.Types.EndpointRegistry.ApiException apiException)
                 {
                     if (apiException.StatusCode != 409)
                     {

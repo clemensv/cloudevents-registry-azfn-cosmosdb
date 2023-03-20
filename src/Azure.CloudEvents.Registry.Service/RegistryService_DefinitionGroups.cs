@@ -1,10 +1,11 @@
-﻿using Azure.CloudEvents.MessageDefinitionsRegistry;
+﻿
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using xRegistry.Types.MessageDefinitionsRegistry;
 
 namespace Azure.CloudEvents.Registry
 {

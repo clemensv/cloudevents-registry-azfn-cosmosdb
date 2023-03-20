@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Azure.CloudEvents.Registry\Azure.CloudEvents.Registry.csproj" />
+    <ProjectReference Include="..\Azure.CloudEvents.Registry\xRegistry.Types.Client.csproj" />
   </ItemGroup>
 
 </Project>

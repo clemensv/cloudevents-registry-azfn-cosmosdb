@@ -9,8 +9,8 @@ namespace Azure.CloudEvents.Registry
         public Uri EndpointsUrl { get; set; }
         public Uri DefinitionGroupsUrl { get; set; }
         public Uri SchemaGroupsUrl { get; set; }
-        public IDictionary<string, SchemaRegistry.SchemaGroup> SchemaGroups { get; internal set; }
-        public IDictionary<string, MessageDefinitionsRegistry.DefinitionGroup> DefinitionGroups { get; internal set; }
-        public IDictionary<string, EndpointRegistry.Endpoint> Endpoints { get; internal set; }
+        public IDictionary<string, xRegistry.Types.SchemaRegistry.SchemaGroup> SchemaGroups { get; internal set; }
+        public IDictionary<string, xRegistry.Types.MessageDefinitionsRegistry.DefinitionGroup> DefinitionGroups { get; internal set; }
+        public IDictionary<string, xRegistry.Types.EndpointRegistry.Endpoint> Endpoints { get; internal set; }
     }
 }

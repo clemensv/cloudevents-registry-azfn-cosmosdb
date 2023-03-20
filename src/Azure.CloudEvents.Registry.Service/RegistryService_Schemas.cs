@@ -1,10 +1,11 @@
-﻿using Azure.CloudEvents.SchemaRegistry;
+﻿
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using xRegistry.Types.SchemaRegistry;
 
 namespace Azure.CloudEvents.Registry
 {

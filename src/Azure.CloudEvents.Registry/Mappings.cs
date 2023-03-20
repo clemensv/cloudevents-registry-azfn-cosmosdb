@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Resources;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Azure.CloudEvents.Registry
+﻿namespace xRegistry.Types.Registry
 {
     partial class Resource : IResource
     {
@@ -30,9 +23,9 @@ namespace Azure.CloudEvents.Registry
     }
 }
 
-namespace Azure.CloudEvents.EndpointRegistry
+namespace xRegistry.Types.EndpointRegistry
 {
-    public partial class Resource : Azure.CloudEvents.Registry.IResource
+    public partial class Resource : xRegistry.Types.Registry.IResource
     {
     }
     public class CloudEventMetadata : Metadata5 { }
@@ -43,13 +36,13 @@ namespace Azure.CloudEvents.EndpointRegistry
     public class AmqpMetadata : Metadata { }
 }
 
-namespace Azure.CloudEvents.SchemaRegistry
+namespace xRegistry.Types.SchemaRegistry
 {
-    public partial class Resource : Azure.CloudEvents.Registry.IResource
+    public partial class Resource : xRegistry.Types.Registry.IResource
     {
     }
 
-    public partial class Schema : Azure.CloudEvents.Registry.IResource
+    public partial class Schema : xRegistry.Types.Registry.IResource
     {
         public Schema()
         {
@@ -57,7 +50,7 @@ namespace Azure.CloudEvents.SchemaRegistry
         }
     }
 
-    public partial class SchemaGroup : Azure.CloudEvents.Registry.IResource
+    public partial class SchemaGroup : xRegistry.Types.Registry.IResource
     {
         public SchemaGroup()
         {
@@ -66,9 +59,9 @@ namespace Azure.CloudEvents.SchemaRegistry
     }
 }
 
-namespace Azure.CloudEvents.MessageDefinitionsRegistry
+namespace xRegistry.Types.MessageDefinitionsRegistry
 {
-    public partial class Resource : Azure.CloudEvents.Registry.IResource
+    public partial class Resource : xRegistry.Types.Registry.IResource
     {
     }
 

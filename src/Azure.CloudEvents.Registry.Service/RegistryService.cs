@@ -15,6 +15,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using xRegistry.Types.Registry;
 using Container = Microsoft.Azure.Cosmos.Container;
 using PartitionKey = Microsoft.Azure.Cosmos.PartitionKey;
 
@@ -99,7 +100,7 @@ namespace Azure.CloudEvents.Registry
             {
                 var ctrGroups = this.cosmosClient.GetContainer(DatabaseId, SchemaGroupsName);
                 var ctrSchemas = this.cosmosClient.GetContainer(DatabaseId, SchemasName);
-                var res = await PutGroupsHandler<SchemaRegistry.SchemaGroup, SchemaRegistry.Schema>(
+                var res = await PutGroupsHandler<xRegistry.Types.SchemaRegistry.SchemaGroup, xRegistry.Types.SchemaRegistry.Schema>(
                     req, (g) => g.Schemas, ctrGroups, ctrSchemas, document.SchemaGroups);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
@@ -108,7 +109,7 @@ namespace Azure.CloudEvents.Registry
             {
                 Container ctrGroups = this.cosmosClient.GetContainer(DatabaseId, "groups");
                 Container ctrDefs = this.cosmosClient.GetContainer(DatabaseId, DefinitionsName);
-                var res = await PutGroupsHandler<MessageDefinitionsRegistry.DefinitionGroup, MessageDefinitionsRegistry.Definition>(
+                var res = await PutGroupsHandler<xRegistry.Types.MessageDefinitionsRegistry.DefinitionGroup, xRegistry.Types.MessageDefinitionsRegistry.Definition>(
                     req, (g) => g.Definitions, ctrGroups, ctrDefs, document.DefinitionGroups);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
@@ -117,7 +118,7 @@ namespace Azure.CloudEvents.Registry
             {
                 Container ctrEndpoints = this.cosmosClient.GetContainer(DatabaseId, EndpointsName);
                 Container ctrdefs = this.cosmosClient.GetContainer(DatabaseId, EndpointDefinitionsCollection);
-                var res = await PutGroupsHandler<EndpointRegistry.Endpoint, EndpointRegistry.Definition>(req, (e) => e.Definitions, ctrEndpoints, ctrdefs, document.Endpoints);
+                var res = await PutGroupsHandler<xRegistry.Types.EndpointRegistry.Endpoint, xRegistry.Types.EndpointRegistry.Definition>(req, (e) => e.Definitions, ctrEndpoints, ctrdefs, document.Endpoints);
                 if (res.StatusCode != HttpStatusCode.OK)
                     return res;
             }
